@@ -1,7 +1,7 @@
 {
   "project_name": "AI Tradie Receptionist Platform",
   "title": "AI Tradie Receptionist Platform — Phase Roadmap",
-  "active_phase_id": "P7",
+  "active_phase_id": "P8",
   "last_updated": "2026-05-23",
   "phases": [
     {
@@ -189,7 +189,7 @@
     {
       "phase_id": "P7",
       "phase_name": "Notifications and lead workflow",
-      "status": "READY_FOR_REVIEW",
+      "status": "COMPLETE",
       "completion_percentage": 100,
       "tasks": [
         "Define lead data fields and qualification rules",
@@ -212,13 +212,13 @@
       "pending_tasks": [],
       "blocked_tasks": [],
       "last_updated": "2026-05-23",
-      "notes": "Deterministic lead qualification, tenant-scoped lifecycle transitions, SMTP-compatible email provider abstraction, DB-backed delivery queue/retry state, business notification settings, portal status updates, and tests are implemented and validated for review."
+      "notes": "Deterministic lead qualification, tenant-scoped lifecycle transitions, SMTP-compatible email provider abstraction, DB-backed delivery queue/retry state, business notification settings, portal status updates, and tests are implemented and merged into master."
     },
     {
       "phase_id": "P8",
       "phase_name": "Analytics and usage tracking",
-      "status": "NOT_STARTED",
-      "completion_percentage": 0,
+      "status": "READY_FOR_REVIEW",
+      "completion_percentage": 100,
       "tasks": [
         "Define usage event taxonomy",
         "Implement usage logging service",
@@ -228,8 +228,7 @@
         "Build admin usage dashboard",
         "Add tenant-scoped analytics tests"
       ],
-      "completed_tasks": [],
-      "pending_tasks": [
+      "completed_tasks": [
         "Define usage event taxonomy",
         "Implement usage logging service",
         "Add tenant analytics queries",
@@ -238,9 +237,10 @@
         "Build admin usage dashboard",
         "Add tenant-scoped analytics tests"
       ],
+      "pending_tasks": [],
       "blocked_tasks": [],
       "last_updated": "2026-05-23",
-      "notes": "Depends on Phase 7 review/merge and explicit Phase 8 instruction."
+      "notes": "Usage event taxonomy/service, tenant/admin analytics queries, richer business/admin dashboards, and tenant-scoped analytics tests are implemented and validated for review."
     },
     {
       "phase_id": "P9",
@@ -267,8 +267,8 @@
         "Document deployment and rollback process"
       ],
       "blocked_tasks": [],
-      "last_updated": "2026-05-22",
-      "notes": "Depends on MVP implementation phases being complete enough for integration."
+      "last_updated": "2026-05-23",
+      "notes": "Depends on Phase 8 review/merge and explicit Phase 9 instruction."
     },
     {
       "phase_id": "P10",

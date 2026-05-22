@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.analytics.service import AnalyticsService
 from app.models.conversation import Conversation, Message
 from app.models.knowledge import KnowledgeDocument
 from app.models.lead import Lead
@@ -20,19 +21,6 @@ class TenantMetrics:
 
     businesses_total: int
     users_total: int
-    documents_total: int
-    leads_total: int
-    conversations_total: int
-    messages_total: int
-    usage_events_total: int
-
-
-@dataclass(frozen=True)
-class UsageOverview:
-    """Platform-wide usage totals."""
-
-    tenants_total: int
-    active_tenants: int
     documents_total: int
     leads_total: int
     conversations_total: int
@@ -122,16 +110,8 @@ class AdminService:
             usage_events_total=self._tenant_count(UsageLog, tenant_id),
         )
 
-    def usage_overview(self) -> UsageOverview:
-        return UsageOverview(
-            tenants_total=self._count(Tenant),
-            active_tenants=self._count(Tenant, Tenant.status == "active"),
-            documents_total=self._count(KnowledgeDocument),
-            leads_total=self._count(Lead),
-            conversations_total=self._count(Conversation),
-            messages_total=self._count(Message),
-            usage_events_total=self._count(UsageLog),
-        )
+    def usage_overview(self):
+        return AnalyticsService(self.session).platform_snapshot()
 
     def recent_leads(self, tenant_id: str, limit: int = 10) -> list[Lead]:
         statement = (
@@ -169,12 +149,6 @@ class AdminService:
             Message.conversation_id == conversation_id,
             Message.tenant_id == tenant_id,
         )
-        return int(self.session.scalar(statement) or 0)
-
-    def _count(self, model: type, *criteria) -> int:
-        statement = select(func.count()).select_from(model)
-        if criteria:
-            statement = statement.where(*criteria)
         return int(self.session.scalar(statement) or 0)
 
     def _tenant_count(self, model: type, tenant_id: str) -> int:

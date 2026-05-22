@@ -6,7 +6,7 @@
 
 ## Current implemented modules
 
-Phase 7 notifications and lead workflow is implemented and ready for review.
+Phase 8 analytics and usage tracking is implemented and ready for review.
 
 Implemented repository assets:
 
@@ -59,6 +59,13 @@ Implemented repository assets:
 - Chat lead capture integration that queues and sends newly qualified lead notifications.
 - Business portal lead status update endpoint and leads UI showing qualification and notification state.
 - Backend lead workflow and notification delivery tests.
+- Usage event taxonomy and tenant-scoped usage logging service.
+- Chat, RAG ingestion, widget key, lead status, and notification workflows recording usage events.
+- Tenant analytics query service for documents, conversations, messages, leads, notification deliveries, and usage events.
+- Super admin platform analytics query service with aggregate counts, status breakdowns, and per-tenant usage summaries.
+- Business portal analytics API and dashboard with usage counts, lead/document status breakdowns, and recent usage events.
+- Super admin usage API and dashboard with platform aggregate usage and tenant summaries.
+- Backend analytics tests covering tenant isolation and aggregate analytics without raw lead PII.
 - `.env.example` local configuration template.
 - `docker-compose.yml` local/dev backend, frontend, PostgreSQL/pgvector, and Redis foundation.
 - `.gitignore` for local env files, Python caches, logs, macOS metadata, and generated frontend artifacts.
@@ -77,7 +84,7 @@ Configured but not running in this session:
 - Public chat/widget API routes.
 - Business portal API routes.
 - Super admin API routes.
-- Lead workflow and notification services.
+- Lead workflow, notification, usage, and analytics services.
 
 Not created yet:
 
@@ -104,7 +111,7 @@ Implemented API:
 - `GET /business-portal/conversations/{conversation_id}`
 - `GET /business-portal/widget`
 - `POST /business-portal/widget/keys`
-- `GET /business-portal/analytics`
+- `GET /business-portal/analytics` with tenant-scoped usage and status breakdowns
 - `POST /admin/auth/login`
 - `GET /admin/session`
 - `GET /admin/tenants`
@@ -112,7 +119,7 @@ Implemented API:
 - `GET /admin/tenants/{tenant_id}`
 - `PATCH /admin/tenants/{tenant_id}/status`
 - `GET /admin/tenants/{tenant_id}/support-context`
-- `GET /admin/usage`
+- `GET /admin/usage` with aggregate usage, status breakdowns, and tenant summaries
 - `GET /admin/health`
 - `GET /admin/audit-logs`
 
@@ -141,6 +148,8 @@ The Phase 6 migration adds global `admin_users` for platform operators. This tab
 
 The Phase 7 migration adds lead qualification/notification columns to `leads` plus tenant-scoped `business_notification_settings` and `notification_deliveries`.
 
+Phase 8 does not add a new migration. It uses the existing tenant-scoped `usage_logs` table plus existing tenant-owned models for analytics queries.
+
 ## Migrations applied
 
 - `20260522_0001`: Initial tenant schema.
@@ -151,7 +160,7 @@ The Phase 7 migration adds lead qualification/notification columns to `leads` pl
 
 ## Active services
 
-None running. Compose configuration validates. Temporary local backend/frontend dev servers were started and stopped during Phase 7 browser smoke validation.
+None running from this phase. Compose configuration validates. Temporary local backend/frontend dev servers were started and stopped during Phase 8 browser smoke validation.
 
 ## Deployment status
 
@@ -171,6 +180,7 @@ Planned deployment:
 - Super admin authentication is an MVP email/session contract without passwords, MFA, or external identity provider integration.
 - Tenant-scoped audit logging covers tenant-targeted admin actions; global non-tenant admin events may need a separate audit strategy later.
 - Notification delivery is DB-backed and processed synchronously in the MVP chat path; a dedicated async worker can be introduced later.
+- Analytics are computed directly from transactional tables for MVP simplicity; rollups, materialized views, or cache-backed summaries can be introduced if usage volume requires them.
 - Local `EMAIL_PROVIDER=console` does not contact SMTP and must be replaced with SMTP settings in production.
 - `npm audit --audit-level=high` passed, but npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
 - The widget is a static MVP asset, not a full frontend build pipeline.
@@ -178,7 +188,6 @@ Planned deployment:
 
 ## Incomplete modules
 
-- Analytics and usage tracking.
 - CI and deployment.
 
 ## Update rules

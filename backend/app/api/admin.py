@@ -16,6 +16,7 @@ from app.models.tenant import Business, BusinessUser, Tenant
 from app.models.usage import AuditLog, UsageLog
 from app.schemas.admin import (
     AdminAuditLogResponse,
+    AdminAnalyticsBreakdownResponse,
     AdminBusinessResponse,
     AdminBusinessUserResponse,
     AdminHealthResponse,
@@ -30,6 +31,7 @@ from app.schemas.admin import (
     AdminTenantMetricsResponse,
     AdminTenantStatusUpdateRequest,
     AdminTenantSummaryResponse,
+    AdminTenantUsageSummaryResponse,
     AdminUsageEventResponse,
     AdminUsageOverviewResponse,
 )
@@ -263,10 +265,34 @@ def get_usage_overview(
         tenants_total=overview.tenants_total,
         active_tenants=overview.active_tenants,
         documents_total=overview.documents_total,
+        documents_ingested=overview.documents_ingested,
         leads_total=overview.leads_total,
+        leads_qualified=overview.leads_qualified,
         conversations_total=overview.conversations_total,
         messages_total=overview.messages_total,
         usage_events_total=overview.usage_events_total,
+        ai_responses_total=overview.ai_responses_total,
+        lead_notifications_sent=overview.lead_notifications_sent,
+        admin_audit_events_total=overview.admin_audit_events_total,
+        usage_event_counts=[admin_breakdown_response(item) for item in overview.usage_event_counts],
+        lead_status_counts=[admin_breakdown_response(item) for item in overview.lead_status_counts],
+        document_status_counts=[
+            admin_breakdown_response(item) for item in overview.document_status_counts
+        ],
+        tenant_usage=[
+            AdminTenantUsageSummaryResponse(
+                tenant_id=item.tenant_id,
+                tenant_name=item.tenant_name,
+                tenant_slug=item.tenant_slug,
+                tenant_status=item.tenant_status,
+                documents_total=item.documents_total,
+                leads_total=item.leads_total,
+                conversations_total=item.conversations_total,
+                messages_total=item.messages_total,
+                usage_events_total=item.usage_events_total,
+            )
+            for item in overview.tenant_usage
+        ],
     )
 
 
@@ -376,6 +402,11 @@ def usage_event_response(event: UsageLog) -> AdminUsageEventResponse:
         attributes=event.attributes or {},
         created_at=event.created_at,
     )
+
+
+def admin_breakdown_response(item) -> AdminAnalyticsBreakdownResponse:
+    """Map analytics breakdown to admin response."""
+    return AdminAnalyticsBreakdownResponse(label=item.label, count=item.count)
 
 
 def audit_log_response(event: AuditLog) -> AdminAuditLogResponse:

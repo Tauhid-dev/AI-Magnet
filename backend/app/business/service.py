@@ -2,30 +2,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.analytics.service import AnalyticsService, TenantAnalyticsSnapshot
 from app.leads.workflow import LeadWorkflowService
 from app.models.conversation import Conversation, Message
 from app.models.knowledge import KnowledgeDocument
 from app.models.lead import Lead
 from app.models.usage import UsageLog
 from app.models.widget import WidgetConfig
-
-
-@dataclass(frozen=True)
-class PortalAnalytics:
-    """Compact tenant analytics for the business portal."""
-
-    documents_total: int
-    documents_ingested: int
-    leads_total: int
-    conversations_total: int
-    open_conversations: int
-    messages_total: int
-    widget_status: str
 
 
 class BusinessPortalService:
@@ -101,26 +87,8 @@ class BusinessPortalService:
         )
         return self.session.scalars(statement).first()
 
-    def analytics(self) -> PortalAnalytics:
-        documents_total = self._count(KnowledgeDocument)
-        documents_ingested = self._count(
-            KnowledgeDocument,
-            KnowledgeDocument.status == "ingested",
-        )
-        leads_total = self._count(Lead)
-        conversations_total = self._count(Conversation)
-        open_conversations = self._count(Conversation, Conversation.status == "open")
-        messages_total = self._count(Message)
-        widget = self.active_widget()
-        return PortalAnalytics(
-            documents_total=documents_total,
-            documents_ingested=documents_ingested,
-            leads_total=leads_total,
-            conversations_total=conversations_total,
-            open_conversations=open_conversations,
-            messages_total=messages_total,
-            widget_status=widget.status if widget else "not_configured",
-        )
+    def analytics(self) -> TenantAnalyticsSnapshot:
+        return AnalyticsService(self.session).tenant_snapshot(self.tenant_id)
 
     def recent_usage(self, limit: int = 10) -> list[UsageLog]:
         statement = (
@@ -130,9 +98,3 @@ class BusinessPortalService:
             .limit(limit)
         )
         return list(self.session.scalars(statement))
-
-    def _count(self, model: type, *criteria) -> int:
-        statement = select(func.count()).select_from(model).where(model.tenant_id == self.tenant_id)
-        if criteria:
-            statement = statement.where(*criteria)
-        return int(self.session.scalar(statement) or 0)

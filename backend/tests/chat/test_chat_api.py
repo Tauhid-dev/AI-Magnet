@@ -195,6 +195,7 @@ def test_conversation_message_uses_only_current_tenant_rag_context_and_captures_
         )
         assert {event.event_type for event in usage_events} == {
             "conversation_started",
+            "lead_qualified",
             "message_received",
             "assistant_response_generated",
         }

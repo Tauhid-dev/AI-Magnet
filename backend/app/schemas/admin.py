@@ -107,6 +107,36 @@ class AdminUsageOverviewResponse(BaseModel):
     tenants_total: int
     active_tenants: int
     documents_total: int
+    documents_ingested: int
+    leads_total: int
+    leads_qualified: int
+    conversations_total: int
+    messages_total: int
+    usage_events_total: int
+    ai_responses_total: int
+    lead_notifications_sent: int
+    admin_audit_events_total: int
+    usage_event_counts: list["AdminAnalyticsBreakdownResponse"]
+    lead_status_counts: list["AdminAnalyticsBreakdownResponse"]
+    document_status_counts: list["AdminAnalyticsBreakdownResponse"]
+    tenant_usage: list["AdminTenantUsageSummaryResponse"]
+
+
+class AdminAnalyticsBreakdownResponse(BaseModel):
+    """Analytics label/count pair for admin views."""
+
+    label: str
+    count: int
+
+
+class AdminTenantUsageSummaryResponse(BaseModel):
+    """Tenant usage row for admin analytics."""
+
+    tenant_id: str
+    tenant_name: str
+    tenant_slug: str
+    tenant_status: str
+    documents_total: int
     leads_total: int
     conversations_total: int
     messages_total: int

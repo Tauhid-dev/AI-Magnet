@@ -15,6 +15,7 @@ from app.schemas.business_portal import (
     BusinessPortalLoginRequest,
     BusinessPortalLoginResponse,
     BusinessPortalSessionResponse,
+    PortalAnalyticsBreakdownResponse,
     PortalAnalyticsResponse,
     PortalConversationDetailResponse,
     PortalConversationResponse,
@@ -23,8 +24,10 @@ from app.schemas.business_portal import (
     PortalLeadResponse,
     PortalLeadStatusUpdateRequest,
     PortalMessageResponse,
+    PortalUsageEventResponse,
     PortalWidgetResponse,
 )
+from app.usage import UsageEventSource, UsageEventType, UsageService
 from app.widget.service import WidgetService
 
 
@@ -135,6 +138,12 @@ def create_document(
         content=payload.content.encode("utf-8"),
         content_type=payload.content_type,
     )
+    UsageService(session).record_document_ingestion(
+        tenant_id=portal_session.tenant_id,
+        document_id=document.id,
+        status=document.status,
+        chunk_count=len(document.chunks),
+    )
     session.commit()
     return PortalDocumentResponse(
         id=document.id,
@@ -179,12 +188,24 @@ def update_lead_status(
 ) -> PortalLeadResponse:
     """Update a current tenant lead lifecycle status."""
     service = BusinessPortalService(session, portal_session.tenant_id)
+    current_lead = service.get_lead(lead_id)
+    if current_lead is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
+    previous_status = current_lead.status
     try:
         lead = service.update_lead_status(lead_id, payload.status)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    if lead is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
+    UsageService(session).record_event(
+        tenant_id=portal_session.tenant_id,
+        event_type=UsageEventType.LEAD_STATUS_UPDATED,
+        event_source=UsageEventSource.BUSINESS_PORTAL,
+        attributes={
+            "lead_id": lead.id,
+            "from_status": previous_status,
+            "to_status": lead.status,
+        },
+    )
     session.commit()
     return lead_response(lead)
 
@@ -264,6 +285,12 @@ def create_widget_key(
         widget_key=widget_key,
         name=f"{portal_session.tenant_name} website widget",
     )
+    UsageService(session).record_event(
+        tenant_id=portal_session.tenant_id,
+        event_type=UsageEventType.WIDGET_KEY_CREATED,
+        event_source=UsageEventSource.BUSINESS_PORTAL,
+        attributes={"widget_config_id": widget.id, "key_prefix": widget.key_prefix},
+    )
     session.commit()
     return widget_response(widget, widget_key=widget_key)
 
@@ -276,25 +303,42 @@ def get_analytics(
     """Return basic current tenant analytics."""
     service = BusinessPortalService(session, portal_session.tenant_id)
     analytics = service.analytics()
-    recent_usage = [
-        {
-            "event_type": event.event_type,
-            "event_source": event.event_source,
-            "attributes": event.attributes or {},
-            "created_at": event.created_at.isoformat(),
-        }
-        for event in service.recent_usage()
-    ]
     return PortalAnalyticsResponse(
         documents_total=analytics.documents_total,
         documents_ingested=analytics.documents_ingested,
+        documents_failed=analytics.documents_failed,
         leads_total=analytics.leads_total,
+        leads_qualified=analytics.leads_qualified,
+        leads_notified=analytics.leads_notified,
         conversations_total=analytics.conversations_total,
         open_conversations=analytics.open_conversations,
         messages_total=analytics.messages_total,
+        visitor_messages_total=analytics.visitor_messages_total,
+        assistant_messages_total=analytics.assistant_messages_total,
+        usage_events_total=analytics.usage_events_total,
+        ai_responses_total=analytics.ai_responses_total,
+        lead_notifications_sent=analytics.lead_notifications_sent,
         widget_status=analytics.widget_status,
-        recent_usage=recent_usage,
+        lead_status_counts=[breakdown_response(item) for item in analytics.lead_status_counts],
+        document_status_counts=[
+            breakdown_response(item) for item in analytics.document_status_counts
+        ],
+        usage_event_counts=[breakdown_response(item) for item in analytics.usage_event_counts],
+        recent_usage=[
+            PortalUsageEventResponse(
+                event_type=event.event_type,
+                event_source=event.event_source,
+                attributes=event.attributes,
+                created_at=event.created_at,
+            )
+            for event in analytics.recent_usage
+        ],
     )
+
+
+def breakdown_response(item) -> PortalAnalyticsBreakdownResponse:
+    """Map analytics breakdown item to API response."""
+    return PortalAnalyticsBreakdownResponse(label=item.label, count=item.count)
 
 
 def lead_response(lead) -> PortalLeadResponse:

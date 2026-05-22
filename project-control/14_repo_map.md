@@ -2,15 +2,15 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, and Phase 1 through Phase 7 MVP foundations.
+The repository currently contains planning/control documentation, visual roadmap assets, and Phase 1 through Phase 8 MVP foundations.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Exists | FastAPI backend foundation, tenant/database/admin/notification models, RAG services, AI and email provider abstractions, chat/widget services, business portal routes/services, super admin routes/services, lead workflow, notification services, audit helpers, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
-| `frontend/` | Exists | Next.js, TypeScript, and TailwindCSS business portal and super admin portal foundation. |
+| `backend/` | Exists | FastAPI backend foundation, tenant/database/admin/notification models, RAG services, AI and email provider abstractions, chat/widget services, business portal routes/services, super admin routes/services, lead workflow, notification services, usage/analytics services, audit helpers, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
+| `frontend/` | Exists | Next.js, TypeScript, and TailwindCSS business portal and super admin portal foundation with expanded analytics dashboards. |
 | `widget/` | Exists | Lightweight static embeddable website chat widget and local test page. |
 | `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
 | `.github/workflows/` | Not created | Planned CI workflows. |
@@ -73,7 +73,7 @@ Planned future files:
 
 ## Backend structure
 
-Created across Phases 1 through 7:
+Created across Phases 1 through 8:
 
 - `backend/app/main.py`: FastAPI app factory, application instance, and CORS method configuration.
 - `backend/app/core/config.py`: Environment-backed settings.
@@ -82,8 +82,8 @@ Created across Phases 1 through 7:
 - `backend/app/api/health.py`: `/health` route.
 - `backend/app/api/widget.py`: Public widget initialization route.
 - `backend/app/api/chat.py`: Public conversation start and message routes.
-- `backend/app/api/business_portal.py`: Tenant-aware business portal session, document, lead, lead status, conversation, widget, and analytics routes.
-- `backend/app/api/admin.py`: Super admin session, tenant management, support context, usage, health, and audit routes.
+- `backend/app/api/business_portal.py`: Tenant-aware business portal session, document, lead, lead status, conversation, widget, and tenant analytics routes.
+- `backend/app/api/admin.py`: Super admin session, tenant management, support context, aggregate usage, health, and audit routes.
 - `backend/app/schemas/health.py`: Health response schema.
 - `backend/app/schemas/widget.py`: Widget request/response schemas.
 - `backend/app/schemas/chat.py`: Conversation, message, and lead capture schemas.
@@ -112,6 +112,8 @@ Created across Phases 1 through 7:
 - `backend/app/tenants/`: Tenant/business service helpers.
 - `backend/app/leads/`: Deterministic lead qualification and lifecycle workflow service.
 - `backend/app/notifications/`: Lead notification templates and DB-backed delivery service.
+- `backend/app/usage/`: Usage event taxonomy and tenant-scoped usage logging service.
+- `backend/app/analytics/`: Tenant and platform analytics query services.
 - `backend/app/conversations/`: Reserved package for future conversation-specific helpers.
 - `backend/tests/`: Backend health/config, tenant, and RAG tests.
 - `backend/tests/test_tenant_models.py`: Phase 2 tenant CRUD and isolation tests.
@@ -121,13 +123,14 @@ Created across Phases 1 through 7:
 - `backend/tests/admin/`: Phase 6 admin session, business-token rejection, tenant management, support, usage, health, and audit tests.
 - `backend/tests/leads/`: Phase 7 deterministic lead lifecycle tests.
 - `backend/tests/notifications/`: Phase 7 notification delivery and retry tests.
+- `backend/tests/analytics/`: Phase 8 usage logging and tenant/platform analytics tests.
 - `backend/requirements.txt`: Runtime dependencies.
 - `backend/requirements-dev.txt`: Dev/test/lint dependencies.
 - `backend/Dockerfile`: Backend image definition.
 
 ## Frontend structure
 
-Created in Phase 5 and extended in Phase 7:
+Created in Phase 5 and extended in Phases 7 and 8:
 
 - `frontend/app/`: Next.js App Router routes for login, business portal, and admin portal sections.
 - `frontend/app/login/page.tsx`: Business portal login screen.
@@ -137,7 +140,7 @@ Created in Phase 5 and extended in Phase 7:
 - `frontend/app/portal/leads/page.tsx`: Lead list with qualification, notification state, and business status updates.
 - `frontend/app/portal/conversations/page.tsx`: Conversation list and message history.
 - `frontend/app/portal/widget/page.tsx`: Widget status, key creation, and embed snippet.
-- `frontend/app/portal/analytics/page.tsx`: Basic tenant analytics.
+- `frontend/app/portal/analytics/page.tsx`: Tenant analytics with usage totals, status breakdowns, and recent usage events.
 - `frontend/components/`: Portal shell, status pill, and metric card components.
 - `frontend/lib/api/`: Typed business portal API client and response types.
 - `frontend/lib/auth/`: Browser session storage helper.
@@ -161,6 +164,12 @@ Extended in Phase 7:
 - `frontend/components/StatusPill.tsx`: Status styles for lead lifecycle and notification delivery states.
 - `frontend/lib/api/client.ts`: Business portal lead status update API helper.
 - `frontend/lib/api/types.ts`: Lead qualification and notification response fields.
+
+Extended in Phase 8:
+
+- `frontend/app/admin/usage/page.tsx`: Platform aggregate usage, status breakdowns, and per-tenant usage summaries.
+- `frontend/app/portal/analytics/page.tsx`: Tenant usage event, lead, document, and notification analytics dashboard.
+- `frontend/lib/api/types.ts`: Analytics breakdowns, recent usage events, and tenant usage summary response types.
 
 ## Widget structure
 
@@ -191,7 +200,7 @@ Created:
 
 ## Deployment files
 
-Created across Phases 1 through 7:
+Created across Phases 1 through 8:
 
 - `docker-compose.yml`
   - Backend service.
@@ -216,8 +225,9 @@ Created across Phases 1 through 7:
 - `backend/tests/admin/`
 - `backend/tests/leads/`
 - `backend/tests/notifications/`
+- `backend/tests/analytics/`
 - `frontend/tests/`
 
 Planned future areas:
 
-- Expanded analytics and end-to-end deployment tests.
+- End-to-end deployment tests.
