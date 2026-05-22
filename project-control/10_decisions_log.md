@@ -2,6 +2,39 @@
 
 Use this file to record major product, architecture, tooling, security, and deployment decisions.
 
+## DEC-20260523-010: Phase 10 premium modules remain planning-only
+
+### Decision ID
+
+DEC-20260523-010
+
+### Date
+
+2026-05-23
+
+### Context
+
+Phase 10 covers premium and future modules such as Voice AI, SMS, WhatsApp, Stripe billing, n8n automation, CRM integrations, local model/Ollama support, and multi-region architecture. These features have higher privacy, consent, cost, reliability, and operational risk than the MVP foundations.
+
+### Decision
+
+Complete Phase 10 as research and scoping documentation only. Create future-module plans under `docs/future-modules/` and do not implement provider integrations, runtime code, schemas, feature flags, or customer-facing premium behavior. Future implementation of any premium module must begin from the matching planning document, require explicit user instruction, and include tenant-scoped entitlement checks, provider abstractions, privacy review, and updated tests.
+
+### Alternatives considered
+
+- Implementing lightweight prototypes behind feature flags during Phase 10.
+- Adding placeholder database tables for billing, voice, or messaging now.
+- Selecting final providers before customer demand validation.
+- Deferring all Phase 10 documentation until after production launch.
+
+### Reason
+
+The MVP should remain stable while premium modules are commercially and technically scoped. Planning now captures risks and data flows without adding unused code paths, secrets, dependencies, or tenant-isolation risk. Explicit future instructions can then implement one module at a time with a clearer product and compliance target.
+
+### Impact
+
+The repository now has decision-ready future-module docs, but no premium module is active. Future work must not treat these docs as implementation approval; each module still needs a separate implementation instruction, entitlement model, provider choice, privacy review, and validation plan.
+
 ## DEC-20260523-009: Phase 9 CI and single-host deployment hardening
 
 ### Decision ID

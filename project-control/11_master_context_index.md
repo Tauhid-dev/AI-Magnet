@@ -21,7 +21,7 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation, deterministic roadmap visual assets, and Phase 1 through Phase 9 MVP foundations.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, Phase 1 through Phase 9 MVP foundations, and Phase 10 premium/future-module planning docs.
 - Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, business portal, super admin, lead lifecycle, notification, usage logging, analytics, CI, and deployment-hardening foundations have been implemented.
 - Production authentication hardening, rate limiting, TLS automation, scheduled backups, and a real queue worker remain future production-readiness work.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
@@ -33,16 +33,16 @@ Technology preference:
 - `docker-compose.yml` defines local/dev backend, worker, frontend, PostgreSQL/pgvector, Redis, and Nginx services.
 - `.github/workflows/ci.yml` contains backend, frontend, and Compose validation jobs.
 - `infra/nginx/default.conf` contains MVP reverse proxy routing for `/api`, `/health`, and frontend routes.
-- `docs/` contains deployment, security, and release-readiness notes.
+- `docs/` contains deployment, security, release-readiness, and future-module planning notes.
 - Current branch may vary; future sessions must start from latest `master`, pull remote, then branch.
 
 ## Current active phase
 
-Phase 9: Security, testing, CI, and deployment.
+Phase 10: Premium/future modules.
 
 Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review and explicit instruction: Phase 10: Premium/future modules.
+Next action after review: merge the Phase 10 planning branch. No further product phase should start without a new instruction.
 
 ## Completed phases
 
@@ -144,10 +144,16 @@ Next implementation phase after review and explicit instruction: Phase 10: Premi
   - API responses include conservative security headers.
   - Security tests cover production config, headers, cross-portal token rejection, and tenant-scoped analytics.
   - Deployment, security, and release-readiness documentation exists under `docs/`.
+- Phase 10 premium/future module planning created:
+  - Voice AI scope, consent, reliability, cost, and architecture planning in `docs/future-modules/voice-ai.md`.
+  - SMS and WhatsApp add-on consent, opt-out, provider, and delivery planning in `docs/future-modules/messaging.md`.
+  - Stripe billing, subscription, webhook, entitlement, and failure-handling planning in `docs/future-modules/billing.md`.
+  - n8n automation, CRM integrations, local model/Ollama support, and multi-region planning in `docs/future-modules/automation-and-local-models.md`.
+  - No premium/future product code has been implemented.
 
 ## Pending phases
 
-- Phase 10: Premium/future modules.
+- No numbered project phases remain after Phase 10 review/merge.
 
 ## Critical architecture summary
 
@@ -189,27 +195,22 @@ Next implementation phase after review and explicit instruction: Phase 10: Premi
 ## Current blockers
 
 - No technical blockers are known.
-- Phase 10 must not start until Phase 9 is reviewed/merged, MVP stability is accepted, and the user explicitly instructs it.
+- Premium/future modules remain planning-only. Implementation of Voice AI, SMS, WhatsApp, Stripe, n8n, CRM integrations, local models, or multi-region infrastructure requires a separate explicit instruction.
 
 ## Latest execution state
 
-- Phase 9 security, testing, CI, and deployment exists and validates locally.
-- Backend tests passed with `python3 -m pytest backend/tests` - 42 tests.
-- Frontend checks passed with `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
-- Alembic migrations run against SQLite with `PYTHONPATH=backend DATABASE_URL=sqlite:////private/tmp/ai_magnet_phase9_migration.sqlite python3 -m alembic -c backend/alembic.ini upgrade head`.
-- Docker Compose config validates with `docker compose config`.
-- Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- Next meaningful task, after review and explicit instruction, is Phase 10 planning only; premium module implementation must not start without explicit approval.
+- Phase 9 was merged to `master` before Phase 10 work began.
+- Phase 10 future-module research/scoping docs exist under `docs/future-modules/`.
+- Phase 10 intentionally adds no application code, no provider credentials, no feature flags, and no premium module runtime behavior.
+- Validation should focus on docs, roadmap generation, and regression checks for the existing MVP.
 
 ## Next recommended actions
 
-1. Review and merge the Phase 9 security, testing, CI, and deployment branch.
-2. Start the next instruction from latest `master`.
+1. Review and merge the Phase 10 premium/future modules planning branch.
+2. Start any future instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Do not start Phase 10 unless explicitly instructed.
-5. When instructed, begin Phase 10 with future-module research and scoping only.
-6. Record any Phase 10 premium/future-module decisions in `10_decisions_log.md`.
-7. Update memory files and roadmap artifacts after each future phase execution.
+4. Do not implement premium/future modules unless the user explicitly requests a specific module.
+5. When a premium module is requested, begin with the matching `docs/future-modules/` plan and update the decision log.
 
 ## Files to read next depending on task type
 
