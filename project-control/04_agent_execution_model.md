@@ -165,6 +165,40 @@ If literal sub-agents are not available, Codex should:
 8. Update `10_decisions_log.md` for major decisions.
 9. Provide a concise phase summary, tests run, known issues, and git diff summary.
 
+## Context minimization rules
+
+- Read `11_master_context_index.md` first and `13_quick_resume.md` second.
+- Do not load the full repository before identifying the active phase and task.
+- Use `12_phase_status_matrix.md` and `18_task_execution_queue.md` to decide what is ready.
+- Load only the relevant phase section, task IDs, rules, and code modules.
+- Avoid loading irrelevant code, generated files, logs, or unrelated docs.
+- Prefer targeted searches with `rg` and `rg --files`.
+- Summarize large outputs instead of copying them into memory files.
+
+## Progressive context loading
+
+Use the smallest context mode that can safely complete the work:
+
+- Small Context Mode: master index, quick resume, phase matrix, task queue, and the specific docs being edited.
+- Medium Context Mode: Small Context Mode plus active phase/task details, relevant rules, and directly touched module files.
+- Full Context Mode: only for architecture-wide changes, integration issues, CI/deployment work, release readiness, or explicit full-repo review requests.
+
+The parent agent must expand context only when a concrete question, dependency, or failing check requires it.
+
+## Memory checkpointing
+
+After each phase or major instruction, the parent agent should update the relevant memory files:
+
+- `11_master_context_index.md` for durable project status changes.
+- `12_phase_status_matrix.md` for phase state.
+- `13_quick_resume.md` for the current active phase, blockers, and next action.
+- `17_current_system_state.md` for implemented modules and infrastructure.
+- `18_task_execution_queue.md` for ready and blocked task changes.
+- `09_phase_execution_log.md` for execution details.
+- `10_decisions_log.md` for major decisions.
+
+Keep checkpoints concise. Store durable facts, not full logs or full diffs.
+
 ## Parallel work rules
 
 - Parallelize read-only exploration and independent implementation tasks.
@@ -179,12 +213,18 @@ If literal sub-agents are not available, Codex should:
 Each agent handoff should include:
 
 - Task ID.
+- Agent role.
+- Objective.
+- Context loaded.
 - Files changed.
 - Commands run.
 - Tests run.
 - Assumptions made.
 - Risks or follow-ups.
+- Memory files updated or needing update.
 - Whether decision log updates are needed.
+
+Handoffs must be concise. Do not repeat full planning context when a pointer to the relevant file is enough.
 
 ## Phase completion checklist
 
@@ -193,6 +233,10 @@ Each agent handoff should include:
 - Tests/lint/type checks run if available.
 - `09_phase_execution_log.md` updated.
 - `10_decisions_log.md` updated if a major decision was made.
+- `12_phase_status_matrix.md` updated.
+- `13_quick_resume.md` updated.
+- `17_current_system_state.md` updated when implemented modules or infrastructure changed.
+- `18_task_execution_queue.md` updated when task readiness changed.
 - Git diff reviewed.
 - No future-scope features implemented early.
 - Final response includes summary, tests run, and known issues.

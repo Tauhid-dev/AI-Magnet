@@ -24,6 +24,18 @@ YYYY-MM-DD
 
 - TBD
 
+### Context snapshot summary
+
+TBD
+
+### Active modules touched
+
+- TBD
+
+### Memory files updated
+
+- TBD
+
 ### Known issues
 
 - TBD
