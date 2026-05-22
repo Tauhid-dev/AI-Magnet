@@ -1,4 +1,12 @@
 import type {
+  AdminAuditLog,
+  AdminHealth,
+  AdminLoginResponse,
+  AdminSession,
+  AdminSupportContext,
+  AdminTenantDetail,
+  AdminTenantSummary,
+  AdminUsageOverview,
   BusinessSession,
   LoginResponse,
   PortalAnalytics,
@@ -13,7 +21,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8
 
 type RequestOptions = {
   token?: string;
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PATCH";
   body?: unknown;
 };
 
@@ -79,5 +87,59 @@ export const portalApi = {
   },
   analytics(token: string) {
     return request<PortalAnalytics>("/business-portal/analytics", { token });
+  }
+};
+
+export const adminApi = {
+  login(email: string) {
+    return request<AdminLoginResponse>("/admin/auth/login", {
+      method: "POST",
+      body: { email }
+    });
+  },
+  session(token: string) {
+    return request<AdminSession>("/admin/session", { token });
+  },
+  tenants(token: string) {
+    return request<AdminTenantSummary[]>("/admin/tenants", { token });
+  },
+  createTenant(
+    token: string,
+    payload: {
+      name: string;
+      slug: string;
+      business_email?: string;
+      owner_email?: string;
+    }
+  ) {
+    return request<AdminTenantDetail>("/admin/tenants", {
+      token,
+      method: "POST",
+      body: payload
+    });
+  },
+  tenant(token: string, tenantId: string) {
+    return request<AdminTenantDetail>(`/admin/tenants/${tenantId}`, { token });
+  },
+  updateTenantStatus(token: string, tenantId: string, status: string) {
+    return request<AdminTenantDetail>(`/admin/tenants/${tenantId}/status`, {
+      token,
+      method: "PATCH",
+      body: { status }
+    });
+  },
+  supportContext(token: string, tenantId: string) {
+    return request<AdminSupportContext>(`/admin/tenants/${tenantId}/support-context`, {
+      token
+    });
+  },
+  usage(token: string) {
+    return request<AdminUsageOverview>("/admin/usage", { token });
+  },
+  health(token: string) {
+    return request<AdminHealth>("/admin/health", { token });
+  },
+  auditLogs(token: string) {
+    return request<AdminAuditLog[]>("/admin/audit-logs", { token });
   }
 };

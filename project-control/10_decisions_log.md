@@ -2,6 +2,39 @@
 
 Use this file to record major product, architecture, tooling, security, and deployment decisions.
 
+## DEC-20260522-006: Phase 6 super admin role boundary and audit model
+
+### Decision ID
+
+DEC-20260522-006
+
+### Date
+
+2026-05-22
+
+### Context
+
+Phase 6 requires a master admin portal for platform operators. Super admin access must be distinct from tenant business users, must not rely on tenant membership, and must audit access to tenant data.
+
+### Decision
+
+Add a global `admin_users` table for platform operators and use a separate `/admin` HMAC bearer-session contract backed by `ADMIN_PORTAL_SESSION_SECRET`. Only active `AdminUser` records with the `super_admin` role can authenticate to admin APIs. Keep admin browser session storage separate from business portal storage. Add `/admin` backend routes for tenant management, usage, system health, support context, and audit logs. Reuse existing tenant-scoped `audit_logs` for tenant-specific admin actions such as tenant creation, tenant detail access, support context access, and status changes.
+
+### Alternatives considered
+
+- Treating tenant `BusinessUser` records with a special role as platform admins.
+- Reusing business portal tokens for admin APIs.
+- Creating a separate admin frontend app immediately.
+- Adding a new global audit table before the tenant-scoped audit needs are clearer.
+
+### Reason
+
+Global admin users create a clear authorization boundary and prevent tenant membership from becoming platform access. Separate tokens and browser storage reduce accidental token reuse between portals. Reusing tenant-scoped audit logs is enough for Phase 6 because the required audit events target tenant records.
+
+### Impact
+
+Future production auth must replace the email-only MVP login contract with password, magic-link, or external identity provider verification. Future support/admin actions that are not tenant-specific may need a global audit table or nullable tenant audit strategy before being logged.
+
 ## DEC-20260522-005: Phase 5 business portal structure and MVP session contract
 
 ### Decision ID

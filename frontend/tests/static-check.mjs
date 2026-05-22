@@ -14,6 +14,8 @@ assert.equal(packageJson.devDependencies.tailwindcss.startsWith("^3."), true);
 
 const apiClient = read("lib/api/client.ts");
 assert.match(apiClient, /\/business-portal\/auth\/login/);
+assert.match(apiClient, /\/admin\/auth\/login/);
+assert.match(apiClient, /\/admin\/tenants/);
 assert.match(apiClient, /Authorization/);
 assert.doesNotMatch(apiClient, /AI_API_KEY/);
 
@@ -26,3 +28,10 @@ assert.match(widgetPage, /createWidgetKey/);
 
 const documentsPage = read("app/portal/documents/page.tsx");
 assert.match(documentsPage, /uploadDocument/);
+
+const adminShell = read("components/AdminShell.tsx");
+assert.match(adminShell, /getAdminToken/);
+assert.match(adminShell, /Platform console/);
+
+const adminTenantsPage = read("app/admin/tenants/page.tsx");
+assert.match(adminTenantsPage, /createTenant/);

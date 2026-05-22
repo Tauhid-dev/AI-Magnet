@@ -2,17 +2,30 @@
 
 from __future__ import annotations
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.admin import AdminUser
 from app.tenants.service import TenantService
 
 
 def seed_local_development_data(session: Session) -> None:
-    """Create one local demo tenant if no tenants exist.
+    """Create safe local demo records if they do not exist.
 
     This helper is intentionally not called automatically. Future phases can wire it
     into explicit local setup commands without seeding production data.
     """
+    if session.scalars(select(AdminUser.id)).first() is None:
+        session.add(
+            AdminUser(
+                email="admin@example.test",
+                full_name="Local Platform Admin",
+                role="super_admin",
+                status="active",
+            )
+        )
+        session.flush()
+
     tenant_service = TenantService(session)
     if tenant_service.list_tenants():
         return

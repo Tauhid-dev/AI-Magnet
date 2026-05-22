@@ -21,25 +21,25 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation, deterministic roadmap visual assets, a Phase 1 backend foundation, a Phase 2 tenant/database foundation, a Phase 3 RAG ingestion/retrieval foundation, a Phase 4 chat/widget foundation, and a Phase 5 business portal foundation.
-- Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, and business portal foundations have been implemented.
-- No super admin portal, email notification workflow, CI pipeline, or production deployment automation exists yet.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, a Phase 1 backend foundation, a Phase 2 tenant/database foundation, a Phase 3 RAG ingestion/retrieval foundation, a Phase 4 chat/widget foundation, a Phase 5 business portal foundation, and a Phase 6 super admin portal foundation.
+- Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, business portal, and super admin foundations have been implemented.
+- No email notification workflow, CI pipeline, or production deployment automation exists yet.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
 - `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
-- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, chat/widget services, business portal services/routes, config, health endpoint, requirements, Dockerfile, and tests.
+- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, chat/widget services, business portal services/routes, super admin services/routes, audit helpers, config, health endpoint, requirements, Dockerfile, and tests.
 - `backend/migrations/` contains Alembic migration setup, the initial tenant schema migration, the document chunk/vector migration, and the widget config migration.
-- `frontend/` contains the Next.js business portal foundation.
+- `frontend/` contains the Next.js business portal and super admin portal foundations.
 - `widget/` contains the lightweight embeddable chat widget and local test page.
 - `docker-compose.yml` defines local/dev backend, frontend, PostgreSQL/pgvector, and Redis services.
 - Current branch may vary; future sessions must start from latest `master`, pull remote, then branch.
 
 ## Current active phase
 
-Phase 5: Business portal.
+Phase 6: Super admin portal.
 
 Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review and explicit instruction: Phase 6: Super admin portal.
+Next implementation phase after review and explicit instruction: Phase 7: Notifications and lead workflow.
 
 ## Completed phases
 
@@ -108,10 +108,16 @@ Next implementation phase after review and explicit instruction: Phase 6: Super 
   - Backend `/business-portal` API routes for session, document listing/upload, lead/conversation views, widget key creation, and tenant analytics.
   - Frontend API client, local browser session helper, portal shell, and static validation test.
   - Backend tests covering login/session, cross-tenant denial, document upload, widget key creation, and analytics.
+- Phase 6 super admin portal foundation created:
+  - Global `AdminUser` model and migration separate from tenant business users.
+  - MVP super admin login/session flow backed by separate admin HMAC bearer tokens.
+  - Protected `/admin` backend APIs for tenant list/detail, tenant creation, tenant status management, usage overview, health, support context, and audit logs.
+  - Tenant-scoped audit logging for tenant creation, tenant detail access, support context access, and tenant status changes.
+  - Next.js `/admin` portal screens for login, overview, tenants, tenant detail/support context, usage, health, and audit logs.
+  - Backend admin tests covering session invalidation, business-token rejection, tenant management, support context PII limiting, health, usage, and audit records.
 
 ## Pending phases
 
-- Phase 6: Super admin portal.
 - Phase 7: Notifications and lead workflow.
 - Phase 8: Analytics and usage tracking.
 - Phase 9: Security, testing, CI, and deployment.
@@ -125,6 +131,8 @@ Next implementation phase after review and explicit instruction: Phase 6: Super 
 - Public widget keys resolve to a single active tenant on the server and are not private API secrets.
 - Browser widget origins are controlled by environment-backed CORS configuration.
 - Business portal routes verify the bearer session server-side and filter all data by the verified tenant.
+- Super admin routes verify a global admin session server-side and do not accept business portal tokens.
+- Tenant-specific admin data access and tenant changes are audit-logged with the target `tenant_id`.
 - Lead capture and qualification should use deterministic business logic where possible.
 - Email notifications should use an SMTP provider abstraction.
 - Super admin functionality must be role-protected and audit-logged.
@@ -149,29 +157,29 @@ Next implementation phase after review and explicit instruction: Phase 6: Super 
 ## Current blockers
 
 - No technical blockers are known.
-- Phase 6 must not start until the user explicitly instructs it.
-- Super admin role and authorization model is not defined yet.
+- Phase 7 must not start until the user explicitly instructs it.
+- Lead notification workflow, email provider abstraction, and queue/retry behavior are not defined yet.
 
 ## Latest execution state
 
-- Phase 5 business portal foundation exists and validates locally.
-- Backend tests passed with `python3 -m pytest backend/tests` - 24 tests.
+- Phase 6 super admin portal foundation exists and validates locally.
+- Backend tests passed with `python3 -m pytest backend/tests` - 28 tests.
 - Frontend checks passed with `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
 - `npm audit --audit-level=high` passed the high-severity gate; npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
 - Alembic migrations run against SQLite with `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head`.
 - Docker Compose config validates with `docker compose config`.
-- Business portal route registration validates through app introspection.
+- Admin and business portal route registration validate through app introspection.
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- Next meaningful task, after review and explicit instruction, is Phase 6 task P6-T1: Define super admin role model.
+- Next meaningful task, after review and explicit instruction, is Phase 7 task P7-T1: Define lead qualification workflow.
 
 ## Next recommended actions
 
-1. Review and merge the Phase 5 business portal foundation branch.
+1. Review and merge the Phase 6 super admin portal foundation branch.
 2. Start the next instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Do not start Phase 6 unless explicitly instructed.
-5. When instructed, begin Phase 6 with super admin role model and protected admin portal foundation.
-6. Record Phase 6 admin role/routing/audit decisions in `10_decisions_log.md`.
+4. Do not start Phase 7 unless explicitly instructed.
+5. When instructed, begin Phase 7 with lead workflow and email provider decisions.
+6. Record Phase 7 lead lifecycle, worker, and email provider decisions in `10_decisions_log.md`.
 7. Update memory files and roadmap artifacts after each future phase execution.
 
 ## Files to read next depending on task type
@@ -211,7 +219,7 @@ Next implementation phase after review and explicit instruction: Phase 6: Super 
 ### Frontend work
 
 - `project-control/01_architecture_plan.md`
-- `project-control/02_phase_roadmap.md` Phase 5 or Phase 6 as relevant.
+- `project-control/02_phase_roadmap.md` active frontend phase as relevant.
 - `project-control/03_task_dependency_graph.md` active frontend task IDs.
 - `frontend/`, `widget/`, or future `apps/` files relevant to the active task.
 

@@ -9,6 +9,10 @@ const styles: Record<string, string> = {
   new: "border-accent/20 bg-accent/10 text-accent",
   failed: "border-red-200 bg-red-50 text-red-700",
   revoked: "border-red-200 bg-red-50 text-red-700",
+  suspended: "border-orange-200 bg-orange-50 text-orange-700",
+  inactive: "border-slate-200 bg-slate-100 text-slate-700",
+  ok: "border-success/20 bg-success/10 text-success",
+  degraded: "border-orange-200 bg-orange-50 text-orange-700",
   not_configured: "border-slate-200 bg-slate-100 text-slate-700"
 };
 

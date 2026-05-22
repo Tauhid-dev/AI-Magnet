@@ -2,15 +2,15 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, the Phase 2 tenant/database foundation, the Phase 3 RAG ingestion/retrieval foundation, the Phase 4 chat/widget foundation, and the Phase 5 business portal foundation.
+The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, the Phase 2 tenant/database foundation, the Phase 3 RAG ingestion/retrieval foundation, the Phase 4 chat/widget foundation, the Phase 5 business portal foundation, and the Phase 6 super admin portal foundation.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Exists | FastAPI backend foundation, tenant/database models, RAG services, AI provider abstractions, chat/widget services, business portal routes/services, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
-| `frontend/` | Exists | Next.js, TypeScript, and TailwindCSS business portal foundation. |
+| `backend/` | Exists | FastAPI backend foundation, tenant/database/admin models, RAG services, AI provider abstractions, chat/widget services, business portal routes/services, super admin routes/services, audit helpers, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
+| `frontend/` | Exists | Next.js, TypeScript, and TailwindCSS business portal and super admin portal foundation. |
 | `widget/` | Exists | Lightweight static embeddable website chat widget and local test page. |
 | `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
 | `.github/workflows/` | Not created | Planned CI workflows. |
@@ -71,7 +71,7 @@ Planned future files:
 
 ## Backend structure
 
-Created across Phases 1 through 5:
+Created across Phases 1 through 6:
 
 - `backend/app/main.py`: FastAPI app factory and application instance.
 - `backend/app/core/config.py`: Environment-backed settings.
@@ -81,17 +81,20 @@ Created across Phases 1 through 5:
 - `backend/app/api/widget.py`: Public widget initialization route.
 - `backend/app/api/chat.py`: Public conversation start and message routes.
 - `backend/app/api/business_portal.py`: Tenant-aware business portal session, document, lead, conversation, widget, and analytics routes.
+- `backend/app/api/admin.py`: Super admin session, tenant management, support context, usage, health, and audit routes.
 - `backend/app/schemas/health.py`: Health response schema.
 - `backend/app/schemas/widget.py`: Widget request/response schemas.
 - `backend/app/schemas/chat.py`: Conversation, message, and lead capture schemas.
 - `backend/app/schemas/business_portal.py`: Business portal request/response schemas.
+- `backend/app/schemas/admin.py`: Super admin request/response schemas.
 - `backend/app/db/config.py`: Database URL placeholder helper.
 - `backend/app/db/base.py`: SQLAlchemy base and common mixins.
 - `backend/app/db/session.py`: SQLAlchemy engine/session helpers.
 - `backend/app/db/repository.py`: Tenant-scoped repository helper.
-- `backend/app/db/seed.py`: Explicit local seed helper.
+- `backend/app/db/seed.py`: Explicit local seed helper, including local super admin seed support.
 - `backend/app/db/vector.py`: Portable vector type that compiles to pgvector on PostgreSQL and text on SQLite tests.
-- `backend/app/models/`: Tenant, business, document, conversation, message, lead, usage, and audit ORM models.
+- `backend/app/models/`: Admin, tenant, business, document, conversation, message, lead, usage, and audit ORM models.
+- `backend/app/models/admin.py`: Global platform admin user model.
 - `backend/app/models/knowledge.py`: Knowledge document and document chunk ORM models.
 - `backend/app/models/widget.py`: Tenant-scoped public widget configuration model.
 - `backend/app/providers/ai/`: AI provider protocols, deterministic local provider, OpenAI-compatible provider, and factories.
@@ -100,6 +103,8 @@ Created across Phases 1 through 5:
 - `backend/app/chat/`: Conversation orchestration, RAG answer generation, usage logging, and deterministic lead capture.
 - `backend/app/widget/`: Public widget key hashing, resolution, creation, and revocation helpers.
 - `backend/app/business/`: Business portal auth/session and tenant-scoped query services.
+- `backend/app/admin/`: Super admin auth/session and data services.
+- `backend/app/audit/`: Tenant-scoped audit logging helpers.
 - `backend/app/workers/`: Worker-style RAG ingestion entrypoint.
 - `backend/app/tenants/`: Tenant/business service helpers.
 - `backend/app/leads/`: Placeholder for later lead workflow.
@@ -109,6 +114,7 @@ Created across Phases 1 through 5:
 - `backend/tests/rag/`: Phase 3 provider, chunking, ingestion, and retrieval isolation tests.
 - `backend/tests/chat/`: Phase 4 widget initialization, conversation, lead capture, and cross-tenant denial tests.
 - `backend/tests/business/`: Phase 5 business portal login/session, cross-tenant denial, document, widget, and analytics tests.
+- `backend/tests/admin/`: Phase 6 admin session, business-token rejection, tenant management, support, usage, health, and audit tests.
 - `backend/requirements.txt`: Runtime dependencies.
 - `backend/requirements-dev.txt`: Dev/test/lint dependencies.
 - `backend/Dockerfile`: Backend image definition.
@@ -117,7 +123,7 @@ Created across Phases 1 through 5:
 
 Created in Phase 5:
 
-- `frontend/app/`: Next.js App Router routes for login and business portal sections.
+- `frontend/app/`: Next.js App Router routes for login, business portal, and admin portal sections.
 - `frontend/app/login/page.tsx`: Business portal login screen.
 - `frontend/app/portal/layout.tsx`: Protected portal layout.
 - `frontend/app/portal/page.tsx`: Dashboard summary.
@@ -132,9 +138,17 @@ Created in Phase 5:
 - `frontend/tests/static-check.mjs`: Frontend static project-shape validation.
 - `frontend/package.json`: Next.js scripts and dependencies.
 
-Planned future areas:
+Created in Phase 6:
 
-- Admin routes or separate admin portal depending on Phase 6 decision.
+- `frontend/app/admin/login/page.tsx`: Super admin login screen.
+- `frontend/app/admin/page.tsx`: Super admin overview.
+- `frontend/app/admin/tenants/page.tsx`: Tenant list and tenant creation.
+- `frontend/app/admin/tenants/[tenantId]/page.tsx`: Tenant detail, status management, and support context.
+- `frontend/app/admin/usage/page.tsx`: Platform usage overview.
+- `frontend/app/admin/health/page.tsx`: System health view.
+- `frontend/app/admin/audit/page.tsx`: Recent tenant-scoped admin audit logs.
+- `frontend/components/AdminShell.tsx`: Protected admin shell and navigation.
+- `frontend/lib/auth/admin-session.ts`: Browser admin session storage helper.
 
 ## Widget structure
 
@@ -160,10 +174,11 @@ Created:
 - `backend/migrations/versions/20260522_0001_initial_tenant_schema.py`
 - `backend/migrations/versions/20260522_0002_document_chunks_vector.py`
 - `backend/migrations/versions/20260522_0003_widget_configs.py`
+- `backend/migrations/versions/20260522_0004_admin_users.py`
 
 ## Deployment files
 
-Created across Phases 1 through 5:
+Created across Phases 1 through 6:
 
 - `docker-compose.yml`
   - Backend service.
@@ -185,9 +200,9 @@ Created across Phases 1 through 5:
 - `backend/tests/rag/`
 - `backend/tests/chat/`
 - `backend/tests/business/`
+- `backend/tests/admin/`
 - `frontend/tests/`
 
 Planned future areas:
 
-- Admin authorization tests.
 - Notification privacy tests.
