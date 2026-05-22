@@ -9,7 +9,6 @@ from app.db.session import get_db_session
 from app.main import create_app
 from app.models import BusinessUser, Conversation, KnowledgeDocument, Lead, Message
 from app.tenants.service import TenantService
-from app.widget.service import WidgetService
 from fastapi.testclient import TestClient
 
 
