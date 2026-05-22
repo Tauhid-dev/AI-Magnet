@@ -29,8 +29,8 @@
     {
       "phase_id": "P1",
       "phase_name": "Core backend foundation",
-      "status": "NOT_STARTED",
-      "completion_percentage": 0,
+      "status": "READY_FOR_REVIEW",
+      "completion_percentage": 100,
       "tasks": [
         "Select backend tooling",
         "Create FastAPI app skeleton",
@@ -38,17 +38,17 @@
         "Add health endpoint and structured logging",
         "Add minimal backend test setup"
       ],
-      "completed_tasks": [],
-      "pending_tasks": [
+      "completed_tasks": [
         "Select backend tooling",
         "Create FastAPI app skeleton",
         "Add config and environment loading",
         "Add health endpoint and structured logging",
         "Add minimal backend test setup"
       ],
+      "pending_tasks": [],
       "blocked_tasks": [],
       "last_updated": "2026-05-22",
-      "notes": "Next recommended phase. Backend tooling decision is the first task."
+      "notes": "FastAPI foundation, env config, health endpoint, tests, Dockerfile, Docker Compose, and README startup notes are ready for review."
     },
     {
       "phase_id": "P2",

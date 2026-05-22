@@ -6,7 +6,7 @@
 
 ## Current implemented modules
 
-No application modules are implemented yet.
+Phase 1 backend foundation is implemented and ready for review.
 
 Implemented repository assets:
 
@@ -15,25 +15,32 @@ Implemented repository assets:
 - `project-assets/roadmap/` deterministic visual roadmap assets.
 - `project-assets/roadmap/latest_roadmap.png` current visual roadmap image.
 - `project-assets/roadmap/snapshots/` historical roadmap image snapshots.
+- `backend/` FastAPI foundation with app factory, config, health endpoint, placeholders, requirements, Dockerfile, and tests.
+- `.env.example` local configuration template.
+- `docker-compose.yml` local/dev backend, PostgreSQL/pgvector, and Redis foundation.
+- `.gitignore` for local env files, Python caches, logs, and macOS metadata.
 
 ## Active infrastructure
 
-None.
+Configured but not running in this session:
+
+- Docker Compose foundation.
+- Backend service.
+- PostgreSQL/pgvector service.
+- Redis service.
 
 Not created yet:
 
-- Docker Compose.
 - Nginx configuration.
-- PostgreSQL service.
-- Redis service.
-- Backend service.
 - Frontend service.
 - Worker service.
 - CI pipeline.
 
 ## Current APIs
 
-None. No backend code exists yet.
+Implemented API:
+
+- `GET /health`
 
 Planned future API groups:
 
@@ -65,21 +72,20 @@ None. Migration tooling has not been selected.
 
 ## Active services
 
-None.
+None running. Compose configuration validates, but services were not started during Phase 1 validation.
 
 ## Deployment status
 
-No deployment configuration exists yet.
+Local/dev deployment foundation exists through Docker Compose and `backend/Dockerfile`.
 
 Planned deployment:
 
-- Docker Compose local/dev environment.
 - Nginx reverse proxy.
 - OCI VPS target.
 
 ## Known technical debt
 
-- Backend package manager and tooling decision not made.
+- Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
 - ORM/migration tooling decision not made.
 - Frontend app structure decision not made.
 - Auth/session model decision not made.
@@ -87,7 +93,6 @@ Planned deployment:
 
 ## Incomplete modules
 
-- Backend foundation.
 - Database and tenant model.
 - RAG ingestion and retrieval.
 - Chat widget.

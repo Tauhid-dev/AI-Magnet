@@ -2,14 +2,14 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation and visual roadmap assets only. Application folders are not created yet.
+The repository currently contains planning/control documentation, visual roadmap assets, and the Phase 1 backend foundation.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Not created | Planned FastAPI backend. |
+| `backend/` | Exists | FastAPI backend foundation, health endpoint, config, requirements, Dockerfile, and tests. |
 | `frontend/` | Not created | Planned Next.js business and/or admin portal. |
 | `widget/` | Not created | Planned embeddable website chat widget if kept separate from frontend. |
 | `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
@@ -42,14 +42,16 @@ The repository currently contains planning/control documentation and visual road
 
 ## Key infrastructure files
 
-None exist yet.
+Current infrastructure foundation:
+
+- `.env.example`
+- `docker-compose.yml`
+- `backend/Dockerfile`
 
 Planned future files:
 
-- `docker-compose.yml`
 - `infra/nginx/`
 - `.github/workflows/`
-- `.env.example`
 - `docs/deployment.md`
 - `docs/security.md`
 
@@ -63,27 +65,29 @@ Planned future files:
 
 ## Backend structure
 
-Not created yet.
+Created in Phase 1:
 
-Planned future areas:
-
-- `backend/app/`
-- `backend/app/config*`
-- `backend/app/db/`
-- `backend/app/models/`
-- `backend/app/auth/`
-- `backend/app/chat/`
-- `backend/app/rag/`
-- `backend/app/leads/`
-- `backend/app/notifications/`
-- `backend/app/providers/ai/`
-- `backend/app/providers/email/`
-- `backend/app/admin/`
-- `backend/tests/`
+- `backend/app/main.py`: FastAPI app factory and application instance.
+- `backend/app/core/config.py`: Environment-backed settings.
+- `backend/app/core/logging.py`: Logging setup.
+- `backend/app/api/router.py`: Top-level API router.
+- `backend/app/api/health.py`: `/health` route.
+- `backend/app/schemas/health.py`: Health response schema.
+- `backend/app/db/config.py`: Database URL placeholder helper.
+- `backend/app/models/`: Placeholder for Phase 2 ORM models.
+- `backend/app/ai/`: Placeholder for future AI provider abstractions.
+- `backend/app/rag/`: Placeholder for Phase 3 RAG work.
+- `backend/app/tenants/`: Placeholder for Phase 2 tenant work.
+- `backend/app/leads/`: Placeholder for later lead workflow.
+- `backend/app/conversations/`: Placeholder for Phase 4 conversation APIs.
+- `backend/tests/`: Phase 1 health/config tests.
+- `backend/requirements.txt`: Runtime dependencies.
+- `backend/requirements-dev.txt`: Dev/test/lint dependencies.
+- `backend/Dockerfile`: Backend image definition.
 
 ## Frontend structure
 
-Not created yet.
+No database schema or migrations exist yet.
 
 Planned future areas:
 
@@ -117,21 +121,23 @@ Planned future areas:
 
 ## Deployment files
 
-Not created yet.
+Created in Phase 1:
+
+- `docker-compose.yml`
 
 Planned future areas:
 
-- `docker-compose.yml`
 - `infra/nginx/`
 - `docs/deployment.md`
 
 ## Test structure
 
-Not created yet.
+Created in Phase 1:
+
+- `backend/tests/`
 
 Planned future areas:
 
-- `backend/tests/`
 - Frontend tests if introduced.
 - Tenant isolation tests.
 - RAG retrieval tests.

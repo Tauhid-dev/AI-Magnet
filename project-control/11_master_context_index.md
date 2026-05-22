@@ -21,20 +21,22 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation and deterministic roadmap visual assets.
-- No application code has been implemented.
-- No backend, frontend, database, worker, infrastructure, or test scaffold exists yet.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, and a Phase 1 backend foundation.
+- Backend application foundation has been implemented.
+- No frontend, tenant database schema, worker, RAG, chat widget, or production deployment automation exists yet.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
 - `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
+- `backend/` contains the FastAPI app foundation, config, health endpoint, requirements, Dockerfile, and tests.
+- `docker-compose.yml` defines local/dev backend, PostgreSQL/pgvector, and Redis services.
 - Current branch may vary; future sessions must start from latest `master`, pull remote, then branch.
 
 ## Current active phase
 
-Phase 0: Project control and repo setup.
+Phase 1: Core backend foundation.
 
-Current status: READY_FOR_REVIEW after the context-recovery and memory-management layer is merged.
+Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review: Phase 1: Core backend foundation.
+Next implementation phase after review and explicit instruction: Phase 2: Tenant and database model.
 
 ## Completed phases
 
@@ -63,10 +65,17 @@ Next implementation phase after review: Phase 1: Core backend foundation.
   - Python/Pillow roadmap generator.
   - Latest roadmap image.
   - Historical snapshot folder.
+- Phase 1 backend foundation created:
+  - FastAPI app factory.
+  - Environment-backed settings.
+  - `/health` endpoint.
+  - Database and Redis config placeholders.
+  - Backend test setup.
+  - Dockerfile and Docker Compose foundation.
+  - README startup notes.
 
 ## Pending phases
 
-- Phase 1: Core backend foundation.
 - Phase 2: Tenant and database model.
 - Phase 3: RAG ingestion and retrieval.
 - Phase 4: Chat widget and conversation API.
@@ -106,25 +115,26 @@ Next implementation phase after review: Phase 1: Core backend foundation.
 ## Current blockers
 
 - No technical blockers are known.
-- Application implementation must wait until the user explicitly starts Phase 1.
-- Backend tooling decisions have not been made yet.
+- Phase 2 must not start until the user explicitly instructs it.
+- ORM and migration tooling decisions have not been made yet.
 
 ## Latest execution state
 
-- Phase 0 planning docs exist.
-- Context-recovery memory docs exist.
-- No app code exists.
-- Next meaningful task is Phase 1 task P1-T1: Select backend tooling.
+- Phase 1 backend foundation exists and validates locally.
+- Tests passed with `python3 -m pytest backend/tests`.
+- Docker Compose config validates with `docker compose config`.
+- Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
+- Next meaningful task, after review and explicit instruction, is Phase 2 task P2-T1: Select database and migration tooling.
 
 ## Next recommended actions
 
-1. Review and merge the context-recovery branch.
+1. Review and merge the Phase 1 backend foundation branch.
 2. Start the next instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Begin Phase 1 with P1-T1: select backend tooling.
-5. Record the tooling decision in `10_decisions_log.md`.
-6. Update memory files after the phase or major instruction.
-7. Update roadmap status and regenerate the roadmap image after each future phase execution.
+4. Do not start Phase 2 unless explicitly instructed.
+5. When instructed, begin Phase 2 with P2-T1: select database and migration tooling.
+6. Record the Phase 2 tooling decision in `10_decisions_log.md`.
+7. Update memory files and roadmap artifacts after each future phase execution.
 
 ## Files to read next depending on task type
 

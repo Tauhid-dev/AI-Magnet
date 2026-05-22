@@ -10,9 +10,9 @@ Statuses:
 
 | Phase ID | Phase Name | Status | Completion % | Dependencies satisfied | Started date | Last updated | Blocking issues | Next action |
 |---|---|---:|---:|---|---|---|---|---|
-| Phase 0 | Project control and repo setup | READY_FOR_REVIEW | 100% | Yes | 2026-05-22 | 2026-05-22 | None known | Review and merge planning/memory docs |
-| Phase 1 | Core backend foundation | NOT_STARTED | 0% | After Phase 0 review/merge | TBD | 2026-05-22 | Backend tooling not selected | Start P1-T1: select backend tooling |
-| Phase 2 | Tenant and database model | NOT_STARTED | 0% | No | TBD | 2026-05-22 | Depends on Phase 1 | Wait for backend foundation |
+| Phase 0 | Project control and repo setup | COMPLETE | 100% | Yes | 2026-05-22 | 2026-05-22 | None known | None |
+| Phase 1 | Core backend foundation | READY_FOR_REVIEW | 100% | Yes | 2026-05-22 | 2026-05-22 | None known | Review and merge Phase 1 backend foundation |
+| Phase 2 | Tenant and database model | NOT_STARTED | 0% | Pending Phase 1 review/merge and explicit instruction | TBD | 2026-05-22 | ORM/migration tooling not selected | Wait for user instruction before P2-T1 |
 | Phase 3 | RAG ingestion and retrieval | NOT_STARTED | 0% | No | TBD | 2026-05-22 | Depends on tenant DB model and AI provider decision | Wait for Phase 2 |
 | Phase 4 | Chat widget and conversation API | NOT_STARTED | 0% | No | TBD | 2026-05-22 | Depends on Phase 2 and Phase 3 | Wait for RAG retrieval and tenant model |
 | Phase 5 | Business portal | NOT_STARTED | 0% | No | TBD | 2026-05-22 | Depends on backend, auth, document, chat, and lead APIs | Wait for Phase 4 API contracts |
