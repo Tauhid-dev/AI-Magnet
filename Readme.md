@@ -33,3 +33,13 @@ docker compose up --build backend
 ```
 
 This starts the backend plus PostgreSQL with pgvector and Redis as development dependencies. Phase 1 does not create tenant tables, migrations, RAG, frontend, or production deployment automation.
+
+## Database migrations
+
+Phase 2 adds SQLAlchemy ORM models and Alembic migrations for tenant-isolated data. Run migrations from the repository root:
+
+```bash
+python -m alembic -c backend/alembic.ini upgrade head
+```
+
+The migration command reads `DATABASE_URL` from the environment. Tenant-owned tables include a required `tenant_id` column, and tenant-scoped repository helpers require an explicit tenant context.

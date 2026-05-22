@@ -21,22 +21,23 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation, deterministic roadmap visual assets, and a Phase 1 backend foundation.
-- Backend application foundation has been implemented.
-- No frontend, tenant database schema, worker, RAG, chat widget, or production deployment automation exists yet.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, a Phase 1 backend foundation, and a Phase 2 tenant/database foundation.
+- Backend application and database foundations have been implemented.
+- No frontend, worker, RAG, chat widget, or production deployment automation exists yet.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
 - `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
 - `backend/` contains the FastAPI app foundation, config, health endpoint, requirements, Dockerfile, and tests.
+- `backend/migrations/` contains Alembic migration setup and the initial tenant schema migration.
 - `docker-compose.yml` defines local/dev backend, PostgreSQL/pgvector, and Redis services.
 - Current branch may vary; future sessions must start from latest `master`, pull remote, then branch.
 
 ## Current active phase
 
-Phase 1: Core backend foundation.
+Phase 2: Tenant and database model.
 
 Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review and explicit instruction: Phase 2: Tenant and database model.
+Next implementation phase after review and explicit instruction: Phase 3: RAG ingestion and retrieval.
 
 ## Completed phases
 
@@ -73,10 +74,17 @@ Next implementation phase after review and explicit instruction: Phase 2: Tenant
   - Backend test setup.
   - Dockerfile and Docker Compose foundation.
   - README startup notes.
+- Phase 2 tenant/database foundation created:
+  - SQLAlchemy 2.x synchronous ORM strategy.
+  - Alembic migration setup.
+  - Tenant, business, business user, knowledge document, conversation, message, lead, usage log, and audit log models.
+  - Tenant-scoped repository helpers.
+  - Basic tenant/business service helpers.
+  - Local seed helper.
+  - Tenant isolation tests.
 
 ## Pending phases
 
-- Phase 2: Tenant and database model.
 - Phase 3: RAG ingestion and retrieval.
 - Phase 4: Chat widget and conversation API.
 - Phase 5: Business portal.
@@ -115,25 +123,26 @@ Next implementation phase after review and explicit instruction: Phase 2: Tenant
 ## Current blockers
 
 - No technical blockers are known.
-- Phase 2 must not start until the user explicitly instructs it.
-- ORM and migration tooling decisions have not been made yet.
+- Phase 3 must not start until the user explicitly instructs it.
+- pgvector/vector schema and AI provider implementation work have not started.
 
 ## Latest execution state
 
-- Phase 1 backend foundation exists and validates locally.
+- Phase 2 tenant/database foundation exists and validates locally.
 - Tests passed with `python3 -m pytest backend/tests`.
+- Alembic migration runs against SQLite with `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head`.
 - Docker Compose config validates with `docker compose config`.
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- Next meaningful task, after review and explicit instruction, is Phase 2 task P2-T1: Select database and migration tooling.
+- Next meaningful task, after review and explicit instruction, is Phase 3 task P3-T1: Enable pgvector and vector schema.
 
 ## Next recommended actions
 
-1. Review and merge the Phase 1 backend foundation branch.
+1. Review and merge the Phase 2 tenant/database foundation branch.
 2. Start the next instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Do not start Phase 2 unless explicitly instructed.
-5. When instructed, begin Phase 2 with P2-T1: select database and migration tooling.
-6. Record the Phase 2 tooling decision in `10_decisions_log.md`.
+4. Do not start Phase 3 unless explicitly instructed.
+5. When instructed, begin Phase 3 with P3-T1 or P3-T2 according to dependency readiness.
+6. Record Phase 3 vector/AI provider decisions in `10_decisions_log.md`.
 7. Update memory files and roadmap artifacts after each future phase execution.
 
 ## Files to read next depending on task type

@@ -6,7 +6,7 @@
 
 ## Current implemented modules
 
-Phase 1 backend foundation is implemented and ready for review.
+Phase 2 tenant/database foundation is implemented and ready for review.
 
 Implemented repository assets:
 
@@ -16,6 +16,9 @@ Implemented repository assets:
 - `project-assets/roadmap/latest_roadmap.png` current visual roadmap image.
 - `project-assets/roadmap/snapshots/` historical roadmap image snapshots.
 - `backend/` FastAPI foundation with app factory, config, health endpoint, placeholders, requirements, Dockerfile, and tests.
+- `backend/migrations/` Alembic migration environment and initial tenant schema migration.
+- SQLAlchemy ORM models for tenants, businesses, business users, knowledge documents, conversations, messages, leads, usage logs, and audit logs.
+- Tenant-scoped repository helper and basic tenant/business service helper.
 - `.env.example` local configuration template.
 - `docker-compose.yml` local/dev backend, PostgreSQL/pgvector, and Redis foundation.
 - `.gitignore` for local env files, Python caches, logs, and macOS metadata.
@@ -28,6 +31,7 @@ Configured but not running in this session:
 - Backend service.
 - PostgreSQL/pgvector service.
 - Redis service.
+- Alembic migration tooling.
 
 Not created yet:
 
@@ -58,7 +62,7 @@ Planned future API groups:
 
 ## Current database state
 
-No database schema exists yet.
+Initial database schema exists as SQLAlchemy models and an Alembic migration.
 
 Planned database:
 
@@ -68,11 +72,11 @@ Planned database:
 
 ## Migrations applied
 
-None. Migration tooling has not been selected.
+- `20260522_0001`: Initial tenant schema.
 
 ## Active services
 
-None running. Compose configuration validates, but services were not started during Phase 1 validation.
+None running. Compose configuration validates, but services were not started during Phase 2 validation.
 
 ## Deployment status
 
@@ -86,14 +90,13 @@ Planned deployment:
 ## Known technical debt
 
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- ORM/migration tooling decision not made.
+- PostgreSQL migrations were not run against a live PostgreSQL container in this session; Alembic was validated against SQLite in memory.
 - Frontend app structure decision not made.
 - Auth/session model decision not made.
 - Worker choice not made.
 
 ## Incomplete modules
 
-- Database and tenant model.
 - RAG ingestion and retrieval.
 - Chat widget.
 - Conversation API.

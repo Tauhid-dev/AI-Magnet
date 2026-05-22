@@ -1,11 +1,5 @@
-from pathlib import Path
-import sys
-
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from app.core.config import get_settings, parse_bool  # noqa: E402
-from app.db.config import get_database_url  # noqa: E402
+from app.core.config import get_settings, parse_bool
+from app.db.config import get_database_url
 
 
 def test_parse_bool_handles_common_values():

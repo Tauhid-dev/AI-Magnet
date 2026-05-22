@@ -1,8 +1,4 @@
-"""Database configuration helpers.
-
-Phase 1 only exposes configuration placeholders. Connection management,
-models, migrations, and tenant-aware repositories belong to Phase 2.
-"""
+"""Database configuration helpers."""
 
 from app.core.config import Settings, get_settings
 
