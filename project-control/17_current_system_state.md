@@ -6,7 +6,7 @@
 
 ## Current implemented modules
 
-Phase 9 security, testing, CI, and deployment is implemented and ready for review.
+Phase 10 premium/future module planning is implemented and ready for review. Phase 10 added planning docs only and did not implement any premium module runtime behavior.
 
 Implemented repository assets:
 
@@ -74,6 +74,7 @@ Implemented repository assets:
 - Docker Compose backend, worker, frontend, PostgreSQL/pgvector, Redis, and Nginx services with healthchecks.
 - Nginx reverse proxy config for `/api`, `/health`, and frontend routes.
 - Deployment, security, and release-readiness docs under `docs/`.
+- Future-module planning docs under `docs/future-modules/` for Voice AI, SMS/WhatsApp messaging, Stripe billing, n8n/CRM automation, local model/Ollama support, and multi-region architecture.
 - `.env.example` local configuration template.
 - `docker-compose.yml` local/dev backend, worker, frontend, PostgreSQL/pgvector, Redis, and Nginx foundation.
 - `.gitignore` for local env files, Python caches, logs, macOS metadata, and generated frontend artifacts.
@@ -170,7 +171,7 @@ Phase 8 does not add a new migration. It uses the existing tenant-scoped `usage_
 
 ## Active services
 
-None running from this phase. Compose configuration validates. No live services were kept running after Phase 9 validation.
+None running from this phase. Phase 10 did not add services. Compose configuration validated during Phase 9.
 
 ## Deployment status
 
@@ -182,7 +183,7 @@ Planned deployment target:
 
 ## Known technical debt
 
-- Ruff is selected in dev requirements and configured in CI, but was not installed in the current interpreter during validation.
+- Ruff is selected in dev requirements and configured in CI; local Ruff validation passed during Phase 10.
 - Full Docker Compose startup could not be validated in this session because the Docker daemon is unavailable.
 - PostgreSQL migrations were not run against a live PostgreSQL container in this session; Alembic was validated against SQLite in memory.
 - Retrieval currently scores tenant-filtered chunks in Python for MVP simplicity; optimized database vector search can be introduced later.
@@ -201,7 +202,7 @@ Planned deployment target:
 
 ## Incomplete modules
 
-- Premium/future modules.
+- Premium/future modules are documented only. Voice AI, SMS, WhatsApp, Stripe billing, n8n automation, CRM integrations, local model/Ollama support, and multi-region infrastructure are not implemented.
 
 ## Update rules
 

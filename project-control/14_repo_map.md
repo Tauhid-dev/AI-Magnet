@@ -2,7 +2,7 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, and Phase 1 through Phase 9 MVP foundations.
+The repository currently contains planning/control documentation, visual roadmap assets, Phase 1 through Phase 9 MVP foundations, and Phase 10 premium/future-module planning docs.
 
 | Path | Current status | Purpose |
 |---|---|---|
@@ -14,7 +14,7 @@ The repository currently contains planning/control documentation, visual roadmap
 | `widget/` | Exists | Lightweight static embeddable website chat widget and local test page. |
 | `infra/` | Exists | Nginx reverse proxy configuration. |
 | `.github/workflows/` | Exists | GitHub Actions CI workflow. |
-| `docs/` | Exists | Deployment, security, and release-readiness docs. |
+| `docs/` | Exists | Deployment, security, release-readiness, and future-module planning docs. |
 
 ## Important entrypoint files
 
@@ -63,6 +63,13 @@ Phase 9 deployment files:
 - `docs/deployment.md`
 - `docs/security.md`
 - `docs/release-readiness.md`
+
+Phase 10 planning files:
+
+- `docs/future-modules/voice-ai.md`
+- `docs/future-modules/messaging.md`
+- `docs/future-modules/billing.md`
+- `docs/future-modules/automation-and-local-models.md`
 
 ## Visual roadmap files
 
