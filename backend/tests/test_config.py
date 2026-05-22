@@ -1,4 +1,4 @@
-from app.core.config import get_settings, parse_bool
+from app.core.config import get_settings, parse_bool, parse_csv
 from app.db.config import get_database_url
 
 
@@ -7,6 +7,14 @@ def test_parse_bool_handles_common_values():
     assert parse_bool("YES") is True
     assert parse_bool("0") is False
     assert parse_bool(None, default=True) is True
+
+
+def test_parse_csv_handles_widget_origins():
+    assert parse_csv("https://a.test, https://b.test") == [
+        "https://a.test",
+        "https://b.test",
+    ]
+    assert parse_csv(None, ["*"]) == ["*"]
 
 
 def test_settings_do_not_require_ai_secret_for_local_startup():

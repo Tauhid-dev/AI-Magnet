@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Tradie Widget Test Embed</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #172033;
+        background: #f7f9fc;
+      }
+
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 48px 20px;
+      }
+
+      h1 {
+        font-size: 32px;
+        line-height: 1.2;
+        margin: 0 0 12px;
+      }
+
+      p {
+        max-width: 640px;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Widget Embed Test Page</h1>
+      <p>
+        This local page is for checking the embeddable chat widget against the
+        Phase 4 conversation API. Replace the widget key with a tenant widget
+        key created by backend setup or tests.
+      </p>
+    </main>
+    <script
+      src="./chat-widget.js"
+      data-api-base-url="http://127.0.0.1:8000"
+      data-widget-key="wm_live_replace_with_tenant_widget_key"
+      data-title="Ask our AI receptionist"
+    ></script>
+  </body>
+</html>

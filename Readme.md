@@ -55,3 +55,18 @@ Phase 3 adds tenant-scoped RAG foundations:
 - tenant-first retrieval service
 
 The PostgreSQL migration enables the `vector` extension when running against PostgreSQL. Local automated tests use SQLite with a portable vector column representation.
+
+## Chat widget and conversation API
+
+Phase 4 adds the public chat path:
+
+- active public widget keys resolve to exactly one tenant
+- `/widget/init` validates a widget key without returning tenant IDs
+- `/chat/conversations` starts tenant-scoped conversations
+- `/chat/conversations/{conversation_id}/messages` stores visitor and assistant messages
+- assistant replies use tenant-filtered RAG context and the AI provider abstraction
+- deterministic lead capture tracks name, phone, job type, suburb, urgency, and notes
+
+The lightweight embeddable widget lives in `widget/chat-widget.js`, with a local test page at `widget/test-embed.html`.
+
+For local widget smoke tests without an external AI key, set `AI_PROVIDER=local-deterministic`. Set `CORS_ALLOWED_ORIGINS` to the allowed website origins before production deployment.

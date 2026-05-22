@@ -21,23 +21,24 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation, deterministic roadmap visual assets, a Phase 1 backend foundation, a Phase 2 tenant/database foundation, and a Phase 3 RAG ingestion/retrieval foundation.
-- Backend application, database, tenant, AI provider, and RAG foundations have been implemented.
-- No frontend, chat widget, conversation API, document upload API endpoint, notification workflow, or production deployment automation exists yet.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, a Phase 1 backend foundation, a Phase 2 tenant/database foundation, a Phase 3 RAG ingestion/retrieval foundation, and a Phase 4 chat/widget foundation.
+- Backend application, database, tenant, AI provider, RAG, chat, widget-key, and conversation foundations have been implemented.
+- No business portal, super admin portal, document upload API endpoint, email notification workflow, or production deployment automation exists yet.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
 - `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
-- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, config, health endpoint, requirements, Dockerfile, and tests.
-- `backend/migrations/` contains Alembic migration setup, the initial tenant schema migration, and the document chunk/vector migration.
+- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, chat/widget services, config, health endpoint, requirements, Dockerfile, and tests.
+- `backend/migrations/` contains Alembic migration setup, the initial tenant schema migration, the document chunk/vector migration, and the widget config migration.
+- `widget/` contains the lightweight embeddable chat widget and local test page.
 - `docker-compose.yml` defines local/dev backend, PostgreSQL/pgvector, and Redis services.
 - Current branch may vary; future sessions must start from latest `master`, pull remote, then branch.
 
 ## Current active phase
 
-Phase 3: RAG ingestion and retrieval.
+Phase 4: Chat widget and conversation API.
 
 Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review and explicit instruction: Phase 4: Chat widget and conversation API.
+Next implementation phase after review and explicit instruction: Phase 5: Business portal.
 
 ## Completed phases
 
@@ -90,10 +91,18 @@ Next implementation phase after review and explicit instruction: Phase 4: Chat w
   - Plain text/Markdown extraction and chunking helpers.
   - Tenant-scoped ingestion service and worker-style entrypoint.
   - Tenant-first retrieval and RAG isolation tests.
+- Phase 4 chat/widget foundation created:
+  - Public widget key model and server-side resolver.
+  - Widget initialization endpoint.
+  - Conversation start and message endpoints.
+  - Tenant-filtered RAG-backed AI answer generation.
+  - Deterministic lead capture from messages and structured widget fields.
+  - Message usage logging.
+  - Lightweight static embeddable widget and local test page.
+  - Chat/widget tenant isolation tests.
 
 ## Pending phases
 
-- Phase 4: Chat widget and conversation API.
 - Phase 5: Business portal.
 - Phase 6: Super admin portal.
 - Phase 7: Notifications and lead workflow.
@@ -106,6 +115,8 @@ Next implementation phase after review and explicit instruction: Phase 4: Chat w
 - Multi-tenant SaaS platform with tenant-owned records isolated by `tenant_id`.
 - RAG retrieval filters document chunks by active `tenant_id` before scoring or returning results.
 - AI provider calls go through embedding and chat-completion provider protocols.
+- Public widget keys resolve to a single active tenant on the server and are not private API secrets.
+- Browser widget origins are controlled by environment-backed CORS configuration.
 - Lead capture and qualification should use deterministic business logic where possible.
 - Email notifications should use an SMTP provider abstraction.
 - Super admin functionality must be role-protected and audit-logged.
@@ -130,26 +141,28 @@ Next implementation phase after review and explicit instruction: Phase 4: Chat w
 ## Current blockers
 
 - No technical blockers are known.
-- Phase 4 must not start until the user explicitly instructs it.
-- Auth/session, widget security contract, and chat API contracts are not defined yet.
+- Phase 5 must not start until the user explicitly instructs it.
+- Business portal auth/session structure is not defined yet.
 
 ## Latest execution state
 
-- Phase 3 RAG ingestion/retrieval foundation exists and validates locally.
-- Tests passed with `python3 -m pytest backend/tests` - 16 tests.
+- Phase 4 chat/widget foundation exists and validates locally.
+- Tests passed with `python3 -m pytest backend/tests` - 20 tests.
 - Alembic migrations run against SQLite with `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head`.
 - Docker Compose config validates with `docker compose config`.
+- Widget JavaScript syntax validates with `node --check widget/chat-widget.js`.
+- Route registration and CORS middleware validate through app introspection.
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- Next meaningful task, after review and explicit instruction, is Phase 4 task P4-T1: Define widget authentication contract.
+- Next meaningful task, after review and explicit instruction, is Phase 5 task P5-T1: Select frontend structure.
 
 ## Next recommended actions
 
-1. Review and merge the Phase 3 RAG ingestion/retrieval foundation branch.
+1. Review and merge the Phase 4 chat/widget foundation branch.
 2. Start the next instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Do not start Phase 4 unless explicitly instructed.
-5. When instructed, begin Phase 4 with widget authentication and conversation API contracts.
-6. Record Phase 4 chat/widget API decisions in `10_decisions_log.md`.
+4. Do not start Phase 5 unless explicitly instructed.
+5. When instructed, begin Phase 5 with frontend structure selection and business portal foundation.
+6. Record Phase 5 frontend structure/auth decisions in `10_decisions_log.md`.
 7. Update memory files and roadmap artifacts after each future phase execution.
 
 ## Files to read next depending on task type

@@ -4,12 +4,12 @@ Read this second, after `11_master_context_index.md`.
 
 ## Current active phase
 
-Phase 3: RAG ingestion and retrieval.
+Phase 4: Chat widget and conversation API.
 
 ## Current active tasks
 
-- Review Phase 3 RAG ingestion/retrieval foundation branch.
-- Do not start Phase 4 until explicitly instructed.
+- Review Phase 4 chat/widget foundation branch.
+- Do not start Phase 5 until explicitly instructed.
 
 ## Latest completed task
 
@@ -19,16 +19,17 @@ Phase 3: RAG ingestion and retrieval.
 - Phase 1 backend foundation created and validated.
 - Phase 2 tenant/database foundation created and validated.
 - Phase 3 RAG ingestion/retrieval foundation created and validated.
+- Phase 4 chat/widget foundation created and validated.
 
 ## Roadmap visual status
 
 - Latest roadmap image path: `project-assets/roadmap/latest_roadmap.png`
-- Current phase visual status: Phase 3 READY_FOR_REVIEW and marked as the active phase in the roadmap.
+- Current phase visual status: Phase 4 READY_FOR_REVIEW and marked as the active phase in the roadmap.
 
 ## Current blockers
 
 - None known.
-- Phase 4 must not begin until the user explicitly starts it.
+- Phase 5 must not begin until the user explicitly starts it.
 
 ## Next command to run
 
@@ -38,14 +39,14 @@ Phase 3: RAG ingestion and retrieval.
 
 - Start every instruction from latest `master`, pull remote, then create a feature branch.
 - Do not load the whole repo first.
-- Backend, tenant/database, AI provider, and RAG foundations exist; no frontend, widget, conversation API, upload API endpoint, or notification workflow exists yet.
+- Backend, tenant/database, AI provider, RAG, chat API, widget-key, and static widget foundations exist; no business portal, admin portal, upload API endpoint, or notification workflow exists yet.
 - Keep future-scope features out of MVP.
-- Keep Phase 4 chat/widget work out of Phase 3 review changes.
+- Keep Phase 5 business portal work out of Phase 4 review changes.
 
 ## Files requiring immediate attention
 
 - `11_master_context_index.md`
 - `12_phase_status_matrix.md`
 - `18_task_execution_queue.md`
-- `10_decisions_log.md` when Phase 4 chat/widget API decisions are made.
+- `10_decisions_log.md` when Phase 5 frontend structure/auth decisions are made.
 - `project-assets/roadmap/roadmap_status.json` after every phase execution.

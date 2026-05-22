@@ -5,6 +5,7 @@ from app.models.knowledge import DocumentChunk, KnowledgeDocument
 from app.models.lead import Lead
 from app.models.tenant import Business, BusinessUser, Tenant
 from app.models.usage import AuditLog, UsageLog
+from app.models.widget import WidgetConfig
 
 __all__ = [
     "AuditLog",
@@ -17,4 +18,5 @@ __all__ = [
     "Message",
     "Tenant",
     "UsageLog",
+    "WidgetConfig",
 ]

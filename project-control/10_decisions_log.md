@@ -2,6 +2,39 @@
 
 Use this file to record major product, architecture, tooling, security, and deployment decisions.
 
+## DEC-20260522-004: Phase 4 public widget key and chat API contract
+
+### Decision ID
+
+DEC-20260522-004
+
+### Date
+
+2026-05-22
+
+### Context
+
+Phase 4 requires a browser-embeddable widget that can initialize without exposing private tenant data, start conversations, send visitor messages, use tenant-scoped RAG context, and capture lead fields predictably. The widget runs on customer websites, so it can only hold public identifiers.
+
+### Decision
+
+Use a public widget key that resolves server-side to exactly one active `WidgetConfig` and tenant. Store only a SHA-256 hash of the widget key plus a short non-secret prefix for support. Add `/widget/init`, `/chat/conversations`, and `/chat/conversations/{conversation_id}/messages` endpoints. Chat messages are stored with the resolved `tenant_id`; cross-tenant widget keys cannot access another tenant's conversation. AI responses use the existing provider abstraction and tenant-filtered RAG retrieval. Lead capture uses deterministic extraction and optional structured fields instead of relying only on LLM output. Add environment-backed CORS configuration so browser-embedded widgets can call the API from approved origins.
+
+### Alternatives considered
+
+- Exposing tenant IDs directly to the widget.
+- Treating the widget key as a private API secret.
+- Delaying widget key revocation support until a later phase.
+- Letting the LLM infer and mutate lead records directly.
+
+### Reason
+
+Public widget keys are appropriate for browser code, but tenant resolution and authorization must remain server-side. Hashing stored keys reduces accidental raw-key exposure. Deterministic lead capture keeps Phase 4 predictable and testable while leaving richer CRM workflows for later phases.
+
+### Impact
+
+Future business portal work should create, display once, rotate, and revoke widget keys through tenant-authorized screens. Future widget/API work must keep tenant resolution server-side and must not expose private tenant IDs, private API keys, or unrelated RAG context to the browser.
+
 ## DEC-20260522-003: Phase 3 RAG vector schema and AI provider abstraction
 
 ### Decision ID
