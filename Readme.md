@@ -4,7 +4,7 @@ Codex dummy update for branch workflow verification.
 
 # AI Tradie Receptionist Platform
 
-Multi-tenant SaaS platform for Australian tradies and local businesses. The current foundation includes a FastAPI backend, tenant-isolated database models, tenant-scoped RAG, chat/widget APIs, and a Next.js business portal.
+Multi-tenant SaaS platform for Australian tradies and local businesses. The current foundation includes a FastAPI backend, tenant-isolated database models, tenant-scoped RAG, chat/widget APIs, a Next.js business portal, and a protected super admin portal foundation.
 
 ## Backend local setup
 
@@ -32,7 +32,7 @@ Create a local `.env` from `.env.example`, then run:
 docker compose up --build
 ```
 
-This starts the backend, frontend, PostgreSQL with pgvector, and Redis as development dependencies. Notification workflow, super admin portal, CI, and production deployment automation are still future phases.
+This starts the backend, frontend, PostgreSQL with pgvector, and Redis as development dependencies. Notification workflow, CI, and production deployment automation are still future phases.
 
 ## Database migrations
 
@@ -84,3 +84,19 @@ npm run dev
 The portal talks to the backend through `NEXT_PUBLIC_API_BASE_URL`. It includes sign-in, dashboard metrics, knowledge document upload/status, leads, conversations, widget setup, and basic analytics screens.
 
 The Phase 5 sign-in flow is an MVP tenant-aware email/session contract for local validation. Production auth hardening belongs to a later security/auth phase.
+
+## Super admin portal
+
+Phase 6 adds super admin routes in the same `frontend/` app at `/admin` and backend APIs under `/admin`.
+
+Current admin scope:
+
+- super admin login/session contract
+- tenant list/detail
+- tenant creation and status management
+- usage overview
+- system health view
+- limited tenant support context
+- tenant-scoped admin audit logs
+
+Super admins are stored separately from tenant business users in `admin_users`. The current sign-in flow is an MVP email/session contract for local validation and must be hardened before production.

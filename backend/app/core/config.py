@@ -49,6 +49,15 @@ class Settings:
     business_portal_session_ttl_minutes: int = field(
         default_factory=lambda: int(os.getenv("BUSINESS_PORTAL_SESSION_TTL_MINUTES", "480"))
     )
+    admin_portal_session_secret: str = field(
+        default_factory=lambda: os.getenv(
+            "ADMIN_PORTAL_SESSION_SECRET",
+            "change-me-local-admin-portal-secret",
+        )
+    )
+    admin_portal_session_ttl_minutes: int = field(
+        default_factory=lambda: int(os.getenv("ADMIN_PORTAL_SESSION_TTL_MINUTES", "240"))
+    )
 
     database_url: str = field(
         default_factory=lambda: os.getenv(

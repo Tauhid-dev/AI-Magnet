@@ -6,7 +6,7 @@
 
 ## Current implemented modules
 
-Phase 5 business portal foundation is implemented and ready for review.
+Phase 6 super admin portal foundation is implemented and ready for review.
 
 Implemented repository assets:
 
@@ -17,7 +17,7 @@ Implemented repository assets:
 - `project-assets/roadmap/snapshots/` historical roadmap image snapshots.
 - `backend/` FastAPI foundation with app factory, config, health endpoint, placeholders, requirements, Dockerfile, and tests.
 - `backend/migrations/` Alembic migration environment and initial tenant schema migration.
-- SQLAlchemy ORM models for tenants, businesses, business users, knowledge documents, conversations, messages, leads, usage logs, and audit logs.
+- SQLAlchemy ORM models for global admin users, tenants, businesses, business users, knowledge documents, conversations, messages, leads, usage logs, and audit logs.
 - Document chunk model with required `tenant_id`, document ownership, chunk metadata, and embedding storage.
 - pgvector-compatible migration that creates `document_chunks` and enables the `vector` extension on PostgreSQL.
 - Tenant-scoped repository helper and basic tenant/business service helper.
@@ -43,6 +43,14 @@ Implemented repository assets:
 - Frontend typed API client and browser session helper.
 - Frontend static validation test and package lockfile.
 - Backend business portal tests covering login/session, cross-tenant denial, document upload, widget key creation, and analytics.
+- Global `AdminUser` model and Alembic migration for super admin access.
+- Super admin HMAC bearer-session service with active admin and role verification.
+- Super admin API routes for tenant list/detail, tenant creation, tenant status management, usage overview, system health, support context, and audit log viewing.
+- Tenant-scoped audit service for admin access to tenant data and tenant changes.
+- Next.js super admin portal under `frontend/app/admin/`.
+- Admin portal pages for login, overview, tenants, tenant detail/support context, usage, health, and audit logs.
+- Frontend admin API client and browser session helper.
+- Backend admin tests covering admin login/session, business-token rejection, tenant management, limited support context, usage, health, and audit logging.
 - `.env.example` local configuration template.
 - `docker-compose.yml` local/dev backend, frontend, PostgreSQL/pgvector, and Redis foundation.
 - `.gitignore` for local env files, Python caches, logs, macOS metadata, and generated frontend artifacts.
@@ -60,6 +68,7 @@ Configured but not running in this session:
 - RAG ingestion worker entrypoint.
 - Public chat/widget API routes.
 - Business portal API routes.
+- Super admin API routes.
 
 Not created yet:
 
@@ -86,6 +95,16 @@ Implemented API:
 - `GET /business-portal/widget`
 - `POST /business-portal/widget/keys`
 - `GET /business-portal/analytics`
+- `POST /admin/auth/login`
+- `GET /admin/session`
+- `GET /admin/tenants`
+- `POST /admin/tenants`
+- `GET /admin/tenants/{tenant_id}`
+- `PATCH /admin/tenants/{tenant_id}/status`
+- `GET /admin/tenants/{tenant_id}/support-context`
+- `GET /admin/usage`
+- `GET /admin/health`
+- `GET /admin/audit-logs`
 
 Planned future API groups:
 
@@ -93,7 +112,6 @@ Planned future API groups:
 - `/auth`
 - `/tenants`
 - `/business-portal`
-- `/admin`
 - `/documents`
 - `/chat`
 - `/leads`
@@ -109,15 +127,18 @@ Current schema includes tenant-owned tables with required `tenant_id` where tena
 
 The Phase 4 migration adds `widget_configs` with required `tenant_id`, hashed widget key lookup, key prefix, status, and optional allowed origins.
 
+The Phase 6 migration adds global `admin_users` for platform operators. This table is intentionally not tenant-scoped because super admins are platform-level users, not tenant business users.
+
 ## Migrations applied
 
 - `20260522_0001`: Initial tenant schema.
 - `20260522_0002`: Document chunk vector schema.
 - `20260522_0003`: Widget configuration schema.
+- `20260522_0004`: Global admin users.
 
 ## Active services
 
-None running. Compose configuration validates, but services were not started during Phase 5 validation.
+None running. Compose configuration validates, but services were not started during Phase 6 validation.
 
 ## Deployment status
 
@@ -134,14 +155,14 @@ Planned deployment:
 - PostgreSQL migrations were not run against a live PostgreSQL container in this session; Alembic was validated against SQLite in memory.
 - Retrieval currently scores tenant-filtered chunks in Python for MVP simplicity; optimized database vector search can be introduced later.
 - Business portal authentication is an MVP email/session contract without passwords or external identity provider integration.
+- Super admin authentication is an MVP email/session contract without passwords, MFA, or external identity provider integration.
+- Tenant-scoped audit logging covers tenant-targeted admin actions; global non-tenant admin events may need a separate audit strategy later.
 - `npm audit --audit-level=high` passed, but npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
 - The widget is a static MVP asset, not a full frontend build pipeline.
-- Super admin role model decision not made.
 - Worker choice not made.
 
 ## Incomplete modules
 
-- Super admin portal.
 - Lead workflow and notifications.
 - Analytics and usage tracking.
 - CI and deployment.

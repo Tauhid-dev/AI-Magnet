@@ -2,6 +2,129 @@
 
 Use this file to record phase completion notes. Add a new entry after each phase or major instruction.
 
+## 2026-05-22 - Phase 6: Super admin portal
+
+### Phase
+
+Phase 6: Super admin portal
+
+### Date
+
+2026-05-22
+
+### Tasks completed
+
+- P6-T1: Define super admin role model
+- P6-T2: Build admin backend APIs
+- P6-T3: Build super admin portal UI
+- P6-T4: Add admin audit logging
+
+### Files changed
+
+- `.env.example`
+- `Readme.md`
+- `backend/app/admin/`
+- `backend/app/api/admin.py`
+- `backend/app/api/router.py`
+- `backend/app/audit/`
+- `backend/app/core/config.py`
+- `backend/app/db/seed.py`
+- `backend/app/models/admin.py`
+- `backend/app/models/__init__.py`
+- `backend/app/schemas/admin.py`
+- `backend/migrations/versions/20260522_0004_admin_users.py`
+- `backend/tests/admin/`
+- `docker-compose.yml`
+- `frontend/README.md`
+- `frontend/app/admin/`
+- `frontend/components/AdminShell.tsx`
+- `frontend/components/StatusPill.tsx`
+- `frontend/lib/api/client.ts`
+- `frontend/lib/api/types.ts`
+- `frontend/lib/auth/admin-session.ts`
+- `frontend/tests/static-check.mjs`
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+- `project-assets/roadmap/roadmap_status.json`
+- `project-assets/roadmap/latest_roadmap.png`
+- `project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260522_204613.png`
+
+### Tests run
+
+- `python3 -m pytest backend/tests` - passed, 28 tests
+- `python3 -m compileall backend/app backend/tests backend/migrations` - passed
+- `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head` - passed
+- `docker compose config` - passed
+- `python3 -c "import sys; sys.path.insert(0, 'backend'); from app.main import create_app; app=create_app(); routes=sorted(route.path for route in app.routes if route.path.startswith('/admin')); print(len(routes)); print('\\n'.join(routes))"` - passed, 10 admin routes registered
+- `npm run lint` from `frontend/` - passed
+- `npm run typecheck` from `frontend/` - passed
+- `npm test` from `frontend/` - passed, 1 Node static check
+- `npm run build` from `frontend/` - passed, 16 app routes generated including admin routes
+- Browser smoke check of `http://127.0.0.1:3000/admin/login` - passed, admin login screen rendered
+- `npm audit --audit-level=high` from `frontend/` - passed high-severity gate; npm reported 2 moderate transitive vulnerabilities in Next/PostCSS
+- `python3 -m json.tool project-assets/roadmap/roadmap_status.json` - passed
+- `git diff --check` - passed
+- `python3 -m ruff --version` - Ruff not installed in current interpreter
+
+### Context snapshot summary
+
+Phase 6 super admin portal foundation is ready for review. The backend now has global `AdminUser` records, a separate admin portal session contract, protected `/admin` routes for tenant management, usage overview, system health, limited support context, and audit log viewing. Tenant-specific admin actions are recorded to tenant-scoped audit logs. The frontend now has protected `/admin` screens for login, overview, tenants, tenant detail/support context, usage, health, and audit logs.
+
+### Active modules touched
+
+- Super admin auth/session service
+- Admin tenant management service
+- Admin backend API routes
+- Tenant-scoped audit service
+- Admin user ORM model and migration
+- Next.js admin portal routes and shell
+- Frontend admin API client and session helper
+- Backend admin API tests
+- Project memory files
+- Visual roadmap artifacts
+
+### Memory files updated
+
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+
+### roadmap_status_updated
+
+yes
+
+### roadmap_snapshot_created
+
+`project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260522_204613.png`
+
+### latest_roadmap_updated
+
+yes
+
+### Known issues
+
+- Super admin authentication is an MVP email/session contract without passwords, MFA, or external identity provider integration.
+- Tenant-scoped audit logging covers tenant-targeted admin actions; non-tenant global admin events may need a global audit strategy later.
+- `npm audit --audit-level=high` passed, but npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
+- Ruff is listed in backend dev requirements but may not be installed in the current interpreter.
+- PostgreSQL migrations are validated with SQLite in memory in this session unless a live PostgreSQL container is started separately.
+- Notifications, CI, production deployment, and broader analytics remain future phases.
+
+### Next phase readiness
+
+Phase 7 can begin only after this Phase 6 branch is reviewed/merged and the user explicitly instructs Codex to start Phase 7.
+
 ## 2026-05-22 - Phase 5: Business portal
 
 ### Phase

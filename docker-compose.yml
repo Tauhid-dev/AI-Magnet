@@ -13,6 +13,8 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
       BUSINESS_PORTAL_SESSION_SECRET: ${BUSINESS_PORTAL_SESSION_SECRET:-change-me-local-business-portal-secret}
       BUSINESS_PORTAL_SESSION_TTL_MINUTES: ${BUSINESS_PORTAL_SESSION_TTL_MINUTES:-480}
+      ADMIN_PORTAL_SESSION_SECRET: ${ADMIN_PORTAL_SESSION_SECRET:-change-me-local-admin-portal-secret}
+      ADMIN_PORTAL_SESSION_TTL_MINUTES: ${ADMIN_PORTAL_SESSION_TTL_MINUTES:-240}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ai_tradie:ai_tradie@postgres:5432/ai_tradie}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       AI_PROVIDER: ${AI_PROVIDER:-openai-compatible}
