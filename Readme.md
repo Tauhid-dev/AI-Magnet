@@ -32,7 +32,7 @@ Create a local `.env` from `.env.example`, then run:
 docker compose up --build backend
 ```
 
-This starts the backend plus PostgreSQL with pgvector and Redis as development dependencies. Phase 1 does not create tenant tables, migrations, RAG, frontend, or production deployment automation.
+This starts the backend plus PostgreSQL with pgvector and Redis as development dependencies. Current backend phases include the tenant/database foundation and RAG foundation, but no frontend, chat widget, notification workflow, or production deployment automation yet.
 
 ## Database migrations
 
@@ -43,3 +43,15 @@ python -m alembic -c backend/alembic.ini upgrade head
 ```
 
 The migration command reads `DATABASE_URL` from the environment. Tenant-owned tables include a required `tenant_id` column, and tenant-scoped repository helpers require an explicit tenant context.
+
+## RAG ingestion and retrieval
+
+Phase 3 adds tenant-scoped RAG foundations:
+
+- document chunks with pgvector-compatible embedding storage
+- text extraction for plain text/Markdown
+- deterministic local embedding provider for tests
+- OpenAI-compatible embedding/chat provider abstraction
+- tenant-first retrieval service
+
+The PostgreSQL migration enables the `vector` extension when running against PostgreSQL. Local automated tests use SQLite with a portable vector column representation.

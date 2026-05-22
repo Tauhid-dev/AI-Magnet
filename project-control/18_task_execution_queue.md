@@ -6,46 +6,47 @@ This file helps the parent agent choose the next executable tasks without re-rea
 
 ## Current recommended execution order
 
-1. Review and merge Phase 2 tenant/database foundation.
-2. Do not start Phase 3 unless explicitly instructed by the user.
-3. When instructed, start Phase 3 with P3-T1: Enable pgvector and vector schema and P3-T2: Define AI provider abstraction where dependencies allow.
-4. Record Phase 3 vector/AI provider decisions in `10_decisions_log.md`.
+1. Review and merge Phase 3 RAG ingestion/retrieval foundation.
+2. Do not start Phase 4 unless explicitly instructed by the user.
+3. When instructed, start Phase 4 with widget authentication and conversation API contract tasks.
+4. Record Phase 4 chat/widget API decisions in `10_decisions_log.md`.
 5. At the end of every phase, update `project-assets/roadmap/roadmap_status.json` and run `python project-assets/roadmap/generate_roadmap.py`.
 
 ## Ready tasks
 
 | Task ID | Task name | Why ready | Recommended role | Parallel-safe |
 |---|---|---|---|---|
-| ROADMAP-FINAL | Update visual roadmap artifacts | Required at the end of every future phase execution | Parent Planning Agent, Documentation Agent | No |
+| REVIEW-P3 | Review Phase 3 branch | Phase 3 implementation and validation are complete locally | Parent Planning Agent | No |
 
 ## Blocked tasks
 
 | Task ID | Task name | Blocked by | Unblock condition |
 |---|---|---|---|
-| P3-T1 | Enable pgvector and vector schema | Phase 2 is ready for review; can start only after user instruction | RAG/AI Agent, Database Agent | Yes, with P3-T2 after instruction |
-| P3-T2 | Define AI provider abstraction | Phase 1 config exists; can start only after user instruction | RAG/AI Agent, Backend Agent | Yes, with P3-T1 after instruction |
-| P3-T1 and later | RAG/database/chat/frontend/admin tasks | Earlier phases | Complete dependencies in `03_task_dependency_graph.md` |
+| P4-T1 | Define widget authentication contract | Phase 3 branch review/merge and explicit Phase 4 instruction | User instructs Phase 4 from latest `master` |
+| P4-T2 and later | Chat/widget tasks | Phase 4 task dependencies and explicit instruction | Complete dependencies in `03_task_dependency_graph.md` |
+| P5 and later | Frontend/admin/notification/analytics tasks | Earlier MVP phases | Complete dependencies in `03_task_dependency_graph.md` |
 
 ## Dependency status
 
 - Phase 0: Complete.
 - Phase 1: Complete.
-- Phase 2: Ready for review.
-- Phase 3: Not started; waits for explicit user instruction.
-- Phases 4 through 10: Not ready.
+- Phase 2: Complete.
+- Phase 3: Ready for review.
+- Phase 4: Not started; waits for explicit user instruction after Phase 3 review/merge.
+- Phases 5 through 10: Not ready.
 
 ## Tasks safe for parallel execution
 
-Currently none, because the next step is review/merge rather than implementation.
+Currently none, because the next step is Phase 3 review/merge rather than implementation.
 
 Roadmap updates should happen after phase work and memory updates are complete, so they should not run in parallel with status-changing tasks.
 
-After Phase 3 starts:
+After Phase 4 starts:
 
-- P3-T1 and P3-T2 can proceed in parallel if schema/provider ownership is clear.
-- P3-T3 waits for P3-T1 and P3-T2.
-- P3-T4 waits for P3-T1 and P3-T2.
-- P3-T5 waits for ingestion and retrieval services.
+- Contract/API design and widget UI planning can be split by Backend Agent and Frontend Agent.
+- Conversation API implementation should wait for the authentication/widget contract.
+- AI answer generation can use the Phase 3 retrieval and chat provider abstractions.
+- Chat/widget tests should wait for the API and widget surfaces they validate.
 
 ## Queue update rules
 

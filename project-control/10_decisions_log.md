@@ -2,6 +2,39 @@
 
 Use this file to record major product, architecture, tooling, security, and deployment decisions.
 
+## DEC-20260522-003: Phase 3 RAG vector schema and AI provider abstraction
+
+### Decision ID
+
+DEC-20260522-003
+
+### Date
+
+2026-05-22
+
+### Context
+
+Phase 3 requires pgvector-compatible document chunk storage, tenant-scoped ingestion and retrieval, and an AI provider abstraction that can use an OpenAI-compatible API without hardcoding credentials. Automated validation also needs to run without a live PostgreSQL or external AI service.
+
+### Decision
+
+Add a `document_chunks` model and Alembic migration with required `tenant_id`, `document_id`, chunk metadata, and a pgvector-compatible embedding column. Use a small SQLAlchemy `VectorType` wrapper that compiles to `vector(1536)` on PostgreSQL and JSON text on SQLite tests. Add AI provider protocols for embeddings and chat completions, an OpenAI-compatible implementation using `httpx`, and a deterministic local provider for tests/offline development. Keep retrieval tenant-first by filtering chunks by `tenant_id` before scoring in Python.
+
+### Alternatives considered
+
+- Requiring the `pgvector` Python package for all local tests.
+- Calling OpenAI APIs directly from RAG services.
+- Running retrieval similarity only in SQL from the start.
+- Delaying chat provider abstraction until Phase 4.
+
+### Reason
+
+The wrapper keeps migrations pgvector-ready while allowing fast local tests. Provider protocols keep secrets and vendor details out of RAG logic. Tenant-first Python scoring is simple, deterministic, and testable for the MVP foundation, while PostgreSQL vector indexing can be used for optimized retrieval in later phases.
+
+### Impact
+
+Future RAG and chat code must use the provider abstraction instead of direct external API calls. Production embeddings should use vectors matching the configured 1536-dimensional column unless a future migration changes the dimension. Retrieval services must continue filtering by tenant before scoring or returning chunks.
+
 ## DEC-20260522-002: Phase 2 database ORM and migration strategy
 
 ### Decision ID

@@ -1,7 +1,7 @@
 """ORM model exports."""
 
 from app.models.conversation import Conversation, Message
-from app.models.knowledge import KnowledgeDocument
+from app.models.knowledge import DocumentChunk, KnowledgeDocument
 from app.models.lead import Lead
 from app.models.tenant import Business, BusinessUser, Tenant
 from app.models.usage import AuditLog, UsageLog
@@ -11,6 +11,7 @@ __all__ = [
     "Business",
     "BusinessUser",
     "Conversation",
+    "DocumentChunk",
     "KnowledgeDocument",
     "Lead",
     "Message",
