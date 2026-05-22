@@ -2,6 +2,39 @@
 
 Use this file to record major product, architecture, tooling, security, and deployment decisions.
 
+## DEC-20260523-007: Phase 7 lead lifecycle and email notification delivery
+
+### Decision ID
+
+DEC-20260523-007
+
+### Date
+
+2026-05-23
+
+### Context
+
+Phase 7 requires lead qualification, lifecycle management, business notification settings, email delivery, retry behavior, and tests while preserving tenant isolation. The project already has deterministic chat lead capture, tenant-scoped business portal APIs, and Docker Compose with Redis, but no dedicated worker dependency has been introduced yet.
+
+### Decision
+
+Use deterministic backend lead workflow rules to qualify leads only when required contact and job fields are present. Store lifecycle and delivery state on `leads`, and add tenant-scoped `business_notification_settings` and `notification_deliveries` tables. Use a provider-neutral email abstraction with a no-network local console provider by default and an SMTP provider selected through environment variables. Queue notification deliveries in the database and process them synchronously in the Phase 7 chat flow for MVP validation, with delivery attempts, retry status, and failure state persisted for a future worker.
+
+### Alternatives considered
+
+- Letting the LLM decide whether a lead is qualified.
+- Sending SMTP email directly from chat code without a provider abstraction.
+- Introducing Celery, RQ, or a Redis queue immediately.
+- Delaying portal lead status transitions until a larger CRM module.
+
+### Reason
+
+Deterministic qualification is safer and easier to test than LLM-driven state changes. A provider abstraction keeps SMTP and future email providers out of lead workflow code. A DB-backed queue is enough for MVP behavior and avoids adding a worker package before the broader Phase 9 deployment/worker design. Persisted delivery attempts leave a clean path to move processing into a worker later.
+
+### Impact
+
+Future worker work can process `notification_deliveries` asynchronously without redesigning the lead workflow. Production environments must configure `EMAIL_PROVIDER=smtp` and SMTP settings. Future lead lifecycle or CRM expansion should keep tenant filtering server-side and continue treating LLM output as advisory rather than action-authoritative.
+
 ## DEC-20260522-006: Phase 6 super admin role boundary and audit model
 
 ### Decision ID

@@ -67,6 +67,13 @@ export const portalApi = {
   leads(token: string) {
     return request<PortalLead[]>("/business-portal/leads", { token });
   },
+  updateLeadStatus(token: string, leadId: string, status: string) {
+    return request<PortalLead>(`/business-portal/leads/${leadId}/status`, {
+      token,
+      method: "PATCH",
+      body: { status }
+    });
+  },
   conversations(token: string) {
     return request<PortalConversation[]>("/business-portal/conversations", { token });
   },

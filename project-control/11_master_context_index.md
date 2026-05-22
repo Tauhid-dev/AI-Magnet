@@ -21,13 +21,13 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation, deterministic roadmap visual assets, a Phase 1 backend foundation, a Phase 2 tenant/database foundation, a Phase 3 RAG ingestion/retrieval foundation, a Phase 4 chat/widget foundation, a Phase 5 business portal foundation, and a Phase 6 super admin portal foundation.
-- Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, business portal, and super admin foundations have been implemented.
-- No email notification workflow, CI pipeline, or production deployment automation exists yet.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, and Phase 1 through Phase 7 MVP foundations.
+- Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, business portal, super admin, lead lifecycle, and notification foundations have been implemented.
+- No expanded analytics workflow, CI pipeline, or production deployment automation exists yet.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
 - `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
-- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, chat/widget services, business portal services/routes, super admin services/routes, audit helpers, config, health endpoint, requirements, Dockerfile, and tests.
-- `backend/migrations/` contains Alembic migration setup, the initial tenant schema migration, the document chunk/vector migration, and the widget config migration.
+- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, email providers, chat/widget services, business portal services/routes, super admin services/routes, lead workflow and notification services, audit helpers, config, health endpoint, requirements, Dockerfile, and tests.
+- `backend/migrations/` contains Alembic migration setup, tenant schema, document chunk/vector, widget config, admin user, and lead notification migrations.
 - `frontend/` contains the Next.js business portal and super admin portal foundations.
 - `widget/` contains the lightweight embeddable chat widget and local test page.
 - `docker-compose.yml` defines local/dev backend, frontend, PostgreSQL/pgvector, and Redis services.
@@ -35,11 +35,11 @@ Technology preference:
 
 ## Current active phase
 
-Phase 6: Super admin portal.
+Phase 7: Notifications and lead workflow.
 
 Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review and explicit instruction: Phase 7: Notifications and lead workflow.
+Next implementation phase after review and explicit instruction: Phase 8: Analytics and usage tracking.
 
 ## Completed phases
 
@@ -115,10 +115,19 @@ Next implementation phase after review and explicit instruction: Phase 7: Notifi
   - Tenant-scoped audit logging for tenant creation, tenant detail access, support context access, and tenant status changes.
   - Next.js `/admin` portal screens for login, overview, tenants, tenant detail/support context, usage, health, and audit logs.
   - Backend admin tests covering session invalidation, business-token rejection, tenant management, support context PII limiting, health, usage, and audit records.
+- Phase 7 notifications and lead workflow created:
+  - Deterministic lead qualification workflow using required captured fields.
+  - Tenant-scoped lead lifecycle transitions for business portal users.
+  - Lead qualification and notification state on lead records.
+  - Tenant-scoped business notification settings and delivery log models.
+  - DB-backed notification delivery queue with attempts, retry, sent, and failed states.
+  - Provider-neutral email abstraction with local console and SMTP providers.
+  - Chat lead capture integration that queues/sends newly qualified leads.
+  - Business portal lead API and UI updates for qualification, notification, and status updates.
+  - Backend tests for lead workflow, notification delivery, and portal status updates.
 
 ## Pending phases
 
-- Phase 7: Notifications and lead workflow.
 - Phase 8: Analytics and usage tracking.
 - Phase 9: Security, testing, CI, and deployment.
 - Phase 10: Premium/future modules.
@@ -133,8 +142,9 @@ Next implementation phase after review and explicit instruction: Phase 7: Notifi
 - Business portal routes verify the bearer session server-side and filter all data by the verified tenant.
 - Super admin routes verify a global admin session server-side and do not accept business portal tokens.
 - Tenant-specific admin data access and tenant changes are audit-logged with the target `tenant_id`.
-- Lead capture and qualification should use deterministic business logic where possible.
-- Email notifications should use an SMTP provider abstraction.
+- Lead capture, qualification, and lifecycle transitions use deterministic business logic.
+- Email notifications use a provider abstraction with SMTP support and local no-network console delivery.
+- Notification delivery state is tenant-scoped and persisted in the database.
 - Super admin functionality must be role-protected and audit-logged.
 - Local/dev deployment should use Docker Compose.
 
@@ -157,29 +167,27 @@ Next implementation phase after review and explicit instruction: Phase 7: Notifi
 ## Current blockers
 
 - No technical blockers are known.
-- Phase 7 must not start until the user explicitly instructs it.
-- Lead notification workflow, email provider abstraction, and queue/retry behavior are not defined yet.
+- Phase 8 must not start until the user explicitly instructs it.
 
 ## Latest execution state
 
-- Phase 6 super admin portal foundation exists and validates locally.
-- Backend tests passed with `python3 -m pytest backend/tests` - 28 tests.
+- Phase 7 notifications and lead workflow exists and validates locally.
+- Backend tests passed with `python3 -m pytest backend/tests` - 35 tests.
 - Frontend checks passed with `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
-- `npm audit --audit-level=high` passed the high-severity gate; npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
-- Alembic migrations run against SQLite with `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head`.
+- Alembic migrations run against SQLite with `PYTHONPATH=backend DATABASE_URL=sqlite:////private/tmp/ai_magnet_phase7_migration_20260523_final.sqlite python3 -m alembic -c backend/alembic.ini upgrade head`.
 - Docker Compose config validates with `docker compose config`.
-- Admin and business portal route registration validate through app introspection.
+- Browser smoke test of the business portal lead workflow passed against a seeded local SQLite backend.
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- Next meaningful task, after review and explicit instruction, is Phase 7 task P7-T1: Define lead qualification workflow.
+- Next meaningful task, after review and explicit instruction, is Phase 8 task P8-T1: Define usage event taxonomy.
 
 ## Next recommended actions
 
-1. Review and merge the Phase 6 super admin portal foundation branch.
+1. Review and merge the Phase 7 notifications and lead workflow branch.
 2. Start the next instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Do not start Phase 7 unless explicitly instructed.
-5. When instructed, begin Phase 7 with lead workflow and email provider decisions.
-6. Record Phase 7 lead lifecycle, worker, and email provider decisions in `10_decisions_log.md`.
+4. Do not start Phase 8 unless explicitly instructed.
+5. When instructed, begin Phase 8 with usage event taxonomy and analytics query planning.
+6. Record any Phase 8 analytics/data model decisions in `10_decisions_log.md`.
 7. Update memory files and roadmap artifacts after each future phase execution.
 
 ## Files to read next depending on task type

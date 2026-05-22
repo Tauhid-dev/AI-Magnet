@@ -160,6 +160,65 @@ def test_business_portal_blocks_cross_tenant_lead_and_conversation(monkeypatch):
         assert list_response.json() == []
 
 
+def test_business_portal_updates_own_lead_status_only(monkeypatch):
+    with create_test_session() as session:
+        tenant_a, _user_a = seed_business_user(
+            session,
+            "Tenant A Plumbing",
+            "tenant-a",
+            "a@example.test",
+        )
+        tenant_b, _user_b = seed_business_user(
+            session,
+            "Tenant B Electrical",
+            "tenant-b",
+            "b@example.test",
+        )
+        lead_a = Lead(
+            tenant_id=tenant_a.id,
+            customer_name="Alice",
+            customer_phone="0400000000",
+            job_type="blocked drain",
+            suburb="Bondi",
+            urgency="today",
+            status="notified",
+            notification_status="sent",
+        )
+        lead_b = Lead(
+            tenant_id=tenant_b.id,
+            customer_name="Bob",
+            customer_phone="0411111111",
+            status="notified",
+            notification_status="sent",
+        )
+        session.add_all([lead_a, lead_b])
+        session.commit()
+        client = create_client(session, monkeypatch)
+        token_a = login(client, "tenant-a", "a@example.test")
+
+        update_response = client.patch(
+            f"/business-portal/leads/{lead_a.id}/status",
+            headers=auth_header(token_a),
+            json={"status": "contacted"},
+        )
+        cross_tenant_response = client.patch(
+            f"/business-portal/leads/{lead_b.id}/status",
+            headers=auth_header(token_a),
+            json={"status": "contacted"},
+        )
+        invalid_response = client.patch(
+            f"/business-portal/leads/{lead_a.id}/status",
+            headers=auth_header(token_a),
+            json={"status": "qualified"},
+        )
+
+        assert update_response.status_code == 200
+        assert update_response.json()["status"] == "contacted"
+        assert update_response.json()["notification_status"] == "sent"
+        assert cross_tenant_response.status_code == 404
+        assert invalid_response.status_code == 400
+
+
 def test_business_portal_document_upload_and_widget_key_are_tenant_scoped(monkeypatch):
     with create_test_session() as session:
         tenant, _user = seed_business_user(

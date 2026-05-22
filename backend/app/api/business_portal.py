@@ -21,6 +21,7 @@ from app.schemas.business_portal import (
     PortalDocumentCreateRequest,
     PortalDocumentResponse,
     PortalLeadResponse,
+    PortalLeadStatusUpdateRequest,
     PortalMessageResponse,
     PortalWidgetResponse,
 )
@@ -169,6 +170,25 @@ def get_lead(
     return lead_response(lead)
 
 
+@router.patch("/leads/{lead_id}/status", response_model=PortalLeadResponse)
+def update_lead_status(
+    lead_id: str,
+    payload: PortalLeadStatusUpdateRequest,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+) -> PortalLeadResponse:
+    """Update a current tenant lead lifecycle status."""
+    service = BusinessPortalService(session, portal_session.tenant_id)
+    try:
+        lead = service.update_lead_status(lead_id, payload.status)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if lead is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
+    session.commit()
+    return lead_response(lead)
+
+
 @router.get("/conversations", response_model=list[PortalConversationResponse])
 def list_conversations(
     portal_session: BusinessPortalSession = Depends(get_current_business_session),
@@ -289,6 +309,10 @@ def lead_response(lead) -> PortalLeadResponse:
         suburb=lead.suburb,
         urgency=lead.urgency,
         status=lead.status,
+        qualified_at=lead.qualified_at,
+        qualification_reason=lead.qualification_reason,
+        notification_status=lead.notification_status,
+        last_notified_at=lead.last_notified_at,
         notes=lead.notes,
         created_at=lead.created_at,
     )

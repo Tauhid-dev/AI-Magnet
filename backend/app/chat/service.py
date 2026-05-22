@@ -9,8 +9,10 @@ from sqlalchemy.orm import Session
 
 from app.chat.lead_capture import LeadCaptureResult, LeadCaptureService
 from app.core.config import Settings, get_settings
+from app.leads.workflow import LEAD_STATUS_QUALIFIED, LeadWorkflowService
 from app.models.conversation import Conversation, Message
 from app.models.usage import UsageLog
+from app.notifications.service import NotificationService
 from app.providers.ai.base import ChatCompletionProvider, ChatMessage
 from app.rag.retrieval import RagRetrievalService, RetrievalResult
 from app.schemas.chat import LeadFields
@@ -51,6 +53,8 @@ class ChatService:
         self.chat_provider = chat_provider
         self.settings = settings or get_settings()
         self.lead_capture = LeadCaptureService(session)
+        self.lead_workflow = LeadWorkflowService(session)
+        self.notifications = NotificationService(session, self.settings)
 
     def start_conversation(
         self,
@@ -124,6 +128,16 @@ class ChatService:
             message=message,
             provided_fields=lead_fields,
         )
+        if lead_capture.lead is not None:
+            workflow_result = self.lead_workflow.evaluate_qualification(lead_capture.lead)
+            if (
+                workflow_result.lead.status == LEAD_STATUS_QUALIFIED
+                and workflow_result.became_qualified
+            ):
+                self.notifications.queue_and_send_lead_notification(
+                    tenant_id=widget_resolution.tenant_id,
+                    lead=workflow_result.lead,
+                )
         self._log_usage(
             tenant_id=widget_resolution.tenant_id,
             event_type="message_received",

@@ -33,6 +33,10 @@ export type PortalLead = {
   suburb: string | null;
   urgency: string | null;
   status: string;
+  qualified_at: string | null;
+  qualification_reason: string | null;
+  notification_status: string;
+  last_notified_at: string | null;
   notes: string | null;
   created_at: string;
 };

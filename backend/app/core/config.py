@@ -98,6 +98,23 @@ class Settings:
     )
     rag_top_k: int = field(default_factory=lambda: int(os.getenv("RAG_TOP_K", "5")))
 
+    email_provider: str = field(
+        default_factory=lambda: os.getenv("EMAIL_PROVIDER", "console")
+    )
+    smtp_host: str | None = field(default_factory=lambda: os.getenv("SMTP_HOST") or None)
+    smtp_port: int = field(default_factory=lambda: int(os.getenv("SMTP_PORT", "587")))
+    smtp_username: str | None = field(default_factory=lambda: os.getenv("SMTP_USERNAME") or None)
+    smtp_password: str | None = field(default_factory=lambda: os.getenv("SMTP_PASSWORD") or None)
+    smtp_from_email: str | None = field(
+        default_factory=lambda: os.getenv("SMTP_FROM_EMAIL") or None
+    )
+    smtp_use_tls: bool = field(
+        default_factory=lambda: parse_bool(os.getenv("SMTP_USE_TLS"), default=False)
+    )
+    smtp_starttls: bool = field(
+        default_factory=lambda: parse_bool(os.getenv("SMTP_STARTTLS"), default=True)
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:

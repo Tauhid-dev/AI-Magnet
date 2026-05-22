@@ -2,14 +2,14 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, the Phase 2 tenant/database foundation, the Phase 3 RAG ingestion/retrieval foundation, the Phase 4 chat/widget foundation, the Phase 5 business portal foundation, and the Phase 6 super admin portal foundation.
+The repository currently contains planning/control documentation, visual roadmap assets, and Phase 1 through Phase 7 MVP foundations.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Exists | FastAPI backend foundation, tenant/database/admin models, RAG services, AI provider abstractions, chat/widget services, business portal routes/services, super admin routes/services, audit helpers, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
+| `backend/` | Exists | FastAPI backend foundation, tenant/database/admin/notification models, RAG services, AI and email provider abstractions, chat/widget services, business portal routes/services, super admin routes/services, lead workflow, notification services, audit helpers, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
 | `frontend/` | Exists | Next.js, TypeScript, and TailwindCSS business portal and super admin portal foundation. |
 | `widget/` | Exists | Lightweight static embeddable website chat widget and local test page. |
 | `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
@@ -53,6 +53,8 @@ Current infrastructure foundation:
   - `backend/migrations/versions/20260522_0001_initial_tenant_schema.py`
   - `backend/migrations/versions/20260522_0002_document_chunks_vector.py`
   - `backend/migrations/versions/20260522_0003_widget_configs.py`
+  - `backend/migrations/versions/20260522_0004_admin_users.py`
+  - `backend/migrations/versions/20260523_0005_lead_notifications.py`
 
 Planned future files:
 
@@ -71,16 +73,16 @@ Planned future files:
 
 ## Backend structure
 
-Created across Phases 1 through 6:
+Created across Phases 1 through 7:
 
-- `backend/app/main.py`: FastAPI app factory and application instance.
+- `backend/app/main.py`: FastAPI app factory, application instance, and CORS method configuration.
 - `backend/app/core/config.py`: Environment-backed settings.
 - `backend/app/core/logging.py`: Logging setup.
 - `backend/app/api/router.py`: Top-level API router.
 - `backend/app/api/health.py`: `/health` route.
 - `backend/app/api/widget.py`: Public widget initialization route.
 - `backend/app/api/chat.py`: Public conversation start and message routes.
-- `backend/app/api/business_portal.py`: Tenant-aware business portal session, document, lead, conversation, widget, and analytics routes.
+- `backend/app/api/business_portal.py`: Tenant-aware business portal session, document, lead, lead status, conversation, widget, and analytics routes.
 - `backend/app/api/admin.py`: Super admin session, tenant management, support context, usage, health, and audit routes.
 - `backend/app/schemas/health.py`: Health response schema.
 - `backend/app/schemas/widget.py`: Widget request/response schemas.
@@ -93,21 +95,23 @@ Created across Phases 1 through 6:
 - `backend/app/db/repository.py`: Tenant-scoped repository helper.
 - `backend/app/db/seed.py`: Explicit local seed helper, including local super admin seed support.
 - `backend/app/db/vector.py`: Portable vector type that compiles to pgvector on PostgreSQL and text on SQLite tests.
-- `backend/app/models/`: Admin, tenant, business, document, conversation, message, lead, usage, and audit ORM models.
+- `backend/app/models/`: Admin, tenant, business, document, conversation, message, lead, notification, usage, and audit ORM models.
 - `backend/app/models/admin.py`: Global platform admin user model.
 - `backend/app/models/knowledge.py`: Knowledge document and document chunk ORM models.
 - `backend/app/models/widget.py`: Tenant-scoped public widget configuration model.
 - `backend/app/providers/ai/`: AI provider protocols, deterministic local provider, OpenAI-compatible provider, and factories.
+- `backend/app/providers/email/`: Email provider protocols, local console provider, SMTP provider, and factory.
 - `backend/app/ai/`: Compatibility exports for AI provider abstractions.
 - `backend/app/rag/`: Text extraction, chunking, ingestion, retrieval, and scoring helpers.
-- `backend/app/chat/`: Conversation orchestration, RAG answer generation, usage logging, and deterministic lead capture.
+- `backend/app/chat/`: Conversation orchestration, RAG answer generation, usage logging, deterministic lead capture, and notification trigger integration.
 - `backend/app/widget/`: Public widget key hashing, resolution, creation, and revocation helpers.
-- `backend/app/business/`: Business portal auth/session and tenant-scoped query services.
+- `backend/app/business/`: Business portal auth/session, tenant-scoped query services, and lead status update service path.
 - `backend/app/admin/`: Super admin auth/session and data services.
 - `backend/app/audit/`: Tenant-scoped audit logging helpers.
 - `backend/app/workers/`: Worker-style RAG ingestion entrypoint.
 - `backend/app/tenants/`: Tenant/business service helpers.
-- `backend/app/leads/`: Placeholder for later lead workflow.
+- `backend/app/leads/`: Deterministic lead qualification and lifecycle workflow service.
+- `backend/app/notifications/`: Lead notification templates and DB-backed delivery service.
 - `backend/app/conversations/`: Reserved package for future conversation-specific helpers.
 - `backend/tests/`: Backend health/config, tenant, and RAG tests.
 - `backend/tests/test_tenant_models.py`: Phase 2 tenant CRUD and isolation tests.
@@ -115,20 +119,22 @@ Created across Phases 1 through 6:
 - `backend/tests/chat/`: Phase 4 widget initialization, conversation, lead capture, and cross-tenant denial tests.
 - `backend/tests/business/`: Phase 5 business portal login/session, cross-tenant denial, document, widget, and analytics tests.
 - `backend/tests/admin/`: Phase 6 admin session, business-token rejection, tenant management, support, usage, health, and audit tests.
+- `backend/tests/leads/`: Phase 7 deterministic lead lifecycle tests.
+- `backend/tests/notifications/`: Phase 7 notification delivery and retry tests.
 - `backend/requirements.txt`: Runtime dependencies.
 - `backend/requirements-dev.txt`: Dev/test/lint dependencies.
 - `backend/Dockerfile`: Backend image definition.
 
 ## Frontend structure
 
-Created in Phase 5:
+Created in Phase 5 and extended in Phase 7:
 
 - `frontend/app/`: Next.js App Router routes for login, business portal, and admin portal sections.
 - `frontend/app/login/page.tsx`: Business portal login screen.
 - `frontend/app/portal/layout.tsx`: Protected portal layout.
 - `frontend/app/portal/page.tsx`: Dashboard summary.
 - `frontend/app/portal/documents/page.tsx`: Knowledge base document list and text upload.
-- `frontend/app/portal/leads/page.tsx`: Lead list and selected lead detail.
+- `frontend/app/portal/leads/page.tsx`: Lead list with qualification, notification state, and business status updates.
 - `frontend/app/portal/conversations/page.tsx`: Conversation list and message history.
 - `frontend/app/portal/widget/page.tsx`: Widget status, key creation, and embed snippet.
 - `frontend/app/portal/analytics/page.tsx`: Basic tenant analytics.
@@ -149,6 +155,12 @@ Created in Phase 6:
 - `frontend/app/admin/audit/page.tsx`: Recent tenant-scoped admin audit logs.
 - `frontend/components/AdminShell.tsx`: Protected admin shell and navigation.
 - `frontend/lib/auth/admin-session.ts`: Browser admin session storage helper.
+
+Extended in Phase 7:
+
+- `frontend/components/StatusPill.tsx`: Status styles for lead lifecycle and notification delivery states.
+- `frontend/lib/api/client.ts`: Business portal lead status update API helper.
+- `frontend/lib/api/types.ts`: Lead qualification and notification response fields.
 
 ## Widget structure
 
@@ -175,10 +187,11 @@ Created:
 - `backend/migrations/versions/20260522_0002_document_chunks_vector.py`
 - `backend/migrations/versions/20260522_0003_widget_configs.py`
 - `backend/migrations/versions/20260522_0004_admin_users.py`
+- `backend/migrations/versions/20260523_0005_lead_notifications.py`
 
 ## Deployment files
 
-Created across Phases 1 through 6:
+Created across Phases 1 through 7:
 
 - `docker-compose.yml`
   - Backend service.
@@ -193,7 +206,7 @@ Planned future areas:
 
 ## Test structure
 
-Created across Phases 1 through 5:
+Created across Phases 1 through 7:
 
 - `backend/tests/`
 - `backend/tests/test_tenant_models.py`
@@ -201,8 +214,10 @@ Created across Phases 1 through 5:
 - `backend/tests/chat/`
 - `backend/tests/business/`
 - `backend/tests/admin/`
+- `backend/tests/leads/`
+- `backend/tests/notifications/`
 - `frontend/tests/`
 
 Planned future areas:
 
-- Notification privacy tests.
+- Expanded analytics and end-to-end deployment tests.

@@ -2,6 +2,131 @@
 
 Use this file to record phase completion notes. Add a new entry after each phase or major instruction.
 
+## 2026-05-23 - Phase 7: Notifications and lead workflow
+
+### Phase
+
+Phase 7: Notifications and lead workflow
+
+### Date
+
+2026-05-23
+
+### Tasks completed
+
+- P7-T1: Define lead qualification workflow
+- P7-T2: Implement lead lifecycle
+- P7-T3: Implement email provider abstraction
+- P7-T4: Queue lead notifications
+- P7-T5: Add notification and lead tests
+
+### Files changed
+
+- `.env.example`
+- `Readme.md`
+- `backend/app/main.py`
+- `backend/app/api/business_portal.py`
+- `backend/app/business/service.py`
+- `backend/app/chat/service.py`
+- `backend/app/core/config.py`
+- `backend/app/leads/`
+- `backend/app/models/lead.py`
+- `backend/app/models/notification.py`
+- `backend/app/models/__init__.py`
+- `backend/app/notifications/`
+- `backend/app/providers/email/`
+- `backend/app/schemas/business_portal.py`
+- `backend/migrations/versions/20260523_0005_lead_notifications.py`
+- `backend/tests/business/test_business_portal_api.py`
+- `backend/tests/chat/test_chat_api.py`
+- `backend/tests/leads/`
+- `backend/tests/notifications/`
+- `docker-compose.yml`
+- `frontend/app/portal/leads/page.tsx`
+- `frontend/components/StatusPill.tsx`
+- `frontend/lib/api/client.ts`
+- `frontend/lib/api/types.ts`
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+- `project-assets/roadmap/roadmap_status.json`
+- `project-assets/roadmap/latest_roadmap.png`
+- `project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260523_010429.png`
+
+### Tests run
+
+- `python3 -m pytest backend/tests` - passed, 35 tests
+- `python3 -m compileall backend/app backend/tests backend/migrations` - passed
+- `PYTHONPATH=backend DATABASE_URL=sqlite:////private/tmp/ai_magnet_phase7_migration_20260523_final.sqlite python3 -m alembic -c backend/alembic.ini upgrade head` - passed
+- `docker compose config` - passed
+- `npm run lint` from `frontend/` - passed
+- `npm run typecheck` from `frontend/` - passed
+- `npm test` from `frontend/` - passed, 1 Node static check
+- `npm run build` from `frontend/` - passed, 17 app routes generated
+- Browser smoke check of `http://localhost:3000/portal/leads` against a seeded local SQLite backend - passed; login, lead rendering, and status update from `notified` to `contacted` worked
+- `python3 -m json.tool project-assets/roadmap/roadmap_status.json` - passed
+- `git diff --check` - passed
+- `python3 -m ruff check backend/app backend/tests` - not run; Ruff is not installed in the current interpreter
+
+### Context snapshot summary
+
+Phase 7 notification and lead workflow is ready for review. The backend now qualifies leads deterministically, stores qualification and notification state, exposes tenant-scoped lead status transitions to the business portal, queues notification deliveries in the database, and sends through a provider abstraction that defaults to a no-network console provider and can use SMTP through environment variables. The business portal leads table now displays lead qualification and notification state and can mark leads contacted, closed, or disqualified.
+
+### Active modules touched
+
+- Lead lifecycle workflow service
+- Tenant-scoped lead capture integration
+- Email provider abstraction and SMTP provider
+- Notification delivery queue/service/templates
+- Notification settings and delivery ORM models
+- Lead lifecycle migration
+- Business portal lead API and UI
+- CORS method configuration for browser PATCH requests
+- Backend lead/notification/business portal tests
+- Project memory files
+- Visual roadmap artifacts
+
+### Memory files updated
+
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+
+### roadmap_status_updated
+
+yes
+
+### roadmap_snapshot_created
+
+`project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260523_010429.png`
+
+### latest_roadmap_updated
+
+yes
+
+### Known issues
+
+- Business and super admin authentication remain MVP email/session contracts without passwords, MFA, or external identity provider integration.
+- Notification delivery is DB-backed and synchronous for the MVP; a dedicated worker/Redis-backed queue can be introduced in a later phase if needed.
+- `EMAIL_PROVIDER=console` marks delivery as successful locally without contacting an SMTP server; production needs `EMAIL_PROVIDER=smtp` plus SMTP settings.
+- Ruff is listed in backend dev requirements but is not installed in the current interpreter.
+- PostgreSQL migrations were validated with SQLite in this session unless a live PostgreSQL container is started separately.
+- Analytics expansion, CI, deployment hardening, and production security review remain future phases.
+
+### Next phase readiness
+
+Phase 8 can begin only after this Phase 7 branch is reviewed/merged and the user explicitly instructs Codex to start Phase 8.
+
 ## 2026-05-22 - Phase 6: Super admin portal
 
 ### Phase

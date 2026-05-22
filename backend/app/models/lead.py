@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from sqlalchemy import ForeignKey, String, Text
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, IdMixin, TenantScopedMixin, TimestampMixin
@@ -26,4 +28,16 @@ class Lead(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     suburb: Mapped[str | None] = mapped_column(String(160), nullable=True)
     urgency: Mapped[str | None] = mapped_column(String(80), nullable=True)
     status: Mapped[str] = mapped_column(String(60), nullable=False, default="new", index=True)
+    qualified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    qualification_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notification_status: Mapped[str] = mapped_column(
+        String(40),
+        nullable=False,
+        default="not_queued",
+        index=True,
+    )
+    last_notified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

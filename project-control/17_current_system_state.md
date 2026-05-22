@@ -2,11 +2,11 @@
 
 ## Last updated
 
-2026-05-22
+2026-05-23
 
 ## Current implemented modules
 
-Phase 6 super admin portal foundation is implemented and ready for review.
+Phase 7 notifications and lead workflow is implemented and ready for review.
 
 Implemented repository assets:
 
@@ -51,6 +51,14 @@ Implemented repository assets:
 - Admin portal pages for login, overview, tenants, tenant detail/support context, usage, health, and audit logs.
 - Frontend admin API client and browser session helper.
 - Backend admin tests covering admin login/session, business-token rejection, tenant management, limited support context, usage, health, and audit logging.
+- Deterministic lead lifecycle workflow that marks leads `needs_info`, `qualified`, `notified`, `contacted`, `closed`, or `disqualified` using backend rules.
+- Lead qualification and notification state fields on `leads`.
+- Tenant-scoped `business_notification_settings` and `notification_deliveries` ORM models.
+- Email provider abstraction with local console and SMTP providers.
+- DB-backed notification queue/service with delivery attempts, retry scheduling, sent state, and failure state.
+- Chat lead capture integration that queues and sends newly qualified lead notifications.
+- Business portal lead status update endpoint and leads UI showing qualification and notification state.
+- Backend lead workflow and notification delivery tests.
 - `.env.example` local configuration template.
 - `docker-compose.yml` local/dev backend, frontend, PostgreSQL/pgvector, and Redis foundation.
 - `.gitignore` for local env files, Python caches, logs, macOS metadata, and generated frontend artifacts.
@@ -69,6 +77,7 @@ Configured but not running in this session:
 - Public chat/widget API routes.
 - Business portal API routes.
 - Super admin API routes.
+- Lead workflow and notification services.
 
 Not created yet:
 
@@ -90,6 +99,7 @@ Implemented API:
 - `POST /business-portal/documents`
 - `GET /business-portal/leads`
 - `GET /business-portal/leads/{lead_id}`
+- `PATCH /business-portal/leads/{lead_id}/status`
 - `GET /business-portal/conversations`
 - `GET /business-portal/conversations/{conversation_id}`
 - `GET /business-portal/widget`
@@ -129,16 +139,19 @@ The Phase 4 migration adds `widget_configs` with required `tenant_id`, hashed wi
 
 The Phase 6 migration adds global `admin_users` for platform operators. This table is intentionally not tenant-scoped because super admins are platform-level users, not tenant business users.
 
+The Phase 7 migration adds lead qualification/notification columns to `leads` plus tenant-scoped `business_notification_settings` and `notification_deliveries`.
+
 ## Migrations applied
 
 - `20260522_0001`: Initial tenant schema.
 - `20260522_0002`: Document chunk vector schema.
 - `20260522_0003`: Widget configuration schema.
 - `20260522_0004`: Global admin users.
+- `20260523_0005`: Lead lifecycle notification schema.
 
 ## Active services
 
-None running. Compose configuration validates, but services were not started during Phase 6 validation.
+None running. Compose configuration validates. Temporary local backend/frontend dev servers were started and stopped during Phase 7 browser smoke validation.
 
 ## Deployment status
 
@@ -157,13 +170,14 @@ Planned deployment:
 - Business portal authentication is an MVP email/session contract without passwords or external identity provider integration.
 - Super admin authentication is an MVP email/session contract without passwords, MFA, or external identity provider integration.
 - Tenant-scoped audit logging covers tenant-targeted admin actions; global non-tenant admin events may need a separate audit strategy later.
+- Notification delivery is DB-backed and processed synchronously in the MVP chat path; a dedicated async worker can be introduced later.
+- Local `EMAIL_PROVIDER=console` does not contact SMTP and must be replaced with SMTP settings in production.
 - `npm audit --audit-level=high` passed, but npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
 - The widget is a static MVP asset, not a full frontend build pipeline.
 - Worker choice not made.
 
 ## Incomplete modules
 
-- Lead workflow and notifications.
 - Analytics and usage tracking.
 - CI and deployment.
 

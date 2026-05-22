@@ -66,8 +66,18 @@ class PortalLeadResponse(BaseModel):
     suburb: str | None
     urgency: str | None
     status: str
+    qualified_at: datetime | None
+    qualification_reason: str | None
+    notification_status: str
+    last_notified_at: datetime | None
     notes: str | None
     created_at: datetime
+
+
+class PortalLeadStatusUpdateRequest(BaseModel):
+    """Lead status update request from the business portal."""
+
+    status: str = Field(min_length=1, max_length=60)
 
 
 class PortalMessageResponse(BaseModel):
