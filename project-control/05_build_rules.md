@@ -14,9 +14,24 @@
 - Keep changes scoped to the requested task.
 - Do not delete or overwrite existing files unless explicitly instructed.
 - Every phase must update `09_phase_execution_log.md`.
+- Every phase must update `12_phase_status_matrix.md`.
+- Every phase must update `13_quick_resume.md`.
+- Every phase must update `17_current_system_state.md`.
+- Every phase must update `18_task_execution_queue.md` when task readiness changes.
 - Every major design decision must update `10_decisions_log.md`.
 - Before completing a phase, run available tests, lint checks, and type checks if the repo has them.
 - After completing a phase, provide a git diff summary.
+
+## Context and memory rules
+
+- Future sessions must read `11_master_context_index.md` first and `13_quick_resume.md` second.
+- Avoid unnecessary context expansion.
+- Never load the full repository first unless the user explicitly asks for a full review.
+- Use progressive context loading: small context first, then targeted phase/task docs, then specific code modules.
+- Prefer concise summaries over large logs.
+- Large generated outputs should be summarized into memory files, not pasted in full.
+- Keep memory files synchronized with implementation state.
+- Do not duplicate the full roadmap or task graph inside quick memory files.
 
 ## Multi-tenant data rules
 
