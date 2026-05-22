@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.leads.workflow import LeadWorkflowService
 from app.models.conversation import Conversation, Message
 from app.models.knowledge import KnowledgeDocument
 from app.models.lead import Lead
@@ -56,6 +57,12 @@ class BusinessPortalService:
             Lead.tenant_id == self.tenant_id,
         )
         return self.session.scalars(statement).first()
+
+    def update_lead_status(self, lead_id: str, status: str) -> Lead | None:
+        lead = self.get_lead(lead_id)
+        if lead is None:
+            return None
+        return LeadWorkflowService(self.session).update_business_status(lead, status)
 
     def list_conversations(self) -> list[Conversation]:
         statement = (

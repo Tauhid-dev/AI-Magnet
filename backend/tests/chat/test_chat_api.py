@@ -165,7 +165,10 @@ def test_conversation_message_uses_only_current_tenant_rag_context_and_captures_
             f"/chat/conversations/{conversation_id}/messages",
             json={
                 "widget_key": widget_key,
-                "message": "My name is Alex, phone 0412 345 678. I have a blocked drain in Bondi today.",
+                "message": (
+                    "My name is Alex, phone 0412 345 678. "
+                    "I have a blocked drain in Bondi today."
+                ),
             },
         )
 
@@ -187,7 +190,9 @@ def test_conversation_message_uses_only_current_tenant_rag_context_and_captures_
         lead = session.scalars(select(Lead).where(Lead.tenant_id == tenant_a.id)).one()
         assert lead.conversation_id == conversation_id
         assert lead.job_type == "blocked drain"
-        usage_events = list(session.scalars(select(UsageLog).where(UsageLog.tenant_id == tenant_a.id)))
+        usage_events = list(
+            session.scalars(select(UsageLog).where(UsageLog.tenant_id == tenant_a.id))
+        )
         assert {event.event_type for event in usage_events} == {
             "conversation_started",
             "message_received",

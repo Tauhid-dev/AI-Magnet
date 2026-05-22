@@ -100,3 +100,13 @@ Current admin scope:
 - tenant-scoped admin audit logs
 
 Super admins are stored separately from tenant business users in `admin_users`. The current sign-in flow is an MVP email/session contract for local validation and must be hardened before production.
+
+## Lead notifications
+
+Phase 7 adds deterministic lead qualification and tenant-scoped email notification delivery.
+Leads move from `new` or `needs_info` to `qualified` only after required contact and job fields are captured.
+Qualified leads are queued in `notification_deliveries` and sent through the configured email provider.
+
+Local development uses `EMAIL_PROVIDER=console`, which records a successful delivery without contacting an external SMTP server.
+Set `EMAIL_PROVIDER=smtp` plus the `SMTP_*` variables in `.env` to send real lead notifications.
+The business portal leads table shows qualification and notification state, and lets business users mark leads as contacted, closed, or disqualified.

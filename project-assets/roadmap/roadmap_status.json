@@ -1,8 +1,8 @@
 {
   "project_name": "AI Tradie Receptionist Platform",
   "title": "AI Tradie Receptionist Platform — Phase Roadmap",
-  "active_phase_id": "P6",
-  "last_updated": "2026-05-22",
+  "active_phase_id": "P7",
+  "last_updated": "2026-05-23",
   "phases": [
     {
       "phase_id": "P0",
@@ -163,7 +163,7 @@
     {
       "phase_id": "P6",
       "phase_name": "Super admin portal",
-      "status": "READY_FOR_REVIEW",
+      "status": "COMPLETE",
       "completion_percentage": 100,
       "tasks": [
         "Define super admin role model",
@@ -183,14 +183,14 @@
       ],
       "pending_tasks": [],
       "blocked_tasks": [],
-      "last_updated": "2026-05-22",
-      "notes": "Global AdminUser role model, protected admin APIs, admin portal screens, tenant management, usage, health, support context, and tenant-scoped audit logging are implemented and validated for review."
+      "last_updated": "2026-05-23",
+      "notes": "Global AdminUser role model, protected admin APIs, admin portal screens, tenant management, usage, health, support context, and tenant-scoped audit logging are implemented and merged into master."
     },
     {
       "phase_id": "P7",
       "phase_name": "Notifications and lead workflow",
-      "status": "NOT_STARTED",
-      "completion_percentage": 0,
+      "status": "READY_FOR_REVIEW",
+      "completion_percentage": 100,
       "tasks": [
         "Define lead data fields and qualification rules",
         "Implement lead lifecycle",
@@ -200,8 +200,7 @@
         "Add business notification settings",
         "Add lead and notification tests"
       ],
-      "completed_tasks": [],
-      "pending_tasks": [
+      "completed_tasks": [
         "Define lead data fields and qualification rules",
         "Implement lead lifecycle",
         "Implement SMTP provider abstraction",
@@ -210,9 +209,10 @@
         "Add business notification settings",
         "Add lead and notification tests"
       ],
+      "pending_tasks": [],
       "blocked_tasks": [],
-      "last_updated": "2026-05-22",
-      "notes": "Depends on chat lead capture, tenant model, and worker/queue foundation."
+      "last_updated": "2026-05-23",
+      "notes": "Deterministic lead qualification, tenant-scoped lifecycle transitions, SMTP-compatible email provider abstraction, DB-backed delivery queue/retry state, business notification settings, portal status updates, and tests are implemented and validated for review."
     },
     {
       "phase_id": "P8",
@@ -239,8 +239,8 @@
         "Add tenant-scoped analytics tests"
       ],
       "blocked_tasks": [],
-      "last_updated": "2026-05-22",
-      "notes": "Depends on conversations, leads, business portal, and admin portal foundations."
+      "last_updated": "2026-05-23",
+      "notes": "Depends on Phase 7 review/merge and explicit Phase 8 instruction."
     },
     {
       "phase_id": "P9",
