@@ -21,10 +21,11 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning and control documentation only.
+- Repository contains planning/control documentation and deterministic roadmap visual assets.
 - No application code has been implemented.
 - No backend, frontend, database, worker, infrastructure, or test scaffold exists yet.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
+- `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
 - Current branch may vary; future sessions must start from latest `master`, pull remote, then branch.
 
 ## Current active phase
@@ -57,6 +58,11 @@ Next implementation phase after review: Phase 1: Core backend foundation.
   - Current system state snapshot.
   - Task execution queue.
   - Context recovery checklist.
+- Phase 0 visual roadmap system created:
+  - Roadmap status JSON.
+  - Python/Pillow roadmap generator.
+  - Latest roadmap image.
+  - Historical snapshot folder.
 
 ## Pending phases
 
@@ -118,6 +124,7 @@ Next implementation phase after review: Phase 1: Core backend foundation.
 4. Begin Phase 1 with P1-T1: select backend tooling.
 5. Record the tooling decision in `10_decisions_log.md`.
 6. Update memory files after the phase or major instruction.
+7. Update roadmap status and regenerate the roadmap image after each future phase execution.
 
 ## Files to read next depending on task type
 
@@ -127,6 +134,7 @@ Next implementation phase after review: Phase 1: Core backend foundation.
 - `project-control/13_quick_resume.md`
 - `project-control/12_phase_status_matrix.md`
 - `project-control/18_task_execution_queue.md`
+- `project-assets/roadmap/roadmap_status.json` when visual phase status is relevant.
 
 ### Backend work
 

@@ -12,6 +12,9 @@ Implemented repository assets:
 
 - `project-control/` planning and execution-control documentation.
 - Context-recovery and memory-management documentation.
+- `project-assets/roadmap/` deterministic visual roadmap assets.
+- `project-assets/roadmap/latest_roadmap.png` current visual roadmap image.
+- `project-assets/roadmap/snapshots/` historical roadmap image snapshots.
 
 ## Active infrastructure
 

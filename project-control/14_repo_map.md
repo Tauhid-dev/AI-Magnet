@@ -2,12 +2,13 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation only. Application folders are not created yet.
+The repository currently contains planning/control documentation and visual roadmap assets only. Application folders are not created yet.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
+| `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
 | `backend/` | Not created | Planned FastAPI backend. |
 | `frontend/` | Not created | Planned Next.js business and/or admin portal. |
 | `widget/` | Not created | Planned embeddable website chat widget if kept separate from frontend. |
@@ -24,6 +25,8 @@ The repository currently contains planning/control documentation only. Applicati
 - `project-control/19_context_recovery_checklist.md`: Reset recovery steps.
 - `project-control/02_phase_roadmap.md`: Full phase definitions.
 - `project-control/03_task_dependency_graph.md`: Detailed task dependency IDs.
+- `project-assets/roadmap/roadmap_status.json`: Visual roadmap status source.
+- `project-assets/roadmap/generate_roadmap.py`: Deterministic roadmap image generator.
 
 ## Planning and governance files
 
@@ -49,6 +52,14 @@ Planned future files:
 - `.env.example`
 - `docs/deployment.md`
 - `docs/security.md`
+
+## Visual roadmap files
+
+- `project-assets/roadmap/README.md`: How to use the roadmap system.
+- `project-assets/roadmap/roadmap_status.json`: Phase/task status source.
+- `project-assets/roadmap/generate_roadmap.py`: Python/Pillow image generator.
+- `project-assets/roadmap/latest_roadmap.png`: Current roadmap image.
+- `project-assets/roadmap/snapshots/`: Historical roadmap images.
 
 ## Backend structure
 
