@@ -14,6 +14,13 @@ def parse_bool(value: str | None, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
+def parse_csv(value: str | None, default: list[str] | None = None) -> list[str]:
+    """Parse a comma-separated environment variable into a string list."""
+    if value is None:
+        return list(default or [])
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
 @dataclass(frozen=True)
 class Settings:
     """Runtime settings loaded from environment variables."""
@@ -29,6 +36,9 @@ class Settings:
     log_level: str = field(default_factory=lambda: os.getenv("APP_LOG_LEVEL", "INFO"))
     enable_api_docs: bool = field(
         default_factory=lambda: parse_bool(os.getenv("ENABLE_API_DOCS"), default=True)
+    )
+    cors_allowed_origins: list[str] = field(
+        default_factory=lambda: parse_csv(os.getenv("CORS_ALLOWED_ORIGINS"), ["*"])
     )
 
     database_url: str = field(

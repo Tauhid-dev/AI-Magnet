@@ -2,16 +2,16 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, the Phase 2 tenant/database foundation, and the Phase 3 RAG ingestion/retrieval foundation.
+The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, the Phase 2 tenant/database foundation, the Phase 3 RAG ingestion/retrieval foundation, and the Phase 4 chat/widget foundation.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Exists | FastAPI backend foundation, tenant/database models, RAG services, AI provider abstractions, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
+| `backend/` | Exists | FastAPI backend foundation, tenant/database models, RAG services, AI provider abstractions, chat/widget services, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
 | `frontend/` | Not created | Planned Next.js business and/or admin portal. |
-| `widget/` | Not created | Planned embeddable website chat widget if kept separate from frontend. |
+| `widget/` | Exists | Lightweight static embeddable website chat widget and local test page. |
 | `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
 | `.github/workflows/` | Not created | Planned CI workflows. |
 | `docs/` | Not created | Planned setup, deployment, security, and future module docs. |
@@ -51,6 +51,7 @@ Current infrastructure foundation:
 - `backend/migrations/`
   - `backend/migrations/versions/20260522_0001_initial_tenant_schema.py`
   - `backend/migrations/versions/20260522_0002_document_chunks_vector.py`
+  - `backend/migrations/versions/20260522_0003_widget_configs.py`
 
 Planned future files:
 
@@ -69,14 +70,18 @@ Planned future files:
 
 ## Backend structure
 
-Created across Phases 1 through 3:
+Created across Phases 1 through 4:
 
 - `backend/app/main.py`: FastAPI app factory and application instance.
 - `backend/app/core/config.py`: Environment-backed settings.
 - `backend/app/core/logging.py`: Logging setup.
 - `backend/app/api/router.py`: Top-level API router.
 - `backend/app/api/health.py`: `/health` route.
+- `backend/app/api/widget.py`: Public widget initialization route.
+- `backend/app/api/chat.py`: Public conversation start and message routes.
 - `backend/app/schemas/health.py`: Health response schema.
+- `backend/app/schemas/widget.py`: Widget request/response schemas.
+- `backend/app/schemas/chat.py`: Conversation, message, and lead capture schemas.
 - `backend/app/db/config.py`: Database URL placeholder helper.
 - `backend/app/db/base.py`: SQLAlchemy base and common mixins.
 - `backend/app/db/session.py`: SQLAlchemy engine/session helpers.
@@ -85,16 +90,20 @@ Created across Phases 1 through 3:
 - `backend/app/db/vector.py`: Portable vector type that compiles to pgvector on PostgreSQL and text on SQLite tests.
 - `backend/app/models/`: Tenant, business, document, conversation, message, lead, usage, and audit ORM models.
 - `backend/app/models/knowledge.py`: Knowledge document and document chunk ORM models.
+- `backend/app/models/widget.py`: Tenant-scoped public widget configuration model.
 - `backend/app/providers/ai/`: AI provider protocols, deterministic local provider, OpenAI-compatible provider, and factories.
 - `backend/app/ai/`: Compatibility exports for AI provider abstractions.
 - `backend/app/rag/`: Text extraction, chunking, ingestion, retrieval, and scoring helpers.
+- `backend/app/chat/`: Conversation orchestration, RAG answer generation, usage logging, and deterministic lead capture.
+- `backend/app/widget/`: Public widget key hashing, resolution, creation, and revocation helpers.
 - `backend/app/workers/`: Worker-style RAG ingestion entrypoint.
 - `backend/app/tenants/`: Tenant/business service helpers.
 - `backend/app/leads/`: Placeholder for later lead workflow.
-- `backend/app/conversations/`: Placeholder for Phase 4 conversation APIs.
+- `backend/app/conversations/`: Reserved package for future conversation-specific helpers.
 - `backend/tests/`: Backend health/config, tenant, and RAG tests.
 - `backend/tests/test_tenant_models.py`: Phase 2 tenant CRUD and isolation tests.
 - `backend/tests/rag/`: Phase 3 provider, chunking, ingestion, and retrieval isolation tests.
+- `backend/tests/chat/`: Phase 4 widget initialization, conversation, lead capture, and cross-tenant denial tests.
 - `backend/requirements.txt`: Runtime dependencies.
 - `backend/requirements-dev.txt`: Dev/test/lint dependencies.
 - `backend/Dockerfile`: Backend image definition.
@@ -114,14 +123,17 @@ Planned future areas:
 
 ## Widget structure
 
-Not created yet.
+Created in Phase 4:
+
+- `widget/chat-widget.js`: Lightweight embeddable browser widget.
+- `widget/test-embed.html`: Local embed test page.
+- `widget/README.md`: Basic embed usage notes.
 
 Planned future areas:
 
-- `widget/` or `frontend/widget/`
-- Widget bundle source.
-- Test embed page.
-- Widget API client.
+- Bundled/minified widget build if needed.
+- Widget theming/configuration from the business portal.
+- Browser automation checks once a dev server or widget build pipeline exists.
 
 ## Database and migration location
 
@@ -132,10 +144,11 @@ Created:
 - `backend/migrations/`
 - `backend/migrations/versions/20260522_0001_initial_tenant_schema.py`
 - `backend/migrations/versions/20260522_0002_document_chunks_vector.py`
+- `backend/migrations/versions/20260522_0003_widget_configs.py`
 
 ## Deployment files
 
-Created across Phases 1 through 3:
+Created across Phases 1 through 4:
 
 - `docker-compose.yml`
 
@@ -146,11 +159,12 @@ Planned future areas:
 
 ## Test structure
 
-Created in Phase 1:
+Created across Phases 1 through 4:
 
 - `backend/tests/`
 - `backend/tests/test_tenant_models.py`
 - `backend/tests/rag/`
+- `backend/tests/chat/`
 
 Planned future areas:
 

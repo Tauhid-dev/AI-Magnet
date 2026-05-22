@@ -1,7 +1,7 @@
 {
   "project_name": "AI Tradie Receptionist Platform",
   "title": "AI Tradie Receptionist Platform — Phase Roadmap",
-  "active_phase_id": "P3",
+  "active_phase_id": "P4",
   "last_updated": "2026-05-22",
   "phases": [
     {
@@ -79,7 +79,7 @@
     {
       "phase_id": "P3",
       "phase_name": "RAG ingestion and retrieval",
-      "status": "READY_FOR_REVIEW",
+      "status": "COMPLETE",
       "completion_percentage": 100,
       "tasks": [
         "Enable pgvector and vector schema",
@@ -102,13 +102,13 @@
       "pending_tasks": [],
       "blocked_tasks": [],
       "last_updated": "2026-05-22",
-      "notes": "pgvector-compatible document chunks, AI provider abstraction, tenant-scoped ingestion/retrieval, and RAG isolation tests are ready for review."
+      "notes": "pgvector-compatible document chunks, AI provider abstraction, tenant-scoped ingestion/retrieval, and RAG isolation tests are complete."
     },
     {
       "phase_id": "P4",
       "phase_name": "Chat widget and conversation API",
-      "status": "NOT_STARTED",
-      "completion_percentage": 0,
+      "status": "READY_FOR_REVIEW",
+      "completion_percentage": 100,
       "tasks": [
         "Define widget authentication contract",
         "Create conversation start and message endpoints",
@@ -118,8 +118,7 @@
         "Add deterministic lead capture fields",
         "Add chat and widget tests"
       ],
-      "completed_tasks": [],
-      "pending_tasks": [
+      "completed_tasks": [
         "Define widget authentication contract",
         "Create conversation start and message endpoints",
         "Connect retrieval and AI answer generation",
@@ -128,9 +127,10 @@
         "Add deterministic lead capture fields",
         "Add chat and widget tests"
       ],
+      "pending_tasks": [],
       "blocked_tasks": [],
       "last_updated": "2026-05-22",
-      "notes": "Depends on tenant model, RAG retrieval, and AI chat provider abstraction."
+      "notes": "Widget key resolution, conversation API, tenant-filtered AI answers, static widget, lead capture, usage logging, and tests are ready for review."
     },
     {
       "phase_id": "P5",

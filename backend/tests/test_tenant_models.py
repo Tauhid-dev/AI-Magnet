@@ -14,6 +14,7 @@ from app.models import (
     Lead,
     Message,
     UsageLog,
+    WidgetConfig,
 )
 from app.tenants.service import TenantService
 
@@ -89,6 +90,7 @@ def test_tenant_owned_models_have_required_tenant_id_column():
         Lead,
         Message,
         UsageLog,
+        WidgetConfig,
     ]
 
     for model in tenant_owned_models:

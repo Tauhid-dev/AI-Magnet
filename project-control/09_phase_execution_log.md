@@ -2,6 +2,120 @@
 
 Use this file to record phase completion notes. Add a new entry after each phase or major instruction.
 
+## 2026-05-22 - Phase 4: Chat widget and conversation API
+
+### Phase
+
+Phase 4: Chat widget and conversation API
+
+### Date
+
+2026-05-22
+
+### Tasks completed
+
+- P4-T1: Define widget authentication contract
+- P4-T2: Build conversation API
+- P4-T3: Connect AI answer generation
+- P4-T4: Build embeddable widget
+- P4-T5: Add lead capture prompts
+- P4-T6: Add chat/widget tests
+
+### Files changed
+
+- `backend/app/api/chat.py`
+- `backend/app/api/widget.py`
+- `backend/app/api/router.py`
+- `backend/app/core/config.py`
+- `backend/app/main.py`
+- `backend/app/chat/`
+- `backend/app/widget/`
+- `backend/app/models/widget.py`
+- `backend/app/models/__init__.py`
+- `backend/app/schemas/chat.py`
+- `backend/app/schemas/widget.py`
+- `backend/migrations/versions/20260522_0003_widget_configs.py`
+- `backend/tests/chat/`
+- `backend/tests/test_config.py`
+- `backend/tests/test_tenant_models.py`
+- `widget/`
+- `.env.example`
+- `docker-compose.yml`
+- `Readme.md`
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+- `project-assets/roadmap/roadmap_status.json`
+- `project-assets/roadmap/latest_roadmap.png`
+- `project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260522_195505.png`
+
+### Tests run
+
+- `python3 -m pytest backend/tests` - passed, 21 tests
+- `python3 -m compileall backend/app backend/tests backend/migrations` - passed
+- `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head` - passed
+- `docker compose config` - passed
+- `node --check widget/chat-widget.js` - passed
+- `python3 -c "import sys; sys.path.insert(0, 'backend'); from app.main import create_app; app=create_app(); print(sorted(route.path for route in app.routes if route.path in {'/widget/init','/chat/conversations','/chat/conversations/{conversation_id}/messages'})); print(app.user_middleware[0].cls.__name__)"` - passed
+- `python3 -m json.tool project-assets/roadmap/roadmap_status.json` - passed
+- `git diff --check` - passed
+- `python3 -m ruff --version` - Ruff not installed in current interpreter
+
+### Context snapshot summary
+
+Phase 4 chat/widget foundation is ready for review. The backend now has a public widget key contract with revocation support, widget initialization, tenant-scoped conversation start and message endpoints, CORS configuration for browser embeds, tenant-filtered RAG-backed answer generation, deterministic lead capture, message usage logging, and tests for widget initialization, revoked keys, cross-tenant denial, RAG context isolation, and lead capture. A lightweight embeddable widget and local test embed page exist under `widget/`. Phase 5 business portal work has not started.
+
+### Active modules touched
+
+- Widget key model and resolver
+- Chat API routes and service layer
+- RAG/AI chat integration
+- Deterministic lead capture
+- Usage logging for chat events
+- Static embeddable widget assets
+- Backend chat/widget tests
+- Project memory files
+- Visual roadmap artifacts
+
+### Memory files updated
+
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+
+### roadmap_status_updated
+
+yes
+
+### roadmap_snapshot_created
+
+`project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260522_195505.png`
+
+### latest_roadmap_updated
+
+yes
+
+### Known issues
+
+- Ruff is listed in `backend/requirements-dev.txt` but was not installed in the current interpreter, so linting was not run locally.
+- Alembic migration was validated with SQLite in memory; it was not run against a live PostgreSQL container in this session.
+- The widget is a lightweight static MVP asset, not a bundled Next.js package.
+- Widget key creation is available through backend service code for now; business-portal management screens belong to a later phase.
+
+### Next phase readiness
+
+Phase 5 can begin only after this Phase 4 branch is reviewed/merged and the user explicitly instructs Codex to start Phase 5.
+
 ## 2026-05-22 - Phase 3: RAG ingestion and retrieval
 
 ### Phase
