@@ -40,6 +40,15 @@ class Settings:
     cors_allowed_origins: list[str] = field(
         default_factory=lambda: parse_csv(os.getenv("CORS_ALLOWED_ORIGINS"), ["*"])
     )
+    business_portal_session_secret: str = field(
+        default_factory=lambda: os.getenv(
+            "BUSINESS_PORTAL_SESSION_SECRET",
+            "change-me-local-business-portal-secret",
+        )
+    )
+    business_portal_session_ttl_minutes: int = field(
+        default_factory=lambda: int(os.getenv("BUSINESS_PORTAL_SESSION_TTL_MINUTES", "480"))
+    )
 
     database_url: str = field(
         default_factory=lambda: os.getenv(

@@ -2,6 +2,39 @@
 
 Use this file to record major product, architecture, tooling, security, and deployment decisions.
 
+## DEC-20260522-005: Phase 5 business portal structure and MVP session contract
+
+### Decision ID
+
+DEC-20260522-005
+
+### Date
+
+2026-05-22
+
+### Context
+
+Phase 5 requires a business portal that can be validated before the super admin portal exists. The portal needs tenant-aware sessions, document upload/listing, lead and conversation views, widget setup, and basic analytics while preserving tenant isolation and keeping future admin work separate.
+
+### Decision
+
+Create one `frontend/` Next.js, TypeScript, and TailwindCSS app for the business portal first, with reusable shell/API/auth patterns that Phase 6 may extend or split later if needed. Add backend `/business-portal` API routes protected by an MVP HMAC bearer-session token. Business portal login resolves an active `BusinessUser` by tenant slug and email, then every protected route reloads the user and tenant context from the token and filters all data by that tenant. Store the bearer token in browser localStorage for the MVP portal session.
+
+### Alternatives considered
+
+- Creating separate `apps/business-portal/` and `apps/admin-portal/` packages immediately.
+- Building a mock-only frontend without backend portal routes.
+- Delaying business session handling until a full auth provider exists.
+- Implementing password or external identity provider flows during Phase 5.
+
+### Reason
+
+A single `frontend/` app keeps the MVP simple and matches the current repo size. Backend-owned session verification keeps tenant filtering server-side instead of trusting browser-provided tenant IDs. The email/session MVP contract is enough to exercise portal UX and tenant isolation tests, while production-grade auth can be hardened in a later security/auth phase.
+
+### Impact
+
+Future Phase 6 work must decide whether to add protected admin routes in the same app or split an admin app. Before production launch, the business auth flow must add password, magic-link, or external IdP verification, tighter token rotation/revocation, and audit logging for sensitive portal actions.
+
 ## DEC-20260522-004: Phase 4 public widget key and chat API contract
 
 ### Decision ID

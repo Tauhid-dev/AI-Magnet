@@ -6,7 +6,7 @@
 
 ## Current implemented modules
 
-Phase 4 chat/widget foundation is implemented and ready for review.
+Phase 5 business portal foundation is implemented and ready for review.
 
 Implemented repository assets:
 
@@ -35,9 +35,17 @@ Implemented repository assets:
 - Deterministic lead capture for name, phone, job type, suburb, urgency, and notes.
 - Lightweight static embeddable widget and local test embed page under `widget/`.
 - Chat/widget tests covering active/revoked widget keys, cross-tenant conversation denial, tenant-only RAG context, usage logging, and lead capture.
+- Business portal HMAC bearer-session service with active tenant and business user verification.
+- Tenant-scoped business portal API routes for session, documents, leads, conversations, widget setup, and analytics.
+- Portal document upload endpoint that ingests plain text/Markdown content for the verified tenant.
+- Next.js, TypeScript, and TailwindCSS business portal under `frontend/`.
+- Business portal pages for login, dashboard, documents, leads, conversations, widget setup, and analytics.
+- Frontend typed API client and browser session helper.
+- Frontend static validation test and package lockfile.
+- Backend business portal tests covering login/session, cross-tenant denial, document upload, widget key creation, and analytics.
 - `.env.example` local configuration template.
-- `docker-compose.yml` local/dev backend, PostgreSQL/pgvector, and Redis foundation.
-- `.gitignore` for local env files, Python caches, logs, and macOS metadata.
+- `docker-compose.yml` local/dev backend, frontend, PostgreSQL/pgvector, and Redis foundation.
+- `.gitignore` for local env files, Python caches, logs, macOS metadata, and generated frontend artifacts.
 
 ## Active infrastructure
 
@@ -45,16 +53,17 @@ Configured but not running in this session:
 
 - Docker Compose foundation.
 - Backend service.
+- Frontend service.
 - PostgreSQL/pgvector service.
 - Redis service.
 - Alembic migration tooling.
 - RAG ingestion worker entrypoint.
 - Public chat/widget API routes.
+- Business portal API routes.
 
 Not created yet:
 
 - Nginx configuration.
-- Frontend service.
 - Dedicated worker service.
 - CI pipeline.
 
@@ -66,13 +75,24 @@ Implemented API:
 - `POST /widget/init`
 - `POST /chat/conversations`
 - `POST /chat/conversations/{conversation_id}/messages`
+- `POST /business-portal/auth/login`
+- `GET /business-portal/session`
+- `GET /business-portal/documents`
+- `POST /business-portal/documents`
+- `GET /business-portal/leads`
+- `GET /business-portal/leads/{lead_id}`
+- `GET /business-portal/conversations`
+- `GET /business-portal/conversations/{conversation_id}`
+- `GET /business-portal/widget`
+- `POST /business-portal/widget/keys`
+- `GET /business-portal/analytics`
 
 Planned future API groups:
 
 - `/health`
 - `/auth`
 - `/tenants`
-- `/business`
+- `/business-portal`
 - `/admin`
 - `/documents`
 - `/chat`
@@ -97,7 +117,7 @@ The Phase 4 migration adds `widget_configs` with required `tenant_id`, hashed wi
 
 ## Active services
 
-None running. Compose configuration validates, but services were not started during Phase 4 validation.
+None running. Compose configuration validates, but services were not started during Phase 5 validation.
 
 ## Deployment status
 
@@ -113,16 +133,14 @@ Planned deployment:
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
 - PostgreSQL migrations were not run against a live PostgreSQL container in this session; Alembic was validated against SQLite in memory.
 - Retrieval currently scores tenant-filtered chunks in Python for MVP simplicity; optimized database vector search can be introduced later.
-- Widget key creation is available through service code but not yet exposed in a business portal.
+- Business portal authentication is an MVP email/session contract without passwords or external identity provider integration.
+- `npm audit --audit-level=high` passed, but npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
 - The widget is a static MVP asset, not a full frontend build pipeline.
-- Frontend app structure decision not made.
-- Auth/session model decision not made.
+- Super admin role model decision not made.
 - Worker choice not made.
 
 ## Incomplete modules
 
-- Document upload API endpoint.
-- Business portal.
 - Super admin portal.
 - Lead workflow and notifications.
 - Analytics and usage tracking.
