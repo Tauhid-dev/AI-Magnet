@@ -2,6 +2,40 @@
 
 Use this file to record major product, architecture, tooling, security, and deployment decisions.
 
+## DEC-20260523-009: Phase 9 CI and single-host deployment hardening
+
+### Decision ID
+
+DEC-20260523-009
+
+### Date
+
+2026-05-23
+
+### Context
+
+Phase 9 requires security review, expanded tests, CI, Docker Compose finalization, Nginx routing, deployment documentation, and release readiness without implementing premium modules. The MVP already has backend, frontend, PostgreSQL/pgvector, Redis, tenant isolation, admin routes, and analytics foundations.
+
+### Decision
+
+Use GitHub Actions for CI with separate backend, frontend, and Docker Compose validation jobs. Keep the first deployment target as a single-host Docker Compose layout with backend, worker, frontend, PostgreSQL/pgvector, Redis, and Nginx. Route browser traffic through Nginx, using `/api/*` for backend API calls and frontend fallback routing for portals. Add production runtime guardrails that reject placeholder session secrets, wildcard CORS, and enabled API docs. Add conservative API security headers and security-focused tests for runtime config, cross-portal token rejection, and tenant analytics boundaries. Wire a long-lived worker process for deployment topology, but leave real queue processing for a later worker decision.
+
+### Alternatives considered
+
+- Splitting backend and frontend into separate deployable repositories.
+- Introducing Kubernetes or managed container orchestration before first VPS deployment.
+- Adding a full queue framework in Phase 9.
+- Using one CI job for all checks instead of separate backend/frontend/Compose jobs.
+- Keeping production safety checks as documentation only.
+
+### Reason
+
+A single-host Docker Compose deployment matches the requested OCI VPS target and keeps the MVP operationally understandable. Separate CI jobs make failures easier to diagnose. Runtime guardrails prevent the riskiest local defaults from accidentally reaching production. A worker process in Compose reserves the operational shape without prematurely choosing Celery, RQ, or another queue framework.
+
+### Impact
+
+Production launch still needs real auth hardening, rate limiting, TLS automation, scheduled backups, and a worker queue decision. Future deployment changes should update `docs/deployment.md`, CI, Docker Compose, and this decision log if the topology changes materially.
+
 ## DEC-20260523-008: Phase 8 usage taxonomy and analytics query model
 
 ### Decision ID

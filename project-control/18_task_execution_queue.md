@@ -6,25 +6,26 @@ This file helps the parent agent choose the next executable tasks without re-rea
 
 ## Current recommended execution order
 
-1. Review and merge Phase 8 analytics and usage tracking foundation.
-2. Do not start Phase 9 unless explicitly instructed by the user.
-3. When instructed, start Phase 9 with tenant isolation and security review.
-4. Record Phase 9 security, testing, CI, or deployment decisions in `10_decisions_log.md`.
+1. Review and merge Phase 9 security, testing, CI, and deployment foundation.
+2. Do not start Phase 10 unless explicitly instructed by the user.
+3. When instructed, start Phase 10 with future-module research and scoping only.
+4. Record Phase 10 premium/future-module decisions in `10_decisions_log.md`.
 5. At the end of every phase, update `project-assets/roadmap/roadmap_status.json` and run `python project-assets/roadmap/generate_roadmap.py`.
 
 ## Ready tasks
 
 | Task ID | Task name | Why ready | Recommended role | Parallel-safe |
 |---|---|---|---|---|
-| REVIEW-P8 | Review Phase 8 branch | Phase 8 implementation and validation are complete locally | Parent Planning Agent | No |
+| REVIEW-P9 | Review Phase 9 branch | Phase 9 implementation and validation are complete locally | Parent Planning Agent | No |
 
 ## Blocked tasks
 
 | Task ID | Task name | Blocked by | Unblock condition |
 |---|---|---|---|
-| P9-T1 | Run tenant isolation and security review | Phase 8 branch review/merge and explicit Phase 9 instruction | User instructs Phase 9 from latest `master` |
-| P9-T2 and later | Security, testing, CI, and deployment tasks | Phase 9 task dependencies and explicit instruction | Complete dependencies in `03_task_dependency_graph.md` |
-| P10 and later | Premium/future modules | MVP stability, customer demand validation, and explicit approval | Complete dependencies in `03_task_dependency_graph.md` and receive explicit approval |
+| P10-T1 | Research voice AI module | Phase 9 branch review/merge and explicit Phase 10 approval | User instructs Phase 10 research from latest `master` |
+| P10-T2 | Research SMS and WhatsApp modules | Phase 9 branch review/merge and explicit Phase 10 approval | User instructs Phase 10 research from latest `master` |
+| P10-T3 | Research billing module | Phase 9 branch review/merge and explicit Phase 10 approval | User instructs Phase 10 research from latest `master` |
+| P10-T4 | Research automation and local model support | Phase 9 branch review/merge and explicit Phase 10 approval | User instructs Phase 10 research from latest `master` |
 
 ## Dependency status
 
@@ -36,21 +37,21 @@ This file helps the parent agent choose the next executable tasks without re-rea
 - Phase 5: Complete.
 - Phase 6: Complete.
 - Phase 7: Complete.
-- Phase 8: Ready for review.
-- Phase 9: Not started; waits for explicit user instruction after Phase 8 review/merge.
-- Phase 10: Not ready.
+- Phase 8: Complete.
+- Phase 9: Ready for review.
+- Phase 10: Not started; waits for explicit user instruction after Phase 9 review/merge.
 
 ## Tasks safe for parallel execution
 
-Currently none, because the next step is Phase 8 review/merge rather than implementation.
+Currently none, because the next step is Phase 9 review/merge rather than implementation.
 
 Roadmap updates should happen after phase work and memory updates are complete, so they should not run in parallel with status-changing tasks.
 
-After Phase 9 starts:
+After Phase 10 starts:
 
-- Tenant isolation and security review should happen before CI/deployment hardening.
-- Backend security fixes, frontend test expansion, and deployment documentation can proceed in parallel only after review findings are known and scoped.
-- CI pipeline work should run after test/lint commands are confirmed.
+- Phase 10 tasks are research/scoping tasks unless the user explicitly approves implementation.
+- Voice, messaging, billing, and automation research can run in parallel because their output files are separate.
+- Do not implement Voice AI, WhatsApp, SMS, Stripe, n8n, mobile apps, marketplace, or multi-region infrastructure without a new explicit instruction.
 
 ## Queue update rules
 

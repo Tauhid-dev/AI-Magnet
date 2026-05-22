@@ -32,7 +32,12 @@ Create a local `.env` from `.env.example`, then run:
 docker compose up --build
 ```
 
-This starts the backend, frontend, PostgreSQL with pgvector, and Redis as development dependencies. Notification workflow, CI, and production deployment automation are still future phases.
+This starts the backend, worker, frontend, PostgreSQL with pgvector, Redis, and Nginx as development dependencies.
+The Nginx reverse proxy is available at:
+
+```text
+http://127.0.0.1:8080
+```
 
 ## Database migrations
 
@@ -118,3 +123,15 @@ Chat, RAG ingestion, widget key, lead status, and notification workflows record 
 
 The business portal analytics page shows tenant-only usage totals, lead/document status breakdowns, notification counts, and recent usage events.
 The super admin usage page shows platform aggregate counts, usage breakdowns, and per-tenant summaries without exposing raw lead PII.
+
+## Security, CI, and deployment
+
+Phase 9 adds GitHub Actions CI, Nginx routing, Docker Compose healthchecks, production runtime guardrails, security headers, and deployment/security docs.
+
+Start with:
+
+- `docs/deployment.md`
+- `docs/security.md`
+- `docs/release-readiness.md`
+
+Production mode rejects placeholder session secrets, wildcard CORS, and enabled API docs.

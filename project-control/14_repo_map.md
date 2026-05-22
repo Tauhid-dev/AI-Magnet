@@ -2,19 +2,19 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, and Phase 1 through Phase 8 MVP foundations.
+The repository currently contains planning/control documentation, visual roadmap assets, and Phase 1 through Phase 9 MVP foundations.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Exists | FastAPI backend foundation, tenant/database/admin/notification models, RAG services, AI and email provider abstractions, chat/widget services, business portal routes/services, super admin routes/services, lead workflow, notification services, usage/analytics services, audit helpers, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
+| `backend/` | Exists | FastAPI backend foundation, tenant/database/admin/notification models, RAG services, AI and email provider abstractions, chat/widget services, business portal routes/services, super admin routes/services, lead workflow, notification services, usage/analytics services, security guardrails, worker wiring, audit helpers, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
 | `frontend/` | Exists | Next.js, TypeScript, and TailwindCSS business portal and super admin portal foundation with expanded analytics dashboards. |
 | `widget/` | Exists | Lightweight static embeddable website chat widget and local test page. |
-| `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
-| `.github/workflows/` | Not created | Planned CI workflows. |
-| `docs/` | Not created | Planned setup, deployment, security, and future module docs. |
+| `infra/` | Exists | Nginx reverse proxy configuration. |
+| `.github/workflows/` | Exists | GitHub Actions CI workflow. |
+| `docs/` | Exists | Deployment, security, and release-readiness docs. |
 
 ## Important entrypoint files
 
@@ -47,6 +47,7 @@ Current infrastructure foundation:
 - `.env.example`
 - `.gitignore`
 - `docker-compose.yml`
+- `.github/workflows/ci.yml`
 - `backend/Dockerfile`
 - `backend/alembic.ini`
 - `backend/migrations/`
@@ -56,12 +57,12 @@ Current infrastructure foundation:
   - `backend/migrations/versions/20260522_0004_admin_users.py`
   - `backend/migrations/versions/20260523_0005_lead_notifications.py`
 
-Planned future files:
+Phase 9 deployment files:
 
-- `infra/nginx/`
-- `.github/workflows/`
+- `infra/nginx/default.conf`
 - `docs/deployment.md`
 - `docs/security.md`
+- `docs/release-readiness.md`
 
 ## Visual roadmap files
 
@@ -73,11 +74,12 @@ Planned future files:
 
 ## Backend structure
 
-Created across Phases 1 through 8:
+Created across Phases 1 through 9:
 
-- `backend/app/main.py`: FastAPI app factory, application instance, and CORS method configuration.
-- `backend/app/core/config.py`: Environment-backed settings.
+- `backend/app/main.py`: FastAPI app factory, application instance, CORS configuration, and security header middleware.
+- `backend/app/core/config.py`: Environment-backed settings and production runtime security validation.
 - `backend/app/core/logging.py`: Logging setup.
+- `backend/app/core/security.py`: HTTP security header helper.
 - `backend/app/api/router.py`: Top-level API router.
 - `backend/app/api/health.py`: `/health` route.
 - `backend/app/api/widget.py`: Public widget initialization route.
@@ -108,7 +110,7 @@ Created across Phases 1 through 8:
 - `backend/app/business/`: Business portal auth/session, tenant-scoped query services, and lead status update service path.
 - `backend/app/admin/`: Super admin auth/session and data services.
 - `backend/app/audit/`: Tenant-scoped audit logging helpers.
-- `backend/app/workers/`: Worker-style RAG ingestion entrypoint.
+- `backend/app/workers/`: Worker-style RAG ingestion entrypoint and deployment worker runner.
 - `backend/app/tenants/`: Tenant/business service helpers.
 - `backend/app/leads/`: Deterministic lead qualification and lifecycle workflow service.
 - `backend/app/notifications/`: Lead notification templates and DB-backed delivery service.
@@ -124,6 +126,7 @@ Created across Phases 1 through 8:
 - `backend/tests/leads/`: Phase 7 deterministic lead lifecycle tests.
 - `backend/tests/notifications/`: Phase 7 notification delivery and retry tests.
 - `backend/tests/analytics/`: Phase 8 usage logging and tenant/platform analytics tests.
+- `backend/tests/security/`: Phase 9 security guardrail and tenant boundary tests.
 - `backend/requirements.txt`: Runtime dependencies.
 - `backend/requirements-dev.txt`: Dev/test/lint dependencies.
 - `backend/Dockerfile`: Backend image definition.
@@ -200,22 +203,24 @@ Created:
 
 ## Deployment files
 
-Created across Phases 1 through 8:
+Created across Phases 1 through 9:
 
 - `docker-compose.yml`
   - Backend service.
+  - Worker service.
   - Frontend service.
   - PostgreSQL/pgvector service.
   - Redis service.
-
-Planned future areas:
-
-- `infra/nginx/`
+  - Nginx reverse proxy service.
+- `infra/nginx/default.conf`
+- `.github/workflows/ci.yml`
 - `docs/deployment.md`
+- `docs/security.md`
+- `docs/release-readiness.md`
 
 ## Test structure
 
-Created across Phases 1 through 7:
+Created across Phases 1 through 9:
 
 - `backend/tests/`
 - `backend/tests/test_tenant_models.py`
@@ -226,6 +231,7 @@ Created across Phases 1 through 7:
 - `backend/tests/leads/`
 - `backend/tests/notifications/`
 - `backend/tests/analytics/`
+- `backend/tests/security/`
 - `frontend/tests/`
 
 Planned future areas:

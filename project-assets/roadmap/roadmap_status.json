@@ -1,7 +1,7 @@
 {
   "project_name": "AI Tradie Receptionist Platform",
   "title": "AI Tradie Receptionist Platform — Phase Roadmap",
-  "active_phase_id": "P8",
+  "active_phase_id": "P9",
   "last_updated": "2026-05-23",
   "phases": [
     {
@@ -217,7 +217,7 @@
     {
       "phase_id": "P8",
       "phase_name": "Analytics and usage tracking",
-      "status": "READY_FOR_REVIEW",
+      "status": "COMPLETE",
       "completion_percentage": 100,
       "tasks": [
         "Define usage event taxonomy",
@@ -240,13 +240,13 @@
       "pending_tasks": [],
       "blocked_tasks": [],
       "last_updated": "2026-05-23",
-      "notes": "Usage event taxonomy/service, tenant/admin analytics queries, richer business/admin dashboards, and tenant-scoped analytics tests are implemented and validated for review."
+      "notes": "Usage event taxonomy/service, tenant/admin analytics queries, richer business/admin dashboards, and tenant-scoped analytics tests are implemented and merged into master."
     },
     {
       "phase_id": "P9",
       "phase_name": "Security, testing, CI, and deployment",
-      "status": "NOT_STARTED",
-      "completion_percentage": 0,
+      "status": "READY_FOR_REVIEW",
+      "completion_percentage": 100,
       "tasks": [
         "Run tenant isolation review",
         "Add missing backend and frontend tests",
@@ -256,8 +256,7 @@
         "Document environment variables and secrets",
         "Document deployment and rollback process"
       ],
-      "completed_tasks": [],
-      "pending_tasks": [
+      "completed_tasks": [
         "Run tenant isolation review",
         "Add missing backend and frontend tests",
         "Add lint, type, and test CI pipeline",
@@ -266,9 +265,10 @@
         "Document environment variables and secrets",
         "Document deployment and rollback process"
       ],
+      "pending_tasks": [],
       "blocked_tasks": [],
       "last_updated": "2026-05-23",
-      "notes": "Depends on Phase 8 review/merge and explicit Phase 9 instruction."
+      "notes": "CI, Docker Compose worker/Nginx wiring, security guardrails, security tests, deployment/security docs, and release readiness review are implemented and validated for review."
     },
     {
       "phase_id": "P10",

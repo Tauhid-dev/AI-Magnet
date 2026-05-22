@@ -7,6 +7,16 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 
 
+INSECURE_SECRET_VALUES = frozenset(
+    {
+        "",
+        "change-me-before-production",
+        "change-me-local-admin-portal-secret",
+        "change-me-local-business-portal-secret",
+    }
+)
+
+
 def parse_bool(value: str | None, default: bool = False) -> bool:
     """Parse common environment boolean strings."""
     if value is None:
@@ -114,6 +124,29 @@ class Settings:
     smtp_starttls: bool = field(
         default_factory=lambda: parse_bool(os.getenv("SMTP_STARTTLS"), default=True)
     )
+
+    def production_security_issues(self) -> list[str]:
+        """Return production-only configuration issues."""
+        if self.environment.strip().lower() not in {"prod", "production"}:
+            return []
+        issues: list[str] = []
+        if self.business_portal_session_secret in INSECURE_SECRET_VALUES:
+            issues.append("BUSINESS_PORTAL_SESSION_SECRET must be set to a strong secret")
+        if self.admin_portal_session_secret in INSECURE_SECRET_VALUES:
+            issues.append("ADMIN_PORTAL_SESSION_SECRET must be set to a strong secret")
+        if "*" in self.cors_allowed_origins:
+            issues.append("CORS_ALLOWED_ORIGINS must not contain '*' in production")
+        if self.enable_api_docs:
+            issues.append("ENABLE_API_DOCS must be false in production")
+        return issues
+
+    def validate_runtime_security(self) -> None:
+        """Raise if production configuration is unsafe."""
+        issues = self.production_security_issues()
+        if issues:
+            raise RuntimeError(
+                "Production security configuration invalid: " + "; ".join(issues)
+            )
 
 
 @lru_cache
