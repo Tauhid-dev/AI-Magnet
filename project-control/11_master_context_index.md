@@ -21,25 +21,28 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation, deterministic roadmap visual assets, and Phase 1 through Phase 8 MVP foundations.
-- Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, business portal, super admin, lead lifecycle, notification, usage logging, and analytics foundations have been implemented.
-- No CI pipeline or production deployment automation exists yet.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, and Phase 1 through Phase 9 MVP foundations.
+- Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, business portal, super admin, lead lifecycle, notification, usage logging, analytics, CI, and deployment-hardening foundations have been implemented.
+- Production authentication hardening, rate limiting, TLS automation, scheduled backups, and a real queue worker remain future production-readiness work.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
 - `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
-- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, email providers, chat/widget services, business portal services/routes, super admin services/routes, lead workflow and notification services, usage and analytics services, audit helpers, config, health endpoint, requirements, Dockerfile, and tests.
+- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, email providers, chat/widget services, business portal services/routes, super admin services/routes, lead workflow and notification services, usage and analytics services, security guardrails, worker wiring, audit helpers, config, health endpoint, requirements, Dockerfile, and tests.
 - `backend/migrations/` contains Alembic migration setup, tenant schema, document chunk/vector, widget config, admin user, and lead notification migrations.
 - `frontend/` contains the Next.js business portal and super admin portal foundations.
 - `widget/` contains the lightweight embeddable chat widget and local test page.
-- `docker-compose.yml` defines local/dev backend, frontend, PostgreSQL/pgvector, and Redis services.
+- `docker-compose.yml` defines local/dev backend, worker, frontend, PostgreSQL/pgvector, Redis, and Nginx services.
+- `.github/workflows/ci.yml` contains backend, frontend, and Compose validation jobs.
+- `infra/nginx/default.conf` contains MVP reverse proxy routing for `/api`, `/health`, and frontend routes.
+- `docs/` contains deployment, security, and release-readiness notes.
 - Current branch may vary; future sessions must start from latest `master`, pull remote, then branch.
 
 ## Current active phase
 
-Phase 8: Analytics and usage tracking.
+Phase 9: Security, testing, CI, and deployment.
 
 Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review and explicit instruction: Phase 9: Security, testing, CI, and deployment.
+Next implementation phase after review and explicit instruction: Phase 10: Premium/future modules.
 
 ## Completed phases
 
@@ -133,10 +136,17 @@ Next implementation phase after review and explicit instruction: Phase 9: Securi
   - Business portal analytics dashboard shows richer metrics, status breakdowns, and recent usage.
   - Super admin usage dashboard shows aggregate usage, status breakdowns, and per-tenant summaries.
   - Backend analytics tests prove tenant analytics do not count another tenant's records.
+- Phase 9 security, testing, CI, and deployment created:
+  - GitHub Actions CI for backend tests/lint/migrations, frontend lint/type/test/build, and Docker Compose config validation.
+  - Docker Compose includes backend, worker, frontend, PostgreSQL/pgvector, Redis, Nginx, and service healthchecks.
+  - Nginx reverse proxy routes `/api/*` to the backend and other browser routes to the frontend.
+  - Production runtime guardrails reject placeholder secrets, wildcard CORS, and enabled API docs.
+  - API responses include conservative security headers.
+  - Security tests cover production config, headers, cross-portal token rejection, and tenant-scoped analytics.
+  - Deployment, security, and release-readiness documentation exists under `docs/`.
 
 ## Pending phases
 
-- Phase 9: Security, testing, CI, and deployment.
 - Phase 10: Premium/future modules.
 
 ## Critical architecture summary
@@ -154,6 +164,9 @@ Next implementation phase after review and explicit instruction: Phase 9: Securi
 - Notification delivery state is tenant-scoped and persisted in the database.
 - Usage events are recorded through a typed service and remain tenant-scoped for tenant analytics.
 - Platform analytics expose aggregate counts and tenant summaries without raw customer lead PII.
+- Production mode validates high-risk runtime settings before the FastAPI app starts.
+- Nginx should expose the public app and proxy backend API calls through `/api` for hosted deployment.
+- CI should run backend, frontend, migration, and Compose checks on branches and pull requests.
 - Super admin functionality must be role-protected and audit-logged.
 - Local/dev deployment should use Docker Compose.
 
@@ -176,26 +189,26 @@ Next implementation phase after review and explicit instruction: Phase 9: Securi
 ## Current blockers
 
 - No technical blockers are known.
-- Phase 9 must not start until Phase 8 is reviewed/merged and the user explicitly instructs it.
+- Phase 10 must not start until Phase 9 is reviewed/merged, MVP stability is accepted, and the user explicitly instructs it.
 
 ## Latest execution state
 
-- Phase 8 analytics and usage tracking exists and validates locally.
-- Backend tests passed with `python3 -m pytest backend/tests` - 38 tests.
+- Phase 9 security, testing, CI, and deployment exists and validates locally.
+- Backend tests passed with `python3 -m pytest backend/tests` - 42 tests.
 - Frontend checks passed with `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
+- Alembic migrations run against SQLite with `PYTHONPATH=backend DATABASE_URL=sqlite:////private/tmp/ai_magnet_phase9_migration.sqlite python3 -m alembic -c backend/alembic.ini upgrade head`.
 - Docker Compose config validates with `docker compose config`.
-- Browser smoke test of the business portal analytics page passed against a seeded local SQLite backend.
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- Next meaningful task, after review and explicit instruction, is Phase 9 task P9-T1: Run tenant isolation and security review.
+- Next meaningful task, after review and explicit instruction, is Phase 10 planning only; premium module implementation must not start without explicit approval.
 
 ## Next recommended actions
 
-1. Review and merge the Phase 8 analytics and usage tracking branch.
+1. Review and merge the Phase 9 security, testing, CI, and deployment branch.
 2. Start the next instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Do not start Phase 9 unless explicitly instructed.
-5. When instructed, begin Phase 9 with tenant isolation and security review planning.
-6. Record any Phase 9 security/deployment decisions in `10_decisions_log.md`.
+4. Do not start Phase 10 unless explicitly instructed.
+5. When instructed, begin Phase 10 with future-module research and scoping only.
+6. Record any Phase 10 premium/future-module decisions in `10_decisions_log.md`.
 7. Update memory files and roadmap artifacts after each future phase execution.
 
 ## Files to read next depending on task type
@@ -244,7 +257,7 @@ Next implementation phase after review and explicit instruction: Phase 9: Securi
 - `project-control/01_architecture_plan.md`
 - `project-control/05_build_rules.md`
 - `project-control/06_security_privacy_rules.md`
-- Future `docker-compose.yml`, `infra/`, `.github/workflows/`, and deployment docs only after they exist.
+- `docker-compose.yml`, `infra/nginx/`, `.github/workflows/`, and `docs/` files relevant to the task.
 
 ### Security or QA work
 

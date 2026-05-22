@@ -2,6 +2,122 @@
 
 Use this file to record phase completion notes. Add a new entry after each phase or major instruction.
 
+## 2026-05-23 - Phase 9: Security, testing, CI, and deployment
+
+### Phase
+
+Phase 9: Security, testing, CI, and deployment
+
+### Date
+
+2026-05-23
+
+### Tasks completed
+
+- P9-T1: Add CI pipeline
+- P9-T2: Finalize Docker Compose development environment
+- P9-T3: Expand security and tenant isolation tests
+- P9-T4: Add deployment documentation
+- P9-T5: Run release readiness review
+
+### Files changed
+
+- `.env.example`
+- `.github/workflows/ci.yml`
+- `Readme.md`
+- `backend/Dockerfile`
+- `backend/app/core/config.py`
+- `backend/app/core/security.py`
+- `backend/app/main.py`
+- `backend/app/workers/runner.py`
+- `backend/tests/security/test_security_boundaries.py`
+- `docker-compose.yml`
+- `docs/deployment.md`
+- `docs/security.md`
+- `docs/release-readiness.md`
+- `infra/nginx/default.conf`
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+- `project-assets/roadmap/roadmap_status.json`
+- `project-assets/roadmap/latest_roadmap.png`
+- `project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260523_014309.png`
+
+### Tests run
+
+- `python3 -m pytest backend/tests/security/test_security_boundaries.py` - passed, 4 tests
+- `python3 -m pytest backend/tests` - passed, 42 tests
+- `python3 -m compileall backend/app backend/tests backend/migrations` - passed
+- `PYTHONPATH=backend DATABASE_URL=sqlite:////private/tmp/ai_magnet_phase9_migration.sqlite python3 -m alembic -c backend/alembic.ini upgrade head` - passed
+- `docker compose config` - passed
+- `docker compose up --build -d` - not completed; Docker daemon is unavailable on this machine
+- `npm run lint` from `frontend/` - passed
+- `npm run typecheck` from `frontend/` - passed
+- `npm test` from `frontend/` - passed, 1 Node static check
+- `npm run build` from `frontend/` - passed, 17 app routes generated
+- `python3 -m json.tool project-assets/roadmap/roadmap_status.json` - passed
+- `git diff --check` - passed
+- `find backend/app backend/tests -name '*.py' -print0 | xargs -0 awk 'length($0) > 100 { print FILENAME ":" FNR ":" length($0) ":" $0 }'` - passed, no output
+- `python3 -m ruff check backend/app backend/tests` - not run; Ruff is not installed in the current interpreter
+
+### Context snapshot summary
+
+Phase 9 security, testing, CI, and deployment is ready for review. The repository now has GitHub Actions CI, Docker Compose service healthchecks, backend worker wiring, Nginx reverse proxy config, production runtime guardrails, API security headers, security-focused backend tests, and operator-facing deployment/security/release-readiness documentation.
+
+### Active modules touched
+
+- CI workflow
+- Docker Compose local/dev deployment
+- Nginx reverse proxy config
+- Backend runtime config validation
+- Backend security headers
+- Worker service wiring
+- Security and tenant-boundary tests
+- Deployment/security/readiness docs
+- Project memory files
+- Visual roadmap artifacts
+
+### Memory files updated
+
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+
+### roadmap_status_updated
+
+yes
+
+### roadmap_snapshot_created
+
+`project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260523_014309.png`
+
+### latest_roadmap_updated
+
+yes
+
+### Known issues
+
+- Ruff is listed in backend dev requirements and configured in CI, but it was not installed in the current interpreter.
+- Full Docker Compose startup could not be validated because the Docker daemon is unavailable on this machine; `docker compose config` passed.
+- Production authentication remains MVP email/session based and needs passwordless/password/MFA or identity-provider hardening before public launch.
+- Rate limiting, TLS certificate automation, and scheduled backup automation are not implemented.
+- Worker service is wired for deployment topology but does not process a queue yet.
+- PostgreSQL migrations were validated with SQLite in this session; live PostgreSQL validation should run in the target environment.
+
+### Next phase readiness
+
+Phase 10 can begin only after this Phase 9 branch is reviewed/merged and the user explicitly instructs Codex to start Phase 10. Phase 10 should begin with research/scoping tasks, not premium module implementation, unless explicitly approved.
+
 ## 2026-05-23 - Phase 8: Analytics and usage tracking
 
 ### Phase

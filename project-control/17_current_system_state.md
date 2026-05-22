@@ -6,7 +6,7 @@
 
 ## Current implemented modules
 
-Phase 8 analytics and usage tracking is implemented and ready for review.
+Phase 9 security, testing, CI, and deployment is implemented and ready for review.
 
 Implemented repository assets:
 
@@ -66,19 +66,29 @@ Implemented repository assets:
 - Business portal analytics API and dashboard with usage counts, lead/document status breakdowns, and recent usage events.
 - Super admin usage API and dashboard with platform aggregate usage and tenant summaries.
 - Backend analytics tests covering tenant isolation and aggregate analytics without raw lead PII.
+- Production runtime guardrails for placeholder session secrets, wildcard CORS, and enabled API docs.
+- API security headers for content-type sniffing, framing, referrer policy, and browser permissions.
+- Long-lived worker process entrypoint for Docker Compose deployment wiring.
+- Security-focused backend tests for runtime guardrails, response headers, cross-portal token rejection, and tenant-scoped analytics.
+- GitHub Actions CI workflow for backend, frontend, migration, and Compose validation.
+- Docker Compose backend, worker, frontend, PostgreSQL/pgvector, Redis, and Nginx services with healthchecks.
+- Nginx reverse proxy config for `/api`, `/health`, and frontend routes.
+- Deployment, security, and release-readiness docs under `docs/`.
 - `.env.example` local configuration template.
-- `docker-compose.yml` local/dev backend, frontend, PostgreSQL/pgvector, and Redis foundation.
+- `docker-compose.yml` local/dev backend, worker, frontend, PostgreSQL/pgvector, Redis, and Nginx foundation.
 - `.gitignore` for local env files, Python caches, logs, macOS metadata, and generated frontend artifacts.
 
 ## Active infrastructure
 
 Configured but not running in this session:
 
-- Docker Compose foundation.
+- Docker Compose foundation with backend, worker, frontend, PostgreSQL/pgvector, Redis, and Nginx. Config validation passes, but full startup was not validated because the Docker daemon is unavailable on this machine.
 - Backend service.
+- Worker service wiring.
 - Frontend service.
 - PostgreSQL/pgvector service.
 - Redis service.
+- Nginx reverse proxy service.
 - Alembic migration tooling.
 - RAG ingestion worker entrypoint.
 - Public chat/widget API routes.
@@ -88,9 +98,9 @@ Configured but not running in this session:
 
 Not created yet:
 
-- Nginx configuration.
-- Dedicated worker service.
-- CI pipeline.
+- Production TLS certificate automation.
+- Scheduled backup automation.
+- Real queue-processing worker implementation.
 
 ## Current APIs
 
@@ -160,35 +170,38 @@ Phase 8 does not add a new migration. It uses the existing tenant-scoped `usage_
 
 ## Active services
 
-None running from this phase. Compose configuration validates. Temporary local backend/frontend dev servers were started and stopped during Phase 8 browser smoke validation.
+None running from this phase. Compose configuration validates. No live services were kept running after Phase 9 validation.
 
 ## Deployment status
 
-Local/dev deployment foundation exists through Docker Compose and `backend/Dockerfile`.
+Local/dev deployment foundation exists through Docker Compose, `backend/Dockerfile`, and `infra/nginx/default.conf`.
 
-Planned deployment:
+Planned deployment target:
 
-- Nginx reverse proxy.
-- OCI VPS target.
+- OCI VPS or equivalent single-host Linux server.
 
 ## Known technical debt
 
-- Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
+- Ruff is selected in dev requirements and configured in CI, but was not installed in the current interpreter during validation.
+- Full Docker Compose startup could not be validated in this session because the Docker daemon is unavailable.
 - PostgreSQL migrations were not run against a live PostgreSQL container in this session; Alembic was validated against SQLite in memory.
 - Retrieval currently scores tenant-filtered chunks in Python for MVP simplicity; optimized database vector search can be introduced later.
-- Business portal authentication is an MVP email/session contract without passwords or external identity provider integration.
+- Business portal authentication is an MVP email/session contract without passwords, MFA, or external identity provider integration.
 - Super admin authentication is an MVP email/session contract without passwords, MFA, or external identity provider integration.
+- Rate limiting is not implemented.
+- TLS certificate automation is not implemented.
+- Scheduled backup automation is documented but not implemented.
 - Tenant-scoped audit logging covers tenant-targeted admin actions; global non-tenant admin events may need a separate audit strategy later.
-- Notification delivery is DB-backed and processed synchronously in the MVP chat path; a dedicated async worker can be introduced later.
+- Notification delivery is DB-backed and processed synchronously in the MVP chat path; the worker service is wired but does not process a queue yet.
 - Analytics are computed directly from transactional tables for MVP simplicity; rollups, materialized views, or cache-backed summaries can be introduced if usage volume requires them.
 - Local `EMAIL_PROVIDER=console` does not contact SMTP and must be replaced with SMTP settings in production.
 - `npm audit --audit-level=high` passed, but npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
 - The widget is a static MVP asset, not a full frontend build pipeline.
-- Worker choice not made.
+- Worker queue framework choice not made.
 
 ## Incomplete modules
 
-- CI and deployment.
+- Premium/future modules.
 
 ## Update rules
 
