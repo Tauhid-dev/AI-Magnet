@@ -2,6 +2,111 @@
 
 Use this file to record phase completion notes. Add a new entry after each phase or major instruction.
 
+## 2026-05-22 - Phase 3: RAG ingestion and retrieval
+
+### Phase
+
+Phase 3: RAG ingestion and retrieval
+
+### Date
+
+2026-05-22
+
+### Tasks completed
+
+- P3-T1: Enable pgvector and vector schema
+- P3-T2: Define AI provider abstraction
+- P3-T3: Build ingestion pipeline
+- P3-T4: Implement tenant-scoped retrieval service
+- P3-T5: Add RAG tests
+
+### Files changed
+
+- `backend/app/db/vector.py`
+- `backend/app/models/knowledge.py`
+- `backend/app/models/__init__.py`
+- `backend/app/providers/`
+- `backend/app/ai/__init__.py`
+- `backend/app/rag/`
+- `backend/app/workers/`
+- `backend/migrations/versions/20260522_0002_document_chunks_vector.py`
+- `backend/tests/rag/`
+- `backend/tests/test_tenant_models.py`
+- `backend/requirements.txt`
+- `.env.example`
+- `docker-compose.yml`
+- `Readme.md`
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+- `project-assets/roadmap/roadmap_status.json`
+- `project-assets/roadmap/latest_roadmap.png`
+- `project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260522_194133.png`
+
+### Tests run
+
+- `python3 -m pytest backend/tests` - passed, 16 tests
+- `python3 -m compileall backend/app backend/tests backend/migrations` - passed
+- `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head` - passed
+- `docker compose config` - passed
+- `python3 -m json.tool project-assets/roadmap/roadmap_status.json` - passed
+- `git diff --check` - passed
+- `python3 -m ruff --version` - Ruff not installed in current interpreter
+
+### Context snapshot summary
+
+Phase 3 RAG foundation is ready for review. The backend now has pgvector-compatible document chunk storage, a PostgreSQL migration that enables `vector`, OpenAI-compatible AI provider abstractions, deterministic local provider support, plain text/Markdown extraction, chunking, tenant-scoped ingestion, tenant-first retrieval, and tests proving ingestion and retrieval do not cross tenant boundaries. Phase 4 chat/widget work has not started.
+
+### Active modules touched
+
+- Database vector type and migrations
+- Knowledge document/chunk models
+- AI provider abstractions
+- RAG extraction, chunking, ingestion, retrieval, and scoring
+- Worker-style ingestion entrypoint
+- Backend tests
+- Project memory files
+- Visual roadmap artifacts
+
+### Memory files updated
+
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+
+### roadmap_status_updated
+
+yes
+
+### roadmap_snapshot_created
+
+`project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260522_194133.png`
+
+### latest_roadmap_updated
+
+yes
+
+### Known issues
+
+- Ruff is listed in `backend/requirements-dev.txt` but was not installed in the current interpreter, so linting was not run locally.
+- Alembic migration was validated with SQLite in memory; it was not run against a live PostgreSQL container in this session.
+- Production vector search is pgvector-ready but retrieval currently scores tenant-filtered chunks in Python for MVP simplicity.
+- No chat widget, conversation API, document upload API endpoint, frontend, or notification workflow exists yet.
+
+### Next phase readiness
+
+Phase 4 can begin only after this Phase 3 branch is reviewed/merged and the user explicitly instructs Codex to start Phase 4.
+
 ## 2026-05-22 - Phase 2: Tenant and database model
 
 ### Phase

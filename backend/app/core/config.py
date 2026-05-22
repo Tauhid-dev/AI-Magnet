@@ -52,6 +52,23 @@ class Settings:
     ai_api_key: str | None = field(
         default_factory=lambda: os.getenv("AI_API_KEY") or None
     )
+    ai_embedding_model: str = field(
+        default_factory=lambda: os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small")
+    )
+    ai_chat_model: str = field(
+        default_factory=lambda: os.getenv("AI_CHAT_MODEL", "gpt-4.1-mini")
+    )
+    ai_embedding_dimensions: int = field(
+        default_factory=lambda: int(os.getenv("AI_EMBEDDING_DIMENSIONS", "1536"))
+    )
+
+    rag_chunk_size: int = field(
+        default_factory=lambda: int(os.getenv("RAG_CHUNK_SIZE", "700"))
+    )
+    rag_chunk_overlap: int = field(
+        default_factory=lambda: int(os.getenv("RAG_CHUNK_OVERLAP", "100"))
+    )
+    rag_top_k: int = field(default_factory=lambda: int(os.getenv("RAG_TOP_K", "5")))
 
 
 @lru_cache

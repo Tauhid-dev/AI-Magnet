@@ -2,14 +2,14 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, and the Phase 2 tenant/database foundation.
+The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, the Phase 2 tenant/database foundation, and the Phase 3 RAG ingestion/retrieval foundation.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Exists | FastAPI backend foundation, tenant/database models, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
+| `backend/` | Exists | FastAPI backend foundation, tenant/database models, RAG services, AI provider abstractions, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
 | `frontend/` | Not created | Planned Next.js business and/or admin portal. |
 | `widget/` | Not created | Planned embeddable website chat widget if kept separate from frontend. |
 | `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
@@ -49,6 +49,8 @@ Current infrastructure foundation:
 - `backend/Dockerfile`
 - `backend/alembic.ini`
 - `backend/migrations/`
+  - `backend/migrations/versions/20260522_0001_initial_tenant_schema.py`
+  - `backend/migrations/versions/20260522_0002_document_chunks_vector.py`
 
 Planned future files:
 
@@ -67,7 +69,7 @@ Planned future files:
 
 ## Backend structure
 
-Created in Phase 1:
+Created across Phases 1 through 3:
 
 - `backend/app/main.py`: FastAPI app factory and application instance.
 - `backend/app/core/config.py`: Environment-backed settings.
@@ -80,30 +82,26 @@ Created in Phase 1:
 - `backend/app/db/session.py`: SQLAlchemy engine/session helpers.
 - `backend/app/db/repository.py`: Tenant-scoped repository helper.
 - `backend/app/db/seed.py`: Explicit local seed helper.
+- `backend/app/db/vector.py`: Portable vector type that compiles to pgvector on PostgreSQL and text on SQLite tests.
 - `backend/app/models/`: Tenant, business, document, conversation, message, lead, usage, and audit ORM models.
-- `backend/app/ai/`: Placeholder for future AI provider abstractions.
-- `backend/app/rag/`: Placeholder for Phase 3 RAG work.
-- `backend/app/tenants/`: Placeholder for Phase 2 tenant work.
-- `backend/app/tenants/service.py`: Basic tenant/business service helpers.
+- `backend/app/models/knowledge.py`: Knowledge document and document chunk ORM models.
+- `backend/app/providers/ai/`: AI provider protocols, deterministic local provider, OpenAI-compatible provider, and factories.
+- `backend/app/ai/`: Compatibility exports for AI provider abstractions.
+- `backend/app/rag/`: Text extraction, chunking, ingestion, retrieval, and scoring helpers.
+- `backend/app/workers/`: Worker-style RAG ingestion entrypoint.
+- `backend/app/tenants/`: Tenant/business service helpers.
 - `backend/app/leads/`: Placeholder for later lead workflow.
 - `backend/app/conversations/`: Placeholder for Phase 4 conversation APIs.
-- `backend/tests/`: Phase 1 health/config tests.
+- `backend/tests/`: Backend health/config, tenant, and RAG tests.
 - `backend/tests/test_tenant_models.py`: Phase 2 tenant CRUD and isolation tests.
+- `backend/tests/rag/`: Phase 3 provider, chunking, ingestion, and retrieval isolation tests.
 - `backend/requirements.txt`: Runtime dependencies.
 - `backend/requirements-dev.txt`: Dev/test/lint dependencies.
 - `backend/Dockerfile`: Backend image definition.
 
 ## Frontend structure
 
-Created in Phase 2:
-
-- `backend/alembic.ini`
-- `backend/migrations/env.py`
-- `backend/migrations/versions/20260522_0001_initial_tenant_schema.py`
-- `backend/app/db/base.py`
-- `backend/app/db/session.py`
-- `backend/app/db/repository.py`
-- `backend/app/models/`
+Not created yet.
 
 Planned future areas:
 
@@ -127,17 +125,17 @@ Planned future areas:
 
 ## Database and migration location
 
-Not created yet.
-
-Planned future areas:
+Created:
 
 - `backend/app/db/`
 - `backend/app/models/`
 - `backend/migrations/`
+- `backend/migrations/versions/20260522_0001_initial_tenant_schema.py`
+- `backend/migrations/versions/20260522_0002_document_chunks_vector.py`
 
 ## Deployment files
 
-Created in Phase 1:
+Created across Phases 1 through 3:
 
 - `docker-compose.yml`
 
@@ -152,11 +150,10 @@ Created in Phase 1:
 
 - `backend/tests/`
 - `backend/tests/test_tenant_models.py`
+- `backend/tests/rag/`
 
 Planned future areas:
 
 - Frontend tests if introduced.
-- Tenant isolation tests.
-- RAG retrieval tests.
 - Admin authorization tests.
 - Notification privacy tests.

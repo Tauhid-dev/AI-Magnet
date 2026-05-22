@@ -21,23 +21,23 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation, deterministic roadmap visual assets, a Phase 1 backend foundation, and a Phase 2 tenant/database foundation.
-- Backend application and database foundations have been implemented.
-- No frontend, worker, RAG, chat widget, or production deployment automation exists yet.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, a Phase 1 backend foundation, a Phase 2 tenant/database foundation, and a Phase 3 RAG ingestion/retrieval foundation.
+- Backend application, database, tenant, AI provider, and RAG foundations have been implemented.
+- No frontend, chat widget, conversation API, document upload API endpoint, notification workflow, or production deployment automation exists yet.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
 - `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
-- `backend/` contains the FastAPI app foundation, config, health endpoint, requirements, Dockerfile, and tests.
-- `backend/migrations/` contains Alembic migration setup and the initial tenant schema migration.
+- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, config, health endpoint, requirements, Dockerfile, and tests.
+- `backend/migrations/` contains Alembic migration setup, the initial tenant schema migration, and the document chunk/vector migration.
 - `docker-compose.yml` defines local/dev backend, PostgreSQL/pgvector, and Redis services.
 - Current branch may vary; future sessions must start from latest `master`, pull remote, then branch.
 
 ## Current active phase
 
-Phase 2: Tenant and database model.
+Phase 3: RAG ingestion and retrieval.
 
 Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review and explicit instruction: Phase 3: RAG ingestion and retrieval.
+Next implementation phase after review and explicit instruction: Phase 4: Chat widget and conversation API.
 
 ## Completed phases
 
@@ -82,10 +82,17 @@ Next implementation phase after review and explicit instruction: Phase 3: RAG in
   - Basic tenant/business service helpers.
   - Local seed helper.
   - Tenant isolation tests.
+- Phase 3 RAG ingestion/retrieval foundation created:
+  - pgvector-compatible `document_chunks` schema and migration.
+  - Portable vector type for PostgreSQL and SQLite validation.
+  - AI provider protocols for embeddings and chat completions.
+  - OpenAI-compatible provider implementation and deterministic local provider.
+  - Plain text/Markdown extraction and chunking helpers.
+  - Tenant-scoped ingestion service and worker-style entrypoint.
+  - Tenant-first retrieval and RAG isolation tests.
 
 ## Pending phases
 
-- Phase 3: RAG ingestion and retrieval.
 - Phase 4: Chat widget and conversation API.
 - Phase 5: Business portal.
 - Phase 6: Super admin portal.
@@ -97,8 +104,8 @@ Next implementation phase after review and explicit instruction: Phase 3: RAG in
 ## Critical architecture summary
 
 - Multi-tenant SaaS platform with tenant-owned records isolated by `tenant_id`.
-- RAG retrieval must only return knowledge chunks for the active tenant.
-- AI provider calls must go through a provider abstraction.
+- RAG retrieval filters document chunks by active `tenant_id` before scoring or returning results.
+- AI provider calls go through embedding and chat-completion provider protocols.
 - Lead capture and qualification should use deterministic business logic where possible.
 - Email notifications should use an SMTP provider abstraction.
 - Super admin functionality must be role-protected and audit-logged.
@@ -123,26 +130,26 @@ Next implementation phase after review and explicit instruction: Phase 3: RAG in
 ## Current blockers
 
 - No technical blockers are known.
-- Phase 3 must not start until the user explicitly instructs it.
-- pgvector/vector schema and AI provider implementation work have not started.
+- Phase 4 must not start until the user explicitly instructs it.
+- Auth/session, widget security contract, and chat API contracts are not defined yet.
 
 ## Latest execution state
 
-- Phase 2 tenant/database foundation exists and validates locally.
-- Tests passed with `python3 -m pytest backend/tests`.
-- Alembic migration runs against SQLite with `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head`.
+- Phase 3 RAG ingestion/retrieval foundation exists and validates locally.
+- Tests passed with `python3 -m pytest backend/tests` - 16 tests.
+- Alembic migrations run against SQLite with `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head`.
 - Docker Compose config validates with `docker compose config`.
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- Next meaningful task, after review and explicit instruction, is Phase 3 task P3-T1: Enable pgvector and vector schema.
+- Next meaningful task, after review and explicit instruction, is Phase 4 task P4-T1: Define widget authentication contract.
 
 ## Next recommended actions
 
-1. Review and merge the Phase 2 tenant/database foundation branch.
+1. Review and merge the Phase 3 RAG ingestion/retrieval foundation branch.
 2. Start the next instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Do not start Phase 3 unless explicitly instructed.
-5. When instructed, begin Phase 3 with P3-T1 or P3-T2 according to dependency readiness.
-6. Record Phase 3 vector/AI provider decisions in `10_decisions_log.md`.
+4. Do not start Phase 4 unless explicitly instructed.
+5. When instructed, begin Phase 4 with widget authentication and conversation API contracts.
+6. Record Phase 4 chat/widget API decisions in `10_decisions_log.md`.
 7. Update memory files and roadmap artifacts after each future phase execution.
 
 ## Files to read next depending on task type
@@ -162,14 +169,14 @@ Next implementation phase after review and explicit instruction: Phase 3: RAG in
 - `project-control/03_task_dependency_graph.md` for active task IDs only.
 - `project-control/05_build_rules.md`
 - `project-control/06_security_privacy_rules.md`
-- Future `backend/` files only after backend exists.
+- Relevant `backend/` files for the active task.
 
 ### Database work
 
 - `project-control/01_architecture_plan.md`
 - `project-control/03_task_dependency_graph.md` Phase 2 and Phase 3 tasks.
 - `project-control/06_security_privacy_rules.md`
-- Future `backend/app/db/`, `backend/app/models/`, and migration files only after they exist.
+- `backend/app/db/`, `backend/app/models/`, and `backend/migrations/` files relevant to the task.
 
 ### RAG/AI work
 
@@ -177,7 +184,7 @@ Next implementation phase after review and explicit instruction: Phase 3: RAG in
 - `project-control/03_task_dependency_graph.md` Phase 3 and Phase 4 tasks.
 - `project-control/05_build_rules.md`
 - `project-control/06_security_privacy_rules.md`
-- Future `backend/app/rag/` and `backend/app/providers/ai/` files only after they exist.
+- `backend/app/rag/`, `backend/app/providers/ai/`, `backend/app/models/knowledge.py`, and relevant tests.
 
 ### Frontend work
 
