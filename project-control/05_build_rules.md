@@ -22,6 +22,15 @@
 - Before completing a phase, run available tests, lint checks, and type checks if the repo has them.
 - After completing a phase, provide a git diff summary.
 
+## Visual roadmap artifact rules
+
+- After every phase execution, update `project-assets/roadmap/roadmap_status.json`.
+- After every phase execution, run `python project-assets/roadmap/generate_roadmap.py`.
+- Save a new snapshot image in `project-assets/roadmap/snapshots/`.
+- Keep `project-assets/roadmap/latest_roadmap.png` updated.
+- Do not overwrite historical snapshots.
+- The roadmap image is a visual progress artifact and must be committed with phase changes.
+
 ## Context and memory rules
 
 - Future sessions must read `11_master_context_index.md` first and `13_quick_resume.md` second.

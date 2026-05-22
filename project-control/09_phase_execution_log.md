@@ -36,6 +36,18 @@ TBD
 
 - TBD
 
+### roadmap_status_updated
+
+yes/no
+
+### roadmap_snapshot_created
+
+TBD
+
+### latest_roadmap_updated
+
+yes/no
+
 ### Known issues
 
 - TBD

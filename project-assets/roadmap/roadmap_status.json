@@ -1,0 +1,302 @@
+{
+  "project_name": "AI Tradie Receptionist Platform",
+  "title": "AI Tradie Receptionist Platform — Phase Roadmap",
+  "active_phase_id": "P1",
+  "last_updated": "2026-05-22",
+  "phases": [
+    {
+      "phase_id": "P0",
+      "phase_name": "Project control and repo setup",
+      "status": "COMPLETE",
+      "completion_percentage": 100,
+      "tasks": [
+        "Create project-control Markdown files",
+        "Define phase boundaries and task dependencies",
+        "Define future agent roles and execution model",
+        "Define strict build, security, and memory rules"
+      ],
+      "completed_tasks": [
+        "Create project-control Markdown files",
+        "Define phase boundaries and task dependencies",
+        "Define future agent roles and execution model",
+        "Define strict build, security, and memory rules"
+      ],
+      "pending_tasks": [],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Baseline project-control files and context-recovery memory docs exist."
+    },
+    {
+      "phase_id": "P1",
+      "phase_name": "Core backend foundation",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Select backend tooling",
+        "Create FastAPI app skeleton",
+        "Add config and environment loading",
+        "Add health endpoint and structured logging",
+        "Add minimal backend test setup"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Select backend tooling",
+        "Create FastAPI app skeleton",
+        "Add config and environment loading",
+        "Add health endpoint and structured logging",
+        "Add minimal backend test setup"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Next recommended phase. Backend tooling decision is the first task."
+    },
+    {
+      "phase_id": "P2",
+      "phase_name": "Tenant and database model",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Choose ORM and migration tooling",
+        "Create tenant and business schema",
+        "Create tenant-owned core data models",
+        "Add database session lifecycle",
+        "Add safe seed/dev data",
+        "Add tenant isolation tests"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Choose ORM and migration tooling",
+        "Create tenant and business schema",
+        "Create tenant-owned core data models",
+        "Add database session lifecycle",
+        "Add safe seed/dev data",
+        "Add tenant isolation tests"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Depends on Phase 1 backend foundation and database tooling decision."
+    },
+    {
+      "phase_id": "P3",
+      "phase_name": "RAG ingestion and retrieval",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Enable pgvector and vector schema",
+        "Add document upload and ingestion status",
+        "Build text extraction and chunking pipeline",
+        "Implement embedding provider interface",
+        "Store embeddings with tenant_id",
+        "Implement tenant-scoped retrieval",
+        "Add RAG isolation tests"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Enable pgvector and vector schema",
+        "Add document upload and ingestion status",
+        "Build text extraction and chunking pipeline",
+        "Implement embedding provider interface",
+        "Store embeddings with tenant_id",
+        "Implement tenant-scoped retrieval",
+        "Add RAG isolation tests"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Depends on tenant database model and AI provider abstraction."
+    },
+    {
+      "phase_id": "P4",
+      "phase_name": "Chat widget and conversation API",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Define widget authentication contract",
+        "Create conversation start and message endpoints",
+        "Connect retrieval and AI answer generation",
+        "Build embeddable widget UI bundle",
+        "Store conversation messages",
+        "Add deterministic lead capture fields",
+        "Add chat and widget tests"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Define widget authentication contract",
+        "Create conversation start and message endpoints",
+        "Connect retrieval and AI answer generation",
+        "Build embeddable widget UI bundle",
+        "Store conversation messages",
+        "Add deterministic lead capture fields",
+        "Add chat and widget tests"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Depends on tenant model, RAG retrieval, and AI chat provider abstraction."
+    },
+    {
+      "phase_id": "P5",
+      "phase_name": "Business portal",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Select frontend structure",
+        "Create Next.js portal foundation",
+        "Add business auth and session handling",
+        "Build knowledge base management UI",
+        "Build leads and conversations UI",
+        "Build widget setup view",
+        "Build basic analytics UI"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Select frontend structure",
+        "Create Next.js portal foundation",
+        "Add business auth and session handling",
+        "Build knowledge base management UI",
+        "Build leads and conversations UI",
+        "Build widget setup view",
+        "Build basic analytics UI"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Depends on backend, tenant auth, document APIs, conversation APIs, and lead APIs."
+    },
+    {
+      "phase_id": "P6",
+      "phase_name": "Super admin portal",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Define super admin role model",
+        "Build tenant list and detail pages",
+        "Build tenant creation and status management",
+        "Build usage overview",
+        "Build system health overview",
+        "Add admin audit logging"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Define super admin role model",
+        "Build tenant list and detail pages",
+        "Build tenant creation and status management",
+        "Build usage overview",
+        "Build system health overview",
+        "Add admin audit logging"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Depends on tenant model, frontend foundation, usage data, and admin role decisions."
+    },
+    {
+      "phase_id": "P7",
+      "phase_name": "Notifications and lead workflow",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Define lead data fields and qualification rules",
+        "Implement lead lifecycle",
+        "Implement SMTP provider abstraction",
+        "Queue notification jobs",
+        "Add delivery logging and retry behavior",
+        "Add business notification settings",
+        "Add lead and notification tests"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Define lead data fields and qualification rules",
+        "Implement lead lifecycle",
+        "Implement SMTP provider abstraction",
+        "Queue notification jobs",
+        "Add delivery logging and retry behavior",
+        "Add business notification settings",
+        "Add lead and notification tests"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Depends on chat lead capture, tenant model, and worker/queue foundation."
+    },
+    {
+      "phase_id": "P8",
+      "phase_name": "Analytics and usage tracking",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Define usage event taxonomy",
+        "Implement usage logging service",
+        "Add tenant analytics queries",
+        "Add super admin aggregate analytics",
+        "Build business analytics dashboard",
+        "Build admin usage dashboard",
+        "Add tenant-scoped analytics tests"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Define usage event taxonomy",
+        "Implement usage logging service",
+        "Add tenant analytics queries",
+        "Add super admin aggregate analytics",
+        "Build business analytics dashboard",
+        "Build admin usage dashboard",
+        "Add tenant-scoped analytics tests"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Depends on conversations, leads, business portal, and admin portal foundations."
+    },
+    {
+      "phase_id": "P9",
+      "phase_name": "Security, testing, CI, and deployment",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Run tenant isolation review",
+        "Add missing backend and frontend tests",
+        "Add lint, type, and test CI pipeline",
+        "Finalize Docker Compose services",
+        "Add Nginx routing configuration",
+        "Document environment variables and secrets",
+        "Document deployment and rollback process"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Run tenant isolation review",
+        "Add missing backend and frontend tests",
+        "Add lint, type, and test CI pipeline",
+        "Finalize Docker Compose services",
+        "Add Nginx routing configuration",
+        "Document environment variables and secrets",
+        "Document deployment and rollback process"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Depends on MVP implementation phases being complete enough for integration."
+    },
+    {
+      "phase_id": "P10",
+      "phase_name": "Premium/future modules",
+      "status": "NOT_STARTED",
+      "completion_percentage": 0,
+      "tasks": [
+        "Evaluate Voice AI",
+        "Evaluate WhatsApp and SMS add-ons",
+        "Evaluate Stripe billing",
+        "Evaluate advanced CRM integrations",
+        "Evaluate n8n automation",
+        "Evaluate local model/Ollama support",
+        "Evaluate multi-region architecture"
+      ],
+      "completed_tasks": [],
+      "pending_tasks": [
+        "Evaluate Voice AI",
+        "Evaluate WhatsApp and SMS add-ons",
+        "Evaluate Stripe billing",
+        "Evaluate advanced CRM integrations",
+        "Evaluate n8n automation",
+        "Evaluate local model/Ollama support",
+        "Evaluate multi-region architecture"
+      ],
+      "blocked_tasks": [],
+      "last_updated": "2026-05-22",
+      "notes": "Do not start before MVP stability, customer demand validation, and explicit approval."
+    }
+  ]
+}

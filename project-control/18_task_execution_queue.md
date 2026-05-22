@@ -10,12 +10,14 @@ This file helps the parent agent choose the next executable tasks without re-rea
 2. Start Phase 1 with P1-T1: Select backend tooling.
 3. Record tooling decision in `10_decisions_log.md`.
 4. Continue Phase 1 with backend foundation tasks.
+5. At the end of every phase, update `project-assets/roadmap/roadmap_status.json` and run `python project-assets/roadmap/generate_roadmap.py`.
 
 ## Ready tasks
 
 | Task ID | Task name | Why ready | Recommended role | Parallel-safe |
 |---|---|---|---|---|
 | P1-T1 | Select backend tooling | Phase 0 planning docs exist; no app code required before decision | Backend Agent, QA/Test Agent | No |
+| ROADMAP-FINAL | Update visual roadmap artifacts | Required at the end of every future phase execution | Parent Planning Agent, Documentation Agent | No |
 
 ## Blocked tasks
 
@@ -37,6 +39,8 @@ This file helps the parent agent choose the next executable tasks without re-rea
 ## Tasks safe for parallel execution
 
 Currently none, because the next task is a decision task.
+
+Roadmap updates should happen after phase work and memory updates are complete, so they should not run in parallel with status-changing tasks.
 
 After P1-T1:
 
