@@ -2,15 +2,15 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, the Phase 2 tenant/database foundation, the Phase 3 RAG ingestion/retrieval foundation, and the Phase 4 chat/widget foundation.
+The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, the Phase 2 tenant/database foundation, the Phase 3 RAG ingestion/retrieval foundation, the Phase 4 chat/widget foundation, and the Phase 5 business portal foundation.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Exists | FastAPI backend foundation, tenant/database models, RAG services, AI provider abstractions, chat/widget services, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
-| `frontend/` | Not created | Planned Next.js business and/or admin portal. |
+| `backend/` | Exists | FastAPI backend foundation, tenant/database models, RAG services, AI provider abstractions, chat/widget services, business portal routes/services, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
+| `frontend/` | Exists | Next.js, TypeScript, and TailwindCSS business portal foundation. |
 | `widget/` | Exists | Lightweight static embeddable website chat widget and local test page. |
 | `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
 | `.github/workflows/` | Not created | Planned CI workflows. |
@@ -45,6 +45,7 @@ The repository currently contains planning/control documentation, visual roadmap
 Current infrastructure foundation:
 
 - `.env.example`
+- `.gitignore`
 - `docker-compose.yml`
 - `backend/Dockerfile`
 - `backend/alembic.ini`
@@ -70,7 +71,7 @@ Planned future files:
 
 ## Backend structure
 
-Created across Phases 1 through 4:
+Created across Phases 1 through 5:
 
 - `backend/app/main.py`: FastAPI app factory and application instance.
 - `backend/app/core/config.py`: Environment-backed settings.
@@ -79,9 +80,11 @@ Created across Phases 1 through 4:
 - `backend/app/api/health.py`: `/health` route.
 - `backend/app/api/widget.py`: Public widget initialization route.
 - `backend/app/api/chat.py`: Public conversation start and message routes.
+- `backend/app/api/business_portal.py`: Tenant-aware business portal session, document, lead, conversation, widget, and analytics routes.
 - `backend/app/schemas/health.py`: Health response schema.
 - `backend/app/schemas/widget.py`: Widget request/response schemas.
 - `backend/app/schemas/chat.py`: Conversation, message, and lead capture schemas.
+- `backend/app/schemas/business_portal.py`: Business portal request/response schemas.
 - `backend/app/db/config.py`: Database URL placeholder helper.
 - `backend/app/db/base.py`: SQLAlchemy base and common mixins.
 - `backend/app/db/session.py`: SQLAlchemy engine/session helpers.
@@ -96,6 +99,7 @@ Created across Phases 1 through 4:
 - `backend/app/rag/`: Text extraction, chunking, ingestion, retrieval, and scoring helpers.
 - `backend/app/chat/`: Conversation orchestration, RAG answer generation, usage logging, and deterministic lead capture.
 - `backend/app/widget/`: Public widget key hashing, resolution, creation, and revocation helpers.
+- `backend/app/business/`: Business portal auth/session and tenant-scoped query services.
 - `backend/app/workers/`: Worker-style RAG ingestion entrypoint.
 - `backend/app/tenants/`: Tenant/business service helpers.
 - `backend/app/leads/`: Placeholder for later lead workflow.
@@ -104,22 +108,33 @@ Created across Phases 1 through 4:
 - `backend/tests/test_tenant_models.py`: Phase 2 tenant CRUD and isolation tests.
 - `backend/tests/rag/`: Phase 3 provider, chunking, ingestion, and retrieval isolation tests.
 - `backend/tests/chat/`: Phase 4 widget initialization, conversation, lead capture, and cross-tenant denial tests.
+- `backend/tests/business/`: Phase 5 business portal login/session, cross-tenant denial, document, widget, and analytics tests.
 - `backend/requirements.txt`: Runtime dependencies.
 - `backend/requirements-dev.txt`: Dev/test/lint dependencies.
 - `backend/Dockerfile`: Backend image definition.
 
 ## Frontend structure
 
-Not created yet.
+Created in Phase 5:
+
+- `frontend/app/`: Next.js App Router routes for login and business portal sections.
+- `frontend/app/login/page.tsx`: Business portal login screen.
+- `frontend/app/portal/layout.tsx`: Protected portal layout.
+- `frontend/app/portal/page.tsx`: Dashboard summary.
+- `frontend/app/portal/documents/page.tsx`: Knowledge base document list and text upload.
+- `frontend/app/portal/leads/page.tsx`: Lead list and selected lead detail.
+- `frontend/app/portal/conversations/page.tsx`: Conversation list and message history.
+- `frontend/app/portal/widget/page.tsx`: Widget status, key creation, and embed snippet.
+- `frontend/app/portal/analytics/page.tsx`: Basic tenant analytics.
+- `frontend/components/`: Portal shell, status pill, and metric card components.
+- `frontend/lib/api/`: Typed business portal API client and response types.
+- `frontend/lib/auth/`: Browser session storage helper.
+- `frontend/tests/static-check.mjs`: Frontend static project-shape validation.
+- `frontend/package.json`: Next.js scripts and dependencies.
 
 Planned future areas:
 
-- `frontend/` or `apps/business-portal/`
-- `frontend/app/`
-- `frontend/components/`
-- `frontend/lib/api/`
-- `frontend/lib/auth/`
-- Admin routes or separate admin portal depending on future decision.
+- Admin routes or separate admin portal depending on Phase 6 decision.
 
 ## Widget structure
 
@@ -148,9 +163,13 @@ Created:
 
 ## Deployment files
 
-Created across Phases 1 through 4:
+Created across Phases 1 through 5:
 
 - `docker-compose.yml`
+  - Backend service.
+  - Frontend service.
+  - PostgreSQL/pgvector service.
+  - Redis service.
 
 Planned future areas:
 
@@ -159,15 +178,16 @@ Planned future areas:
 
 ## Test structure
 
-Created across Phases 1 through 4:
+Created across Phases 1 through 5:
 
 - `backend/tests/`
 - `backend/tests/test_tenant_models.py`
 - `backend/tests/rag/`
 - `backend/tests/chat/`
+- `backend/tests/business/`
+- `frontend/tests/`
 
 Planned future areas:
 
-- Frontend tests if introduced.
 - Admin authorization tests.
 - Notification privacy tests.

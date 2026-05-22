@@ -4,7 +4,7 @@ Codex dummy update for branch workflow verification.
 
 # AI Tradie Receptionist Platform
 
-Multi-tenant SaaS platform for Australian tradies and local businesses. Phase 1 adds the backend foundation only: a FastAPI application shell, environment-backed configuration, a health endpoint, basic tests, and Docker Compose support.
+Multi-tenant SaaS platform for Australian tradies and local businesses. The current foundation includes a FastAPI backend, tenant-isolated database models, tenant-scoped RAG, chat/widget APIs, and a Next.js business portal.
 
 ## Backend local setup
 
@@ -29,10 +29,10 @@ http://127.0.0.1:8000/health
 Create a local `.env` from `.env.example`, then run:
 
 ```bash
-docker compose up --build backend
+docker compose up --build
 ```
 
-This starts the backend plus PostgreSQL with pgvector and Redis as development dependencies. Current backend phases include the tenant/database foundation and RAG foundation, but no frontend, chat widget, notification workflow, or production deployment automation yet.
+This starts the backend, frontend, PostgreSQL with pgvector, and Redis as development dependencies. Notification workflow, super admin portal, CI, and production deployment automation are still future phases.
 
 ## Database migrations
 
@@ -70,3 +70,17 @@ Phase 4 adds the public chat path:
 The lightweight embeddable widget lives in `widget/chat-widget.js`, with a local test page at `widget/test-embed.html`.
 
 For local widget smoke tests without an external AI key, set `AI_PROVIDER=local-deterministic`. Set `CORS_ALLOWED_ORIGINS` to the allowed website origins before production deployment.
+
+## Business portal
+
+Phase 5 adds a tenant business portal in `frontend/` using Next.js, TypeScript, and TailwindCSS.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The portal talks to the backend through `NEXT_PUBLIC_API_BASE_URL`. It includes sign-in, dashboard metrics, knowledge document upload/status, leads, conversations, widget setup, and basic analytics screens.
+
+The Phase 5 sign-in flow is an MVP tenant-aware email/session contract for local validation. Production auth hardening belongs to a later security/auth phase.

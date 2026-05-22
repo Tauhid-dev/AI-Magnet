@@ -2,6 +2,119 @@
 
 Use this file to record phase completion notes. Add a new entry after each phase or major instruction.
 
+## 2026-05-22 - Phase 5: Business portal
+
+### Phase
+
+Phase 5: Business portal
+
+### Date
+
+2026-05-22
+
+### Tasks completed
+
+- P5-T1: Select frontend structure
+- P5-T2: Create business portal foundation
+- P5-T3: Implement business auth/session flow
+- P5-T4: Build knowledge base management UI
+- P5-T5: Build leads and conversations UI
+- P5-T6: Build widget setup and analytics UI
+
+### Files changed
+
+- `.env.example`
+- `.gitignore`
+- `Readme.md`
+- `docker-compose.yml`
+- `backend/app/api/business_portal.py`
+- `backend/app/api/router.py`
+- `backend/app/business/`
+- `backend/app/core/config.py`
+- `backend/app/schemas/business_portal.py`
+- `backend/tests/business/`
+- `frontend/`
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+- `project-assets/roadmap/roadmap_status.json`
+- `project-assets/roadmap/latest_roadmap.png`
+- `project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260522_202614.png`
+
+### Tests run
+
+- `python3 -m pytest backend/tests` - passed, 24 tests
+- `python3 -m compileall backend/app backend/tests backend/migrations` - passed
+- `env DATABASE_URL=sqlite:///:memory: python3 -m alembic -c backend/alembic.ini upgrade head` - passed
+- `docker compose config` - passed
+- `python3 -c "import sys; sys.path.insert(0, 'backend'); from app.main import create_app; app=create_app(); routes=sorted(route.path for route in app.routes if route.path.startswith('/business-portal')); print(len(routes)); print('\\n'.join(routes))"` - passed, 11 business portal routes registered
+- `npm run lint` from `frontend/` - passed
+- `npm run typecheck` from `frontend/` - passed
+- `npm test` from `frontend/` - passed, 1 Node static check
+- `npm run build` from `frontend/` - passed, 9 static portal routes generated
+- `npm audit --audit-level=high` from `frontend/` - passed high-severity gate; npm reported 2 moderate transitive vulnerabilities in Next/PostCSS
+- `python3 -m json.tool project-assets/roadmap/roadmap_status.json` - passed
+- `git diff --check` - passed
+- `python3 -m ruff --version` - Ruff not installed in current interpreter
+
+### Context snapshot summary
+
+Phase 5 business portal foundation is ready for review. The backend now exposes a tenant-aware business portal API with an MVP HMAC bearer-session contract, session verification, document listing/upload ingestion, lead and conversation views, widget key creation, and basic analytics. The frontend now has a Next.js, TypeScript, and TailwindCSS business portal with login, dashboard, documents, leads, conversations, widget setup, and analytics pages. Tenant data access is filtered server-side by the verified session tenant.
+
+### Active modules touched
+
+- Business portal backend routes
+- Business portal auth/session service
+- Tenant-scoped portal query service
+- Business portal schemas
+- Next.js portal shell and routes
+- Frontend API client and local session helper
+- Docker Compose frontend service
+- Backend and frontend validation tests
+- Project memory files
+- Visual roadmap artifacts
+
+### Memory files updated
+
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+
+### roadmap_status_updated
+
+yes
+
+### roadmap_snapshot_created
+
+`project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260522_202614.png`
+
+### latest_roadmap_updated
+
+yes
+
+### Known issues
+
+- Business portal authentication is an MVP email/session contract without passwords or external identity provider integration.
+- `npm audit --audit-level=high` passed, but npm reported 2 moderate transitive vulnerabilities in the current Next/PostCSS dependency chain.
+- Ruff is listed in backend dev requirements but was not installed in the current interpreter, so backend Ruff linting was not run locally.
+- Alembic migration was validated with SQLite in memory; it was not run against a live PostgreSQL container in this session.
+- Document upload through the portal is JSON text/Markdown content only for the MVP.
+- Super admin portal, notifications, production deployment, and CI remain future phases.
+
+### Next phase readiness
+
+Phase 6 can begin only after this Phase 5 branch is reviewed/merged and the user explicitly instructs Codex to start Phase 6.
+
 ## 2026-05-22 - Phase 4: Chat widget and conversation API
 
 ### Phase
