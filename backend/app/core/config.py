@@ -23,7 +23,9 @@ class Settings:
     )
     app_version: str = field(default_factory=lambda: os.getenv("APP_VERSION", "0.1.0"))
     environment: str = field(default_factory=lambda: os.getenv("APP_ENV", "local"))
-    debug: bool = field(default_factory=lambda: parse_bool(os.getenv("APP_DEBUG"), default=False))
+    debug: bool = field(
+        default_factory=lambda: parse_bool(os.getenv("APP_DEBUG"), default=False)
+    )
     log_level: str = field(default_factory=lambda: os.getenv("APP_LOG_LEVEL", "INFO"))
     enable_api_docs: bool = field(
         default_factory=lambda: parse_bool(os.getenv("ENABLE_API_DOCS"), default=True)
@@ -47,7 +49,9 @@ class Settings:
             "AI_API_BASE_URL", "https://api.openai.com/v1"
         )
     )
-    ai_api_key: str | None = field(default_factory=lambda: os.getenv("AI_API_KEY") or None)
+    ai_api_key: str | None = field(
+        default_factory=lambda: os.getenv("AI_API_KEY") or None
+    )
 
 
 @lru_cache

@@ -2,14 +2,14 @@
 
 ## Current repository shape
 
-The repository currently contains planning/control documentation, visual roadmap assets, and the Phase 1 backend foundation.
+The repository currently contains planning/control documentation, visual roadmap assets, the Phase 1 backend foundation, and the Phase 2 tenant/database foundation.
 
 | Path | Current status | Purpose |
 |---|---|---|
 | `Readme.md` | Exists | Minimal repository README. Future notes should append or edit carefully, not overwrite blindly. |
 | `project-control/` | Exists | Planning, phase control, safety rules, memory, and context recovery docs. |
 | `project-assets/roadmap/` | Exists | Deterministic visual roadmap status, generator, latest PNG, and historical snapshots. |
-| `backend/` | Exists | FastAPI backend foundation, health endpoint, config, requirements, Dockerfile, and tests. |
+| `backend/` | Exists | FastAPI backend foundation, tenant/database models, migrations, health endpoint, config, requirements, Dockerfile, and tests. |
 | `frontend/` | Not created | Planned Next.js business and/or admin portal. |
 | `widget/` | Not created | Planned embeddable website chat widget if kept separate from frontend. |
 | `infra/` | Not created | Planned Nginx, deployment, and infrastructure files. |
@@ -47,6 +47,8 @@ Current infrastructure foundation:
 - `.env.example`
 - `docker-compose.yml`
 - `backend/Dockerfile`
+- `backend/alembic.ini`
+- `backend/migrations/`
 
 Planned future files:
 
@@ -74,20 +76,34 @@ Created in Phase 1:
 - `backend/app/api/health.py`: `/health` route.
 - `backend/app/schemas/health.py`: Health response schema.
 - `backend/app/db/config.py`: Database URL placeholder helper.
-- `backend/app/models/`: Placeholder for Phase 2 ORM models.
+- `backend/app/db/base.py`: SQLAlchemy base and common mixins.
+- `backend/app/db/session.py`: SQLAlchemy engine/session helpers.
+- `backend/app/db/repository.py`: Tenant-scoped repository helper.
+- `backend/app/db/seed.py`: Explicit local seed helper.
+- `backend/app/models/`: Tenant, business, document, conversation, message, lead, usage, and audit ORM models.
 - `backend/app/ai/`: Placeholder for future AI provider abstractions.
 - `backend/app/rag/`: Placeholder for Phase 3 RAG work.
 - `backend/app/tenants/`: Placeholder for Phase 2 tenant work.
+- `backend/app/tenants/service.py`: Basic tenant/business service helpers.
 - `backend/app/leads/`: Placeholder for later lead workflow.
 - `backend/app/conversations/`: Placeholder for Phase 4 conversation APIs.
 - `backend/tests/`: Phase 1 health/config tests.
+- `backend/tests/test_tenant_models.py`: Phase 2 tenant CRUD and isolation tests.
 - `backend/requirements.txt`: Runtime dependencies.
 - `backend/requirements-dev.txt`: Dev/test/lint dependencies.
 - `backend/Dockerfile`: Backend image definition.
 
 ## Frontend structure
 
-No database schema or migrations exist yet.
+Created in Phase 2:
+
+- `backend/alembic.ini`
+- `backend/migrations/env.py`
+- `backend/migrations/versions/20260522_0001_initial_tenant_schema.py`
+- `backend/app/db/base.py`
+- `backend/app/db/session.py`
+- `backend/app/db/repository.py`
+- `backend/app/models/`
 
 Planned future areas:
 
@@ -135,6 +151,7 @@ Planned future areas:
 Created in Phase 1:
 
 - `backend/tests/`
+- `backend/tests/test_tenant_models.py`
 
 Planned future areas:
 
