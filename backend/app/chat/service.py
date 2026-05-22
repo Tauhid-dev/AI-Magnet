@@ -11,11 +11,11 @@ from app.chat.lead_capture import LeadCaptureResult, LeadCaptureService
 from app.core.config import Settings, get_settings
 from app.leads.workflow import LEAD_STATUS_QUALIFIED, LeadWorkflowService
 from app.models.conversation import Conversation, Message
-from app.models.usage import UsageLog
 from app.notifications.service import NotificationService
 from app.providers.ai.base import ChatCompletionProvider, ChatMessage
 from app.rag.retrieval import RagRetrievalService, RetrievalResult
 from app.schemas.chat import LeadFields
+from app.usage import UsageEventType, UsageService
 from app.widget.service import WidgetResolution
 
 
@@ -55,6 +55,7 @@ class ChatService:
         self.lead_capture = LeadCaptureService(session)
         self.lead_workflow = LeadWorkflowService(session)
         self.notifications = NotificationService(session, self.settings)
+        self.usage = UsageService(session)
 
     def start_conversation(
         self,
@@ -72,7 +73,7 @@ class ChatService:
         self.session.flush()
         self._log_usage(
             tenant_id=widget_resolution.tenant_id,
-            event_type="conversation_started",
+            event_type=UsageEventType.CONVERSATION_STARTED,
             conversation_id=conversation.id,
         )
         self.session.commit()
@@ -134,18 +135,45 @@ class ChatService:
                 workflow_result.lead.status == LEAD_STATUS_QUALIFIED
                 and workflow_result.became_qualified
             ):
-                self.notifications.queue_and_send_lead_notification(
+                self._log_usage(
+                    tenant_id=widget_resolution.tenant_id,
+                    event_type=UsageEventType.LEAD_QUALIFIED,
+                    conversation_id=conversation.id,
+                    attributes={"lead_id": workflow_result.lead.id},
+                )
+                notification_result = self.notifications.queue_and_send_lead_notification(
                     tenant_id=widget_resolution.tenant_id,
                     lead=workflow_result.lead,
                 )
+                if notification_result.delivery is not None:
+                    self._log_usage(
+                        tenant_id=widget_resolution.tenant_id,
+                        event_type=UsageEventType.LEAD_NOTIFICATION_QUEUED,
+                        conversation_id=conversation.id,
+                        attributes={
+                            "lead_id": workflow_result.lead.id,
+                            "delivery_id": notification_result.delivery.id,
+                            "delivery_status": notification_result.delivery.status,
+                        },
+                    )
+                    if notification_result.delivery.status == "sent":
+                        self._log_usage(
+                            tenant_id=widget_resolution.tenant_id,
+                            event_type=UsageEventType.LEAD_NOTIFICATION_SENT,
+                            conversation_id=conversation.id,
+                            attributes={
+                                "lead_id": workflow_result.lead.id,
+                                "delivery_id": notification_result.delivery.id,
+                            },
+                        )
         self._log_usage(
             tenant_id=widget_resolution.tenant_id,
-            event_type="message_received",
+            event_type=UsageEventType.MESSAGE_RECEIVED,
             conversation_id=conversation.id,
         )
         self._log_usage(
             tenant_id=widget_resolution.tenant_id,
-            event_type="assistant_response_generated",
+            event_type=UsageEventType.ASSISTANT_RESPONSE_GENERATED,
             conversation_id=conversation.id,
             attributes={"retrieved_chunk_count": len(retrieved)},
         )
@@ -222,14 +250,9 @@ class ChatService:
         conversation_id: str,
         attributes: dict | None = None,
     ) -> None:
-        payload = {"conversation_id": conversation_id}
-        if attributes:
-            payload.update(attributes)
-        self.session.add(
-            UsageLog(
-                tenant_id=tenant_id,
-                event_type=event_type,
-                event_source="chat_widget",
-                attributes=payload,
-            )
+        self.usage.record_chat_event(
+            tenant_id=tenant_id,
+            event_type=event_type,
+            conversation_id=conversation_id,
+            attributes=attributes,
         )

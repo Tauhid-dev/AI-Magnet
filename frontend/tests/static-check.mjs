@@ -16,6 +16,7 @@ const apiClient = read("lib/api/client.ts");
 assert.match(apiClient, /\/business-portal\/auth\/login/);
 assert.match(apiClient, /\/admin\/auth\/login/);
 assert.match(apiClient, /\/admin\/tenants/);
+assert.match(apiClient, /\/admin\/usage/);
 assert.match(apiClient, /Authorization/);
 assert.doesNotMatch(apiClient, /AI_API_KEY/);
 
@@ -35,3 +36,9 @@ assert.match(adminShell, /Platform console/);
 
 const adminTenantsPage = read("app/admin/tenants/page.tsx");
 assert.match(adminTenantsPage, /createTenant/);
+
+const portalAnalyticsPage = read("app/portal/analytics/page.tsx");
+assert.match(portalAnalyticsPage, /usage_event_counts/);
+
+const adminUsagePage = read("app/admin/usage/page.tsx");
+assert.match(adminUsagePage, /tenant_usage/);

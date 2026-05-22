@@ -21,12 +21,12 @@ Technology preference:
 
 ## Current project status
 
-- Repository contains planning/control documentation, deterministic roadmap visual assets, and Phase 1 through Phase 7 MVP foundations.
-- Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, business portal, super admin, lead lifecycle, and notification foundations have been implemented.
-- No expanded analytics workflow, CI pipeline, or production deployment automation exists yet.
+- Repository contains planning/control documentation, deterministic roadmap visual assets, and Phase 1 through Phase 8 MVP foundations.
+- Backend application, database, tenant, AI provider, RAG, chat, widget-key, conversation, business portal, super admin, lead lifecycle, notification, usage logging, and analytics foundations have been implemented.
+- No CI pipeline or production deployment automation exists yet.
 - `project-control/` contains the planning, execution, security, and memory architecture files.
 - `project-assets/roadmap/` contains the visual roadmap status JSON, generator script, latest image, and snapshots.
-- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, email providers, chat/widget services, business portal services/routes, super admin services/routes, lead workflow and notification services, audit helpers, config, health endpoint, requirements, Dockerfile, and tests.
+- `backend/` contains the FastAPI app foundation, tenant/database models, RAG services, AI providers, email providers, chat/widget services, business portal services/routes, super admin services/routes, lead workflow and notification services, usage and analytics services, audit helpers, config, health endpoint, requirements, Dockerfile, and tests.
 - `backend/migrations/` contains Alembic migration setup, tenant schema, document chunk/vector, widget config, admin user, and lead notification migrations.
 - `frontend/` contains the Next.js business portal and super admin portal foundations.
 - `widget/` contains the lightweight embeddable chat widget and local test page.
@@ -35,11 +35,11 @@ Technology preference:
 
 ## Current active phase
 
-Phase 7: Notifications and lead workflow.
+Phase 8: Analytics and usage tracking.
 
 Current status: READY_FOR_REVIEW.
 
-Next implementation phase after review and explicit instruction: Phase 8: Analytics and usage tracking.
+Next implementation phase after review and explicit instruction: Phase 9: Security, testing, CI, and deployment.
 
 ## Completed phases
 
@@ -125,10 +125,17 @@ Next implementation phase after review and explicit instruction: Phase 8: Analyt
   - Chat lead capture integration that queues/sends newly qualified leads.
   - Business portal lead API and UI updates for qualification, notification, and status updates.
   - Backend tests for lead workflow, notification delivery, and portal status updates.
+- Phase 8 analytics and usage tracking created:
+  - Formal usage event taxonomy and tenant-scoped usage logging service.
+  - Chat, RAG ingestion, widget key, lead status, and notification flows record usage events.
+  - Tenant analytics service aggregates documents, conversations, messages, leads, notifications, and usage events by `tenant_id`.
+  - Super admin usage overview aggregates platform-level counts without exposing lead PII.
+  - Business portal analytics dashboard shows richer metrics, status breakdowns, and recent usage.
+  - Super admin usage dashboard shows aggregate usage, status breakdowns, and per-tenant summaries.
+  - Backend analytics tests prove tenant analytics do not count another tenant's records.
 
 ## Pending phases
 
-- Phase 8: Analytics and usage tracking.
 - Phase 9: Security, testing, CI, and deployment.
 - Phase 10: Premium/future modules.
 
@@ -145,6 +152,8 @@ Next implementation phase after review and explicit instruction: Phase 8: Analyt
 - Lead capture, qualification, and lifecycle transitions use deterministic business logic.
 - Email notifications use a provider abstraction with SMTP support and local no-network console delivery.
 - Notification delivery state is tenant-scoped and persisted in the database.
+- Usage events are recorded through a typed service and remain tenant-scoped for tenant analytics.
+- Platform analytics expose aggregate counts and tenant summaries without raw customer lead PII.
 - Super admin functionality must be role-protected and audit-logged.
 - Local/dev deployment should use Docker Compose.
 
@@ -167,27 +176,26 @@ Next implementation phase after review and explicit instruction: Phase 8: Analyt
 ## Current blockers
 
 - No technical blockers are known.
-- Phase 8 must not start until the user explicitly instructs it.
+- Phase 9 must not start until Phase 8 is reviewed/merged and the user explicitly instructs it.
 
 ## Latest execution state
 
-- Phase 7 notifications and lead workflow exists and validates locally.
-- Backend tests passed with `python3 -m pytest backend/tests` - 35 tests.
+- Phase 8 analytics and usage tracking exists and validates locally.
+- Backend tests passed with `python3 -m pytest backend/tests` - 38 tests.
 - Frontend checks passed with `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
-- Alembic migrations run against SQLite with `PYTHONPATH=backend DATABASE_URL=sqlite:////private/tmp/ai_magnet_phase7_migration_20260523_final.sqlite python3 -m alembic -c backend/alembic.ini upgrade head`.
 - Docker Compose config validates with `docker compose config`.
-- Browser smoke test of the business portal lead workflow passed against a seeded local SQLite backend.
+- Browser smoke test of the business portal analytics page passed against a seeded local SQLite backend.
 - Ruff is selected in dev requirements but was not installed in the current interpreter during validation.
-- Next meaningful task, after review and explicit instruction, is Phase 8 task P8-T1: Define usage event taxonomy.
+- Next meaningful task, after review and explicit instruction, is Phase 9 task P9-T1: Run tenant isolation and security review.
 
 ## Next recommended actions
 
-1. Review and merge the Phase 7 notifications and lead workflow branch.
+1. Review and merge the Phase 8 analytics and usage tracking branch.
 2. Start the next instruction from latest `master`.
 3. Read `11_master_context_index.md` and `13_quick_resume.md`.
-4. Do not start Phase 8 unless explicitly instructed.
-5. When instructed, begin Phase 8 with usage event taxonomy and analytics query planning.
-6. Record any Phase 8 analytics/data model decisions in `10_decisions_log.md`.
+4. Do not start Phase 9 unless explicitly instructed.
+5. When instructed, begin Phase 9 with tenant isolation and security review planning.
+6. Record any Phase 9 security/deployment decisions in `10_decisions_log.md`.
 7. Update memory files and roadmap artifacts after each future phase execution.
 
 ## Files to read next depending on task type

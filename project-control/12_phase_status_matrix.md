@@ -17,9 +17,9 @@ Statuses:
 | Phase 4 | Chat widget and conversation API | COMPLETE | 100% | Yes | 2026-05-22 | 2026-05-22 | None known | None |
 | Phase 5 | Business portal | COMPLETE | 100% | Yes | 2026-05-22 | 2026-05-22 | None known | None |
 | Phase 6 | Super admin portal | COMPLETE | 100% | Yes | 2026-05-22 | 2026-05-23 | None known | None |
-| Phase 7 | Notifications and lead workflow | READY_FOR_REVIEW | 100% | Yes | 2026-05-23 | 2026-05-23 | None known | Review and merge Phase 7 notifications and lead workflow |
-| Phase 8 | Analytics and usage tracking | NOT_STARTED | 0% | Pending Phase 7 review/merge and explicit instruction | TBD | 2026-05-23 | Depends on conversations, leads, portal foundations, and notifications | Wait for user instruction before Phase 8 |
-| Phase 9 | Security, testing, CI, and deployment | NOT_STARTED | 0% | No | TBD | 2026-05-22 | Depends on MVP implementation phases | Wait for Phases 1 through 8 |
+| Phase 7 | Notifications and lead workflow | COMPLETE | 100% | Yes | 2026-05-23 | 2026-05-23 | None known | None |
+| Phase 8 | Analytics and usage tracking | READY_FOR_REVIEW | 100% | Yes | 2026-05-23 | 2026-05-23 | None known | Review and merge Phase 8 analytics and usage tracking |
+| Phase 9 | Security, testing, CI, and deployment | NOT_STARTED | 0% | Pending Phase 8 review/merge and explicit instruction | TBD | 2026-05-23 | Depends on MVP implementation phases | Wait for Phase 8 review/merge and explicit Phase 9 instruction |
 | Phase 10 | Premium/future modules | NOT_STARTED | 0% | No | TBD | 2026-05-22 | Depends on MVP stability and explicit approval | Do not start during MVP |
 
 ## Update rules

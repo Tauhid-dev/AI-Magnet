@@ -2,6 +2,126 @@
 
 Use this file to record phase completion notes. Add a new entry after each phase or major instruction.
 
+## 2026-05-23 - Phase 8: Analytics and usage tracking
+
+### Phase
+
+Phase 8: Analytics and usage tracking
+
+### Date
+
+2026-05-23
+
+### Tasks completed
+
+- P8-T1: Define usage event taxonomy
+- P8-T2: Implement usage logging service
+- P8-T3: Build analytics queries
+- P8-T4: Build analytics dashboard UI
+- P8-T5: Add analytics tests
+
+### Files changed
+
+- `Readme.md`
+- `backend/app/analytics/`
+- `backend/app/usage/`
+- `backend/app/admin/service.py`
+- `backend/app/api/admin.py`
+- `backend/app/api/business_portal.py`
+- `backend/app/business/service.py`
+- `backend/app/chat/service.py`
+- `backend/app/schemas/admin.py`
+- `backend/app/schemas/business_portal.py`
+- `backend/tests/analytics/`
+- `backend/tests/chat/test_chat_api.py`
+- `frontend/app/admin/usage/page.tsx`
+- `frontend/app/portal/analytics/page.tsx`
+- `frontend/lib/api/types.ts`
+- `frontend/tests/static-check.mjs`
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+- `project-assets/roadmap/roadmap_status.json`
+- `project-assets/roadmap/latest_roadmap.png`
+- `project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260523_012717.png`
+
+### Tests run
+
+- `python3 -m pytest backend/tests/analytics backend/tests/business/test_business_portal_api.py backend/tests/admin/test_admin_api.py backend/tests/chat/test_chat_api.py` - passed, 15 tests
+- `python3 -m pytest backend/tests` - passed, 38 tests
+- `python3 -m pytest backend/tests/admin/test_admin_api.py backend/tests/analytics/test_usage_analytics.py` - passed, 7 tests after final admin service cleanup
+- `python3 -m compileall backend/app backend/tests` - passed
+- `docker compose config` - passed
+- `npm run lint` from `frontend/` - passed
+- `npm run typecheck` from `frontend/` - passed
+- `npm test` from `frontend/` - passed, 1 Node static check
+- `npm run build` from `frontend/` - passed, 17 app routes generated
+- Browser smoke check of `http://localhost:3000/admin/usage` against a seeded local SQLite backend - passed; aggregate usage and tenant usage rendered with no console errors
+- Browser smoke check of `http://localhost:3000/portal/analytics` against a seeded local SQLite backend - passed; tenant analytics and usage breakdowns rendered with no console errors
+- `python3 project-assets/roadmap/generate_roadmap.py` - passed
+- `python3 -m json.tool project-assets/roadmap/roadmap_status.json` - passed
+- `git diff --check` - passed
+- `find backend/app backend/tests -name '*.py' -print0 | xargs -0 awk 'length($0) > 100 { print FILENAME ":" FNR ":" length($0) ":" $0 }'` - passed, no output
+- `python3 -m ruff check backend/app backend/tests` - not run; Ruff is not installed in the current interpreter
+
+### Context snapshot summary
+
+Phase 8 analytics and usage tracking is ready for review. The backend now has a typed usage event taxonomy and usage logging service, chat/document/widget/lead/notification flows record tenant-scoped usage events, and analytics services produce tenant snapshots plus platform aggregate summaries. The business portal and super admin usage dashboards now show richer totals, status breakdowns, usage event counts, and tenant summaries without exposing raw lead PII in admin analytics.
+
+### Active modules touched
+
+- Tenant-scoped usage event taxonomy and logging service
+- Tenant and platform analytics query service
+- Chat lead and notification usage logging integration
+- Business portal document/widget/lead status usage event hooks
+- Business portal analytics API and UI
+- Super admin aggregate usage API and UI
+- Backend analytics tests
+- Frontend static checks
+- Project memory files
+- Visual roadmap artifacts
+
+### Memory files updated
+
+- `project-control/09_phase_execution_log.md`
+- `project-control/10_decisions_log.md`
+- `project-control/11_master_context_index.md`
+- `project-control/12_phase_status_matrix.md`
+- `project-control/13_quick_resume.md`
+- `project-control/14_repo_map.md`
+- `project-control/17_current_system_state.md`
+- `project-control/18_task_execution_queue.md`
+
+### roadmap_status_updated
+
+yes
+
+### roadmap_snapshot_created
+
+`project-assets/roadmap/snapshots/roadmap_phase_snapshot_20260523_012717.png`
+
+### latest_roadmap_updated
+
+yes
+
+### Known issues
+
+- Business and super admin authentication remain MVP email/session contracts without passwords, MFA, or external identity provider integration.
+- Analytics are computed directly from transactional tables for MVP simplicity; future production scale may need rollups, caching, or materialized views.
+- `EMAIL_PROVIDER=console` marks delivery as successful locally without contacting an SMTP server; production needs `EMAIL_PROVIDER=smtp` plus SMTP settings.
+- Ruff is listed in backend dev requirements but is not installed in the current interpreter.
+- PostgreSQL migrations were not re-run against a live PostgreSQL container in this session.
+- CI, deployment hardening, and production security review remain future phases.
+
+### Next phase readiness
+
+Phase 9 can begin only after this Phase 8 branch is reviewed/merged and the user explicitly instructs Codex to start Phase 9.
+
 ## 2026-05-23 - Phase 7: Notifications and lead workflow
 
 ### Phase

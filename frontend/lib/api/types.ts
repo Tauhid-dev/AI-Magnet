@@ -70,14 +70,30 @@ export type PortalWidget = {
   allowed_origins: string | null;
 };
 
+export type AnalyticsBreakdown = {
+  label: string;
+  count: number;
+};
+
 export type PortalAnalytics = {
   documents_total: number;
   documents_ingested: number;
+  documents_failed: number;
   leads_total: number;
+  leads_qualified: number;
+  leads_notified: number;
   conversations_total: number;
   open_conversations: number;
   messages_total: number;
+  visitor_messages_total: number;
+  assistant_messages_total: number;
+  usage_events_total: number;
+  ai_responses_total: number;
+  lead_notifications_sent: number;
   widget_status: string;
+  lead_status_counts: AnalyticsBreakdown[];
+  document_status_counts: AnalyticsBreakdown[];
+  usage_event_counts: AnalyticsBreakdown[];
   recent_usage: Array<{
     event_type: string;
     event_source: string | null;
@@ -146,10 +162,29 @@ export type AdminUsageOverview = {
   tenants_total: number;
   active_tenants: number;
   documents_total: number;
+  documents_ingested: number;
   leads_total: number;
+  leads_qualified: number;
   conversations_total: number;
   messages_total: number;
   usage_events_total: number;
+  ai_responses_total: number;
+  lead_notifications_sent: number;
+  admin_audit_events_total: number;
+  usage_event_counts: AnalyticsBreakdown[];
+  lead_status_counts: AnalyticsBreakdown[];
+  document_status_counts: AnalyticsBreakdown[];
+  tenant_usage: Array<{
+    tenant_id: string;
+    tenant_name: string;
+    tenant_slug: string;
+    tenant_status: string;
+    documents_total: number;
+    leads_total: number;
+    conversations_total: number;
+    messages_total: number;
+    usage_events_total: number;
+  }>;
 };
 
 export type AdminHealth = {

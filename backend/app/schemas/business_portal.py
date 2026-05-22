@@ -117,14 +117,41 @@ class PortalWidgetResponse(BaseModel):
     allowed_origins: str | None
 
 
+class PortalAnalyticsBreakdownResponse(BaseModel):
+    """Analytics label/count pair."""
+
+    label: str
+    count: int
+
+
+class PortalUsageEventResponse(BaseModel):
+    """Recent tenant usage event."""
+
+    event_type: str
+    event_source: str | None
+    attributes: dict[str, Any]
+    created_at: datetime
+
+
 class PortalAnalyticsResponse(BaseModel):
     """Business portal analytics response."""
 
     documents_total: int
     documents_ingested: int
+    documents_failed: int
     leads_total: int
+    leads_qualified: int
+    leads_notified: int
     conversations_total: int
     open_conversations: int
     messages_total: int
+    visitor_messages_total: int
+    assistant_messages_total: int
+    usage_events_total: int
+    ai_responses_total: int
+    lead_notifications_sent: int
     widget_status: str
-    recent_usage: list[dict[str, Any]]
+    lead_status_counts: list[PortalAnalyticsBreakdownResponse]
+    document_status_counts: list[PortalAnalyticsBreakdownResponse]
+    usage_event_counts: list[PortalAnalyticsBreakdownResponse]
+    recent_usage: list[PortalUsageEventResponse]

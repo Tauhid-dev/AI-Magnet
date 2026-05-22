@@ -4,7 +4,7 @@ Codex dummy update for branch workflow verification.
 
 # AI Tradie Receptionist Platform
 
-Multi-tenant SaaS platform for Australian tradies and local businesses. The current foundation includes a FastAPI backend, tenant-isolated database models, tenant-scoped RAG, chat/widget APIs, a Next.js business portal, and a protected super admin portal foundation.
+Multi-tenant SaaS platform for Australian tradies and local businesses. The current foundation includes a FastAPI backend, tenant-isolated database models, tenant-scoped RAG, chat/widget APIs, a Next.js business portal, a protected super admin portal foundation, and tenant-safe usage analytics.
 
 ## Backend local setup
 
@@ -110,3 +110,11 @@ Qualified leads are queued in `notification_deliveries` and sent through the con
 Local development uses `EMAIL_PROVIDER=console`, which records a successful delivery without contacting an external SMTP server.
 Set `EMAIL_PROVIDER=smtp` plus the `SMTP_*` variables in `.env` to send real lead notifications.
 The business portal leads table shows qualification and notification state, and lets business users mark leads as contacted, closed, or disqualified.
+
+## Analytics and usage tracking
+
+Phase 8 adds a tenant-scoped usage event taxonomy and logging service backed by the existing `usage_logs` table.
+Chat, RAG ingestion, widget key, lead status, and notification workflows record safe usage events for analytics and future metering.
+
+The business portal analytics page shows tenant-only usage totals, lead/document status breakdowns, notification counts, and recent usage events.
+The super admin usage page shows platform aggregate counts, usage breakdowns, and per-tenant summaries without exposing raw lead PII.

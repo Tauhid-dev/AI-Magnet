@@ -2,6 +2,39 @@
 
 Use this file to record major product, architecture, tooling, security, and deployment decisions.
 
+## DEC-20260523-008: Phase 8 usage taxonomy and analytics query model
+
+### Decision ID
+
+DEC-20260523-008
+
+### Date
+
+2026-05-23
+
+### Context
+
+Phase 8 requires usage event taxonomy, tenant analytics, super admin aggregate analytics, dashboard updates, and tests while preserving tenant isolation and avoiding unnecessary billing or warehouse complexity. The existing schema already includes tenant-scoped `usage_logs`, conversations, messages, leads, documents, and notification deliveries.
+
+### Decision
+
+Use the existing tenant-scoped `usage_logs` table with a typed taxonomy and a `UsageService` for safe event recording. Add an `AnalyticsService` that computes tenant snapshots by filtering every tenant-owned model by `tenant_id`, and platform snapshots by returning aggregate counts, status breakdowns, and per-tenant summaries only. Do not add a new migration or billing table in Phase 8. Keep admin actions audit-log-backed and keep analytics responses free of raw lead PII.
+
+### Alternatives considered
+
+- Adding new rollup tables or materialized summaries immediately.
+- Writing ad hoc `UsageLog` records directly from routes and services.
+- Exposing detailed lead/customer rows in admin analytics.
+- Implementing billing-grade metering or Stripe usage reporting in Phase 8.
+
+### Reason
+
+The existing `usage_logs` table is enough for MVP analytics and future metering preparation. A small taxonomy and service keeps event names consistent, testable, and tenant-scoped. Query-time aggregates avoid schema churn while usage volume is low. Keeping admin analytics aggregated reduces accidental PII exposure.
+
+### Impact
+
+Future Phase 9 or production-hardening work can add rollups, caching, materialized views, or billing-specific event pipelines if usage volume or subscription requirements justify them. Future analytics changes must keep tenant analytics filtered by verified `tenant_id` and avoid using LLM output to perform unsafe actions.
+
 ## DEC-20260523-007: Phase 7 lead lifecycle and email notification delivery
 
 ### Decision ID
