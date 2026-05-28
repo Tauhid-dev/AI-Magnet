@@ -58,6 +58,30 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return response.json() as Promise<T>;
 }
 
+async function requestForm<T>(
+  path: string,
+  token: string | null,
+  formData: FormData
+): Promise<T> {
+  const headers: Record<string, string> = {
+    "X-AI-Magnet-CSRF": "1"
+  };
+  if (token && token !== COOKIE_SESSION_TOKEN) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+    cache: "no-store",
+    credentials: "include"
+  });
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status}`);
+  }
+  return response.json() as Promise<T>;
+}
+
 export const portalApi = {
   login(tenantSlug: string, email: string, password: string) {
     return request<LoginResponse>("/business-portal/auth/login", {
@@ -88,6 +112,23 @@ export const portalApi = {
       token,
       method: "POST",
       body: { filename, content, content_type: "text/plain" }
+    });
+  },
+  uploadDocumentFile(token: string | null, file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return requestForm<PortalDocument>("/business-portal/documents/upload", token, formData);
+  },
+  refreshDocument(token: string | null, documentId: string) {
+    return request<PortalDocument>(`/business-portal/documents/${documentId}/refresh`, {
+      token,
+      method: "POST"
+    });
+  },
+  deleteDocument(token: string | null, documentId: string) {
+    return request<void>(`/business-portal/documents/${documentId}`, {
+      token,
+      method: "DELETE"
     });
   },
   websiteSources(token?: string | null) {

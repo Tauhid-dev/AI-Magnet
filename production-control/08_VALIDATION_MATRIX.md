@@ -1,6 +1,6 @@
 # Validation Matrix
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 
@@ -22,7 +22,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Structured logs/correlation IDs/PII-safe logging | PR-04/PR-10 | required | required | optional | optional | required | required | manual log review | partial | request/correlation baseline tests pass; PR-10 owns full monitoring/log review |
 | Real queue worker and job visibility | PR-05 | required | required | required if schema changes | required if UI | required | required | manual worker smoke | pass | job enqueue/process/retry/failure/idempotency tests, job APIs, worker health check config |
 | Website/sitemap ingestion SSRF safety | PR-06 | required | required | required | required | required | required | staging safe crawl | pass | malicious URL tests, redirect/private DNS tests, crawl status, source UI, and migration smoke pass; controlled real-site crawl remains release-gate evidence |
-| Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | not_run | file fixtures and deletion tests |
+| Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | pass | upload validation, DOCX/PDF extraction/OCR gate tests, tenant API refresh/delete tests, private storage and worker tests |
 | SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | not_run | eval fixtures and source checks |
 | Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | not_run | e2e tests and UX checklist |
 | Monitoring/metering/quotas/cost controls | PR-10 | required | required | required | required if UI | required | required | manual alert/limit checks | not_run | metrics and quota tests |
@@ -125,3 +125,23 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Dependency and static security scans | pass | `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt`; `backend/.venv/bin/python -m bandit -q -r backend/app`; secret pattern scan; `npm audit --audit-level=high` passed high threshold with a moderate transitive PostCSS advisory noted |
 | Production-control status and visuals | pass | `python3 -m json.tool production-control/status/production-status.json`; SVG parse check; `git diff --check` |
 | Controlled real-site crawl smoke | not_run | Repository phase does not crawl live customer sites; run before real pilot usage |
+
+## PR-07 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Upload validation rejects unsupported, malformed, oversized, malicious, and unsafe-name files | pass | `backend/tests/rag/test_secure_document_ingestion.py` |
+| DOCX extraction and PDF OCR gating | pass | `backend/tests/rag/test_secure_document_ingestion.py`; `backend/app/rag/extraction.py` |
+| Private file storage path stays under configured root | pass | `backend/app/rag/document_storage.py`; storage-backed worker/API tests |
+| File-backed worker avoids raw document bytes in job payload | pass | `backend/tests/rag/test_secure_document_ingestion.py` |
+| Tenant-scoped upload, refresh, delete API controls | pass | `backend/tests/rag/test_secure_document_ingestion.py` |
+| Backend focused PR-07 tests | pass | `backend/.venv/bin/python -m pytest backend/tests/rag/test_secure_document_ingestion.py backend/tests/rag/test_chunking_and_extraction.py backend/tests/rag/test_ingestion_and_retrieval.py backend/tests/workers/test_background_jobs.py backend/tests/business/test_business_portal_api.py` - 25 passed |
+| Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 81 passed |
+| Backend compile | pass | `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` |
+| Backend lint | pass | `backend/.venv/bin/python -m ruff check backend/app backend/tests` |
+| Migration upgrade/downgrade | pass | SQLite upgrade head and downgrade to `20260528_0009` |
+| Compose static config | pass | `docker compose config`; `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` |
+| Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
+| Dependency and static security scans | pass | `pip-audit`; `bandit`; secret pattern scan; `npm audit --audit-level=high` passed high threshold with moderate Next.js/PostCSS advisory noted |
+| OCR runtime | partial | Scanned PDFs fail closed with `ocr_status=required`; production OCR engine remains gated and not claimed in PR-07 |
+| Controlled customer-document upload smoke | not_run | Repository phase does not upload real customer documents; run before real pilot usage |

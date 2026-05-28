@@ -8,7 +8,7 @@ from app.core.config import Settings, get_settings
 from app.models.knowledge import DocumentChunk, KnowledgeDocument
 from app.providers.ai.base import EmbeddingProvider
 from app.rag.chunking import chunk_text
-from app.rag.extraction import extract_text
+from app.rag.extraction import OcrRequiredError, extract_text
 
 
 class RagIngestionService:
@@ -52,6 +52,12 @@ class RagIngestionService:
         filename: str,
         content_type: str | None = "text/plain",
         storage_path: str | None = None,
+        source_type: str = "manual_upload",
+        source_title: str | None = None,
+        source_hash: str | None = None,
+        file_size_bytes: int | None = None,
+        file_sha256: str | None = None,
+        malware_scan_status: str = "not_scanned",
         status: str = "queued",
     ) -> KnowledgeDocument:
         """Create tenant document metadata before async processing."""
@@ -60,6 +66,14 @@ class RagIngestionService:
             filename=filename,
             content_type=content_type,
             storage_path=storage_path,
+            source_type=source_type,
+            source_title=source_title,
+            source_hash=source_hash,
+            file_size_bytes=file_size_bytes,
+            file_sha256=file_sha256,
+            malware_scan_status=malware_scan_status,
+            extraction_status="pending",
+            ocr_status="not_required",
             status=status,
         )
         self.session.add(document)
@@ -76,12 +90,19 @@ class RagIngestionService:
     ) -> KnowledgeDocument:
         """Process content for an existing tenant document row."""
         document.status = "processing"
+        document.extraction_status = "processing"
+        document.ocr_status = "not_required"
         document.error_message = None
         for chunk in list(document.chunks):
             self.session.delete(chunk)
         self.session.flush()
         try:
-            text = extract_text(content, content_type)
+            text = extract_text(
+                content,
+                content_type,
+                max_pages=self.settings.document_upload_max_pages,
+                ocr_enabled=self.settings.document_ocr_enabled,
+            )
             chunks = chunk_text(
                 text,
                 chunk_size=self.settings.rag_chunk_size,
@@ -104,9 +125,18 @@ class RagIngestionService:
                     )
                 )
             document.status = "ingested"
+            document.extraction_status = "extracted"
             document.error_message = None
+        except OcrRequiredError as exc:
+            document.status = "failed"
+            document.extraction_status = "failed"
+            document.ocr_status = "required"
+            document.error_message = str(exc)
+            if raise_on_failure:
+                raise
         except Exception as exc:
             document.status = "failed"
+            document.extraction_status = "failed"
             document.error_message = str(exc)
             if raise_on_failure:
                 raise

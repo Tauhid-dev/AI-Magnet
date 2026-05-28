@@ -23,6 +23,11 @@ export type PortalDocument = {
   source_url: string | null;
   source_title: string | null;
   website_source_id: string | null;
+  file_size_bytes: number | null;
+  file_sha256: string | null;
+  malware_scan_status: string;
+  extraction_status: string;
+  ocr_status: string;
   job_id: string | null;
   created_at: string;
   updated_at: string;

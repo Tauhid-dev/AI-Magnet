@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings
 from app.jobs.service import (
     JOB_TYPE_NOTIFICATION_DELIVERY,
+    JOB_TYPE_RAG_DOCUMENT_FILE_INGESTION,
     JOB_TYPE_RAG_DOCUMENT_INGESTION,
     JOB_TYPE_RAG_WEBSITE_CRAWL,
 )
@@ -23,6 +24,7 @@ from app.notifications.service import (
     NotificationService,
 )
 from app.providers.ai.factory import get_embedding_provider
+from app.rag.document_storage import DocumentStorageError, LocalDocumentStorage
 from app.rag.ingestion import RagIngestionService
 from app.rag.website_ingestion import WebsiteIngestionService
 from app.usage import UsageEventSource, UsageEventType, UsageService
@@ -43,6 +45,7 @@ def get_default_handlers() -> Mapping[str, JobHandler]:
     """Return production job handlers by job type."""
     return {
         JOB_TYPE_RAG_DOCUMENT_INGESTION: handle_document_ingestion,
+        JOB_TYPE_RAG_DOCUMENT_FILE_INGESTION: handle_document_file_ingestion,
         JOB_TYPE_RAG_WEBSITE_CRAWL: handle_website_crawl,
         JOB_TYPE_NOTIFICATION_DELIVERY: handle_notification_delivery,
     }
@@ -75,6 +78,52 @@ def handle_document_ingestion(
             raise_on_failure=True,
         )
     except ValueError as exc:
+        UsageService(session).record_document_ingestion(
+            tenant_id=tenant_id,
+            document_id=document.id,
+            status=document.status,
+            chunk_count=0,
+        )
+        raise PermanentJobError(str(exc)) from exc
+    chunk_count = len(document.chunks)
+    UsageService(session).record_document_ingestion(
+        tenant_id=tenant_id,
+        document_id=document.id,
+        status=document.status,
+        chunk_count=chunk_count,
+    )
+    return {"document_id": document.id, "status": document.status, "chunk_count": chunk_count}
+
+
+def handle_document_file_ingestion(
+    session: Session,
+    job: BackgroundJob,
+    settings: Settings,
+) -> dict[str, Any]:
+    """Process a queued private uploaded document into tenant-scoped chunks."""
+    tenant_id = require_tenant(job)
+    document_id = require_payload_string(job, "document_id")
+    document = session.get(KnowledgeDocument, document_id)
+    if document is None or document.tenant_id != tenant_id:
+        raise PermanentJobError("Document does not exist for this tenant")
+    if not document.storage_path:
+        document.status = "failed"
+        document.extraction_status = "failed"
+        document.error_message = "Uploaded document storage path is missing"
+        raise PermanentJobError(document.error_message)
+    try:
+        content = LocalDocumentStorage(settings).read(document.storage_path)
+        RagIngestionService(
+            session=session,
+            embedding_provider=get_embedding_provider(settings),
+            settings=settings,
+        ).process_document_bytes(
+            document=document,
+            content=content,
+            content_type=document.content_type,
+            raise_on_failure=True,
+        )
+    except (DocumentStorageError, FileNotFoundError, ValueError) as exc:
         UsageService(session).record_document_ingestion(
             tenant_id=tenant_id,
             document_id=document.id,

@@ -19,11 +19,13 @@ export default function DocumentsPage() {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
   const [filename, setFilename] = useState("services.txt");
   const [content, setContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sourceType, setSourceType] = useState<SourceType>("website");
   const [sourceUrl, setSourceUrl] = useState("");
   const [maxPages, setMaxPages] = useState(10);
   const [maxDepth, setMaxDepth] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [fileLoading, setFileLoading] = useState(false);
   const [sourceLoading, setSourceLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +74,60 @@ export default function DocumentsPage() {
       await loadKnowledge();
     } catch {
       setError("Document upload could not be queued.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function uploadFile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const token = getToken();
+    if (!token || !selectedFile) {
+      return;
+    }
+    setFileLoading(true);
+    setError(null);
+    try {
+      await portalApi.uploadDocumentFile(token, selectedFile);
+      setSelectedFile(null);
+      event.currentTarget.reset();
+      await loadKnowledge();
+    } catch {
+      setError("File upload could not be queued.");
+    } finally {
+      setFileLoading(false);
+    }
+  }
+
+  async function refreshDocument(documentId: string) {
+    const token = getToken();
+    if (!token) {
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await portalApi.refreshDocument(token, documentId);
+      await loadKnowledge();
+    } catch {
+      setError("Document refresh could not be queued.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteDocument(documentId: string) {
+    const token = getToken();
+    if (!token) {
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await portalApi.deleteDocument(token, documentId);
+      await loadKnowledge();
+    } catch {
+      setError("Document could not be deleted.");
     } finally {
       setLoading(false);
     }
@@ -314,6 +370,24 @@ export default function DocumentsPage() {
         </div>
       </form>
 
+      <form onSubmit={uploadFile} className="rounded-lg border border-line bg-panel p-4">
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <input
+            className="rounded-md border border-line px-3 py-2"
+            type="file"
+            accept=".txt,.md,.markdown,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
+            aria-label="Upload document file"
+          />
+          <button
+            className="rounded-md bg-accent px-4 py-2 font-semibold text-white disabled:opacity-60"
+            disabled={fileLoading || !selectedFile}
+          >
+            Upload file
+          </button>
+        </div>
+      </form>
+
       <div className="overflow-hidden rounded-lg border border-line bg-panel">
         <table className="w-full border-collapse text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-muted">
@@ -321,24 +395,60 @@ export default function DocumentsPage() {
               <th className="px-4 py-3">Document</th>
               <th className="px-4 py-3">Source</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Checks</th>
               <th className="px-4 py-3">Updated</th>
+              <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
             {documents.map((document) => (
               <tr key={document.id}>
-                <td className="px-4 py-3 font-medium">{document.source_title || document.filename}</td>
+                <td className="px-4 py-3">
+                  <div className="font-medium">{document.source_title || document.filename}</div>
+                  {document.file_size_bytes ? (
+                    <div className="mt-1 text-xs text-muted">
+                      {(document.file_size_bytes / 1024).toFixed(1)} KB
+                    </div>
+                  ) : null}
+                </td>
                 <td className="px-4 py-3 text-muted">
                   <div>{document.source_type}</div>
                   {document.source_url ? <div className="mt-1 max-w-lg truncate text-xs">{document.source_url}</div> : null}
                 </td>
                 <td className="px-4 py-3"><StatusPill value={document.status} /></td>
+                <td className="px-4 py-3 text-xs text-muted">
+                  <div>{document.malware_scan_status}</div>
+                  <div>{document.extraction_status}</div>
+                  {document.ocr_status !== "not_required" ? <div>{document.ocr_status}</div> : null}
+                </td>
                 <td className="px-4 py-3 text-muted">{new Date(document.updated_at).toLocaleString()}</td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-2">
+                    {document.source_type === "uploaded_file" ? (
+                      <button
+                        className="rounded-md border border-line px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
+                        type="button"
+                        disabled={loading}
+                        onClick={() => refreshDocument(document.id)}
+                      >
+                        Refresh
+                      </button>
+                    ) : null}
+                    <button
+                      className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 disabled:opacity-60"
+                      type="button"
+                      disabled={loading}
+                      onClick={() => deleteDocument(document.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
             {documents.length === 0 ? (
               <tr>
-                <td className="px-4 py-5 text-muted" colSpan={4}>
+                <td className="px-4 py-5 text-muted" colSpan={6}>
                   No knowledge documents have been indexed.
                 </td>
               </tr>

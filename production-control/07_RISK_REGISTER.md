@@ -1,6 +1,6 @@
 # Risk Register
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 | Risk ID | Severity | Description | Evidence | Affected phase | Mitigation | Residual risk | Status |
 |---|---|---|---|---|---|---|---|
@@ -22,7 +22,7 @@ Last updated: 2026-05-28
 | R-016 | HIGH | Structured logs, request/correlation IDs, and PII-safe logging are incomplete | Basic logging only | PR-04/PR-10 | Added JSON production log format validation and request/correlation ID middleware; Nginx forwards `X-Request-ID` | PR-10 still needs full monitoring, metrics, alerts, and deeper log review | mitigated_pr04 |
 | R-017 | HIGH | Worker queue processing is placeholder only | `backend/app/workers/runner.py` previously slept; ingestion/notifications were synchronous | PR-05 | Implemented durable `background_jobs`, Redis wake signals, worker heartbeats, retry/backoff/idempotency, job APIs, async document ingestion, async notification delivery, and tests | First VPS worker/Redis smoke remains release-gate evidence | resolved_pr05 |
 | R-018 | HIGH | Website/sitemap ingestion is missing | No crawler/sitemap module found | PR-06 | Implemented tenant-owned website/sitemap sources, SSRF-safe URL/redirect validation, crawl limits, robots handling, crawl history, queued `rag.website_crawl` jobs, portal controls, and tests | First controlled real-site crawl smoke remains release-gate evidence | resolved_pr06 |
-| R-019 | HIGH | Document/PDF/DOCX/OCR ingestion is missing | `backend/app/rag/extraction.py` supports text/Markdown only | PR-07 | Add safe upload, extraction, storage, delete/refresh | Real customer docs cannot be safely processed | open |
+| R-019 | HIGH | Document/PDF/DOCX/OCR ingestion is missing | `backend/app/rag/extraction.py` previously supported text/Markdown only | PR-07 | Added authenticated multipart upload, validation, private storage, PDF/DOCX extraction, OCR-required gating, file-backed jobs, refresh/delete controls, and tests | Scanned-document OCR runtime and full external malware/quarantine integration remain gated before claiming OCR production support | resolved_pr07 |
 | R-020 | HIGH | RAG retrieval is not scalable and lacks citations/safety evals | `backend/app/rag/retrieval.py`, chat API response | PR-08 | Use SQL pgvector tenant query, citations, thresholds, prompt-injection tests | Incorrect or ungrounded answers | open |
 | R-021 | HIGH | Onboarding and agent testing UX is incomplete | Portal pages exist but no production flow | PR-09 | Add onboarding, knowledge setup, sandbox, widget domain/key UX | Manual setup blocks beta | open |
 | R-022 | HIGH | Monitoring, metering, quotas, and cost controls are incomplete | Usage logs only | PR-10 | Add metrics, quotas, cost accounting, alerts | Provider cost abuse and blind ops | open |

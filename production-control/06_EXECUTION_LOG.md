@@ -264,3 +264,49 @@ Append-only production phase run history.
   - PR-08 still owns SQL pgvector retrieval, source citations, thresholds, prompt-injection handling, and RAG quality evaluation.
 - Next phase permitted: PR-07.
 - Commit hash: pending until commit.
+
+## 2026-05-29 - PR-07: Secure Document Ingestion, Storage and OCR Path
+
+- Instruction received: `Implement production phase PR-07`.
+- Phase selected: PR-07.
+- Branch: `production/pr-07-secure-document-ingestion-storage-ocr`.
+- Files changed:
+  - Document schema/config/storage: `backend/app/models/knowledge.py`, `backend/migrations/versions/20260529_0010_pr07_secure_document_ingestion.py`, `backend/app/core/config.py`, `backend/requirements.txt`, `.env.example`, `.gitignore`, `docker-compose.yml`, `docker-compose.prod.yml`.
+  - Secure document runtime: `backend/app/rag/document_validation.py`, `backend/app/rag/document_storage.py`, `backend/app/rag/extraction.py`, `backend/app/rag/ingestion.py`.
+  - Queue/API/frontend integration: `backend/app/jobs/service.py`, `backend/app/jobs/handlers.py`, `backend/app/api/business_portal.py`, `backend/app/schemas/business_portal.py`, `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`, `frontend/app/portal/documents/page.tsx`.
+  - Tests/docs/status: `backend/tests/rag/test_secure_document_ingestion.py`, updated existing RAG tests, `docs/document-ingestion.md`, `docs/security.md`, and production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Added authenticated multipart upload for text, Markdown, PDF, and DOCX beta document types.
+  - Added filename sanitisation, size limit enforcement, extension/content-type alignment, PDF signature checks, DOCX package checks, UTF-8 text checks, SHA-256 metadata, and deterministic basic malware screening.
+  - Added private local document storage under `DOCUMENT_STORAGE_ROOT` with traversal-safe path resolution and backend/worker shared Docker volumes.
+  - Added `rag.document_file_ingestion` jobs that carry only `document_id`; workers read private stored bytes, extract text, chunk, embed, and record usage.
+  - Added PDF selectable-text extraction, DOCX paragraph/table extraction, and fail-closed `ocr_status=required` handling for scanned PDFs.
+  - Added business portal upload, refresh, and delete APIs plus portal UI controls and document check/status display.
+- Validations run/result:
+  - `backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt` - pass.
+  - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
+  - `backend/.venv/bin/python -m pytest backend/tests/rag/test_secure_document_ingestion.py backend/tests/rag/test_chunking_and_extraction.py backend/tests/rag/test_ingestion_and_retrieval.py backend/tests/workers/test_background_jobs.py backend/tests/business/test_business_portal_api.py` - pass, 25 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 81 tests.
+  - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr07_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr07_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260528_0009` - pass.
+  - `docker compose config` - pass.
+  - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass.
+  - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+  - Secret pattern scan - pass, no matches.
+  - `npm audit --audit-level=high` - pass for high severity; npm reported moderate transitive PostCSS advisories through Next.js.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
+- Known gaps:
+  - OCR runtime remains gated; scanned PDFs fail safely with `ocr_status=required` and are not claimed as OCR-processed.
+  - Full malware/quarantine integration beyond deterministic basic screening remains a later launch-hardening option.
+  - Controlled customer-document upload smoke, live VPS worker/Redis smoke, backup/restore drill, TLS/firewall checks, and PostgreSQL/pgvector smoke remain release-gate evidence and were not executed.
+  - PR-08 still owns SQL pgvector retrieval, source citations, thresholds, prompt-injection handling, and RAG quality evaluation.
+- Next phase permitted: PR-08.
+- Commit hash: pending until commit.

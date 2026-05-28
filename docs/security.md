@@ -54,6 +54,9 @@ In `APP_ENV=production`, the backend rejects startup when:
 - SMTP/email provider settings are missing.
 - `PUBLIC_BASE_URL` is not HTTPS.
 - `BACKUP_ENCRYPTION_PASSPHRASE` is missing or weak.
+- `DOCUMENT_STORAGE_ROOT` is missing.
+- Document upload size/page limits are invalid.
+- Document malware scanning is disabled or misconfigured.
 
 Use strong random secrets from a password manager or cloud secret store. Do not commit `.env` files.
 
@@ -77,6 +80,8 @@ Rules:
 RAG retrieval must filter by tenant before scoring and returning chunks. Similar documents from another tenant must not influence answers.
 
 Website and sitemap ingestion must also remain tenant-scoped. PR-06 stores each approved source in `website_sources`, each crawl row in `website_crawl_pages`, and each generated document with source metadata on `knowledge_documents`. The crawler rejects unsafe SSRF targets, revalidates redirects, applies crawl limits, respects basic `robots.txt` disallow rules, and only ingests URLs that match the approved source domain.
+
+Document ingestion must remain tenant-scoped and private. PR-07 stores uploaded files under `DOCUMENT_STORAGE_ROOT`, never in public frontend/Nginx paths, and file-backed jobs carry only `document_id` instead of raw bytes. Upload validation enforces allowed beta types, size limits, filename sanitisation, MIME/extension/signature checks, UTF-8 text checks, DOCX package checks, PDF signature checks, and deterministic basic malware screening. Scanned PDFs fail closed with `ocr_status=required` until a production OCR path is explicitly enabled and validated.
 
 AI provider configuration must come from environment variables:
 
@@ -127,3 +132,4 @@ Before production:
 - Live PostgreSQL plus pgvector migration/startup validation path exists, but has not been run against a VPS/staging database.
 - Durable worker queue code exists, but first live worker/Redis smoke validation remains a release check.
 - PR-06 website/sitemap crawler is bounded and SSRF-hardened in repository tests, but first controlled crawl against real customer-like websites remains a release check before pilot onboarding.
+- PR-07 document ingestion supports text, Markdown, PDF text extraction, and DOCX extraction with private storage and tests; production OCR runtime and full malware/quarantine integration remain gated launch checks.

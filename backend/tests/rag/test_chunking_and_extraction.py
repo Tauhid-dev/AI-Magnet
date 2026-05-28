@@ -26,4 +26,4 @@ def test_extract_text_accepts_markdown_bytes():
 
 def test_extract_text_rejects_unsupported_types():
     with pytest.raises(ValueError, match="Unsupported content type"):
-        extract_text(b"%PDF-1.4", "application/pdf")
+        extract_text(b"not a document", "application/octet-stream")
