@@ -122,3 +122,14 @@ Append-only ADR-lite log for production remediation.
   - Run certbot/VPS migration from Codex: rejected because it requires explicit owner permission and live infrastructure access.
   - Mark TLS/backups fully launch-validated after writing scripts only: rejected because first live execution remains release evidence.
 - Follow-up impact: PR-05 can proceed after PR-04, but Gate B still needs PR-05 plus successful remote CI/VPS validation evidence.
+
+## DEC-PR-20260528-012: Durable DB Job Ledger With Redis Wake Signals
+
+- Date: 2026-05-28
+- Decision: Implement PR-05 with a durable `background_jobs` database ledger and `worker_heartbeats`, using Redis only as a wake signal for queued work.
+- Reason: The current stack is synchronous SQLAlchemy plus Redis in Docker Compose. A DB-ledger queue gives durable status, idempotency, tenant ownership, retry visibility, failed-job visibility, and simple admin/tenant APIs without introducing Celery/RQ operational complexity before the ingestion workload is fully expanded in PR-06/PR-07.
+- Affected files/phases: PR-05, `backend/app/jobs/*`, `backend/app/models/job.py`, `backend/app/workers/runner.py`, `backend/migrations/versions/20260528_0008_pr05_background_jobs.py`, `docs/worker-queue.md`.
+- Alternatives rejected:
+  - Keep the placeholder sleep worker: rejected because it leaves ingestion/notification workflows without reliable async execution.
+  - Introduce Celery/RQ immediately: deferred because the current product needs observable durable jobs more than a larger framework, and the DB ledger remains compatible with adopting a larger queue later.
+- Follow-up impact: PR-06 and PR-07 should add website, sitemap, file extraction, and OCR jobs through this ledger; PR-10 should extend metrics/alerts around queue age, failures, and worker liveness.

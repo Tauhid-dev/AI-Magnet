@@ -1,6 +1,6 @@
 # PR-05: Real Async Queue, Worker Reliability and Job Visibility
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -42,15 +42,15 @@ The current worker process sleeps and does not process Redis or database jobs. I
 
 ## Detailed Tasks
 
-- [ ] Inspect current synchronous ingestion/notification paths.
-- [ ] Choose and document queue framework.
-- [ ] Add job model/status APIs if needed.
-- [ ] Implement enqueue and worker consume behavior.
-- [ ] Add retry/backoff/idempotency.
-- [ ] Add failed job visibility.
-- [ ] Add worker health/shutdown behavior.
-- [ ] Add tests for success, retry, failure, and idempotency.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Inspect current synchronous ingestion/notification paths.
+- [x] Choose and document queue framework.
+- [x] Add job model/status APIs if needed.
+- [x] Implement enqueue and worker consume behavior.
+- [x] Add retry/backoff/idempotency.
+- [x] Add failed job visibility.
+- [x] Add worker health/shutdown behavior.
+- [x] Add tests for success, retry, failure, and idempotency.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -69,12 +69,18 @@ Schema may be needed for job status. Provide downgrade and job-state compatibili
 
 ## Evidence
 
-To be filled during PR-05.
+- Queue decision: durable `background_jobs` database ledger with Redis wake signals, documented in `docs/worker-queue.md` and `production-control/05_DECISIONS_LOG.md`.
+- Models and migration: `backend/app/models/job.py`, `backend/migrations/versions/20260528_0008_pr05_background_jobs.py`.
+- Queue services and worker: `backend/app/jobs/*`, `backend/app/workers/runner.py`, `backend/app/workers/healthcheck.py`.
+- Async integrations: business document upload queues `rag.document_ingestion`; chat lead notifications queue `notification.send_delivery`.
+- Visibility APIs: `GET /business-portal/jobs`, `GET /business-portal/jobs/{job_id}`, `GET /admin/jobs`, `GET /admin/worker-heartbeats`, and queue counts in `GET /admin/health`.
+- Tests: `backend/tests/workers/test_background_jobs.py`, updated business/admin API tests.
+- Validation: full backend tests passed with 63 tests; migration upgrade/downgrade passed on SQLite.
 
 ## Blockers
 
-Requires secure production Redis/topology from PR-04.
+No repository-controlled PR-05 blockers remain. Live worker smoke on the target VPS remains release-gate evidence before internet demo operation.
 
 ## Completion Criteria
 
-A real worker consumes queued jobs with reliable failure/retry visibility; placeholder worker is no longer presented as production-ready.
+A real worker consumes queued jobs with reliable failure/retry visibility; placeholder worker is no longer presented as production-ready. Criteria met in repository with backend, frontend, security, migration, and static compose validation.

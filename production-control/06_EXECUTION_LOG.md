@@ -174,3 +174,46 @@ Append-only production phase run history.
   - Worker queue processing remains placeholder and belongs to PR-05.
 - Next phase permitted: PR-05.
 - Commit hash: pending until commit.
+
+## 2026-05-28 - PR-05: Real Async Queue, Worker Reliability and Job Visibility
+
+- Instruction received: `Implement production phase PR-05`.
+- Phase selected: PR-05.
+- Branch: `production/pr-05-real-async-queue-worker`.
+- Files changed:
+  - Queue models/migration/config: `backend/app/models/job.py`, `backend/migrations/versions/20260528_0008_pr05_background_jobs.py`, `backend/app/core/config.py`, `backend/requirements.txt`.
+  - Queue/worker runtime: `backend/app/jobs/*`, `backend/app/workers/runner.py`, `backend/app/workers/healthcheck.py`.
+  - Async integrations/APIs: `backend/app/api/business_portal.py`, `backend/app/api/admin.py`, `backend/app/chat/service.py`, `backend/app/rag/ingestion.py`, frontend API types/client, admin health page.
+  - Deployment/docs/status: `.env.example`, `.env.production.example`, `docker-compose*.yml`, `docs/deployment.md`, `docs/worker-queue.md`, and production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Replaced the placeholder sleep worker with a durable database-backed job queue and Redis wake signals.
+  - Added job status, retry/backoff, idempotency, sensitive payload redaction, failed-job visibility, and worker heartbeat models.
+  - Moved business portal document ingestion to queued `rag.document_ingestion` jobs.
+  - Moved chat lead notification sends to queued `notification.send_delivery` jobs.
+  - Added tenant-visible job APIs, super-admin job/worker APIs, and worker counts in admin health.
+  - Added worker dependency health checks to development and production Compose.
+- Validations run/result:
+  - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 63 tests.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr05_alembic_20260528.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr05_alembic_20260528.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260528_0007` - pass.
+  - `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
+  - `docker compose config` - pass.
+  - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+  - Production compose port check for `postgres` and `redis` - pass, no published host ports.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass.
+  - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+  - Secret pattern scan - pass, no matches.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
+- Known gaps:
+  - PR-06 website/sitemap ingestion and PR-07 secure document/PDF/DOCX ingestion are still missing.
+  - Live VPS worker/Redis smoke, backup/restore drill, TLS/firewall checks, and PostgreSQL/pgvector smoke remain release-gate evidence and were not executed.
+  - PR-10 still owns full monitoring, metrics, alerts, queue-age alerting, quotas, and cost controls.
+- Next phase permitted: PR-06.
+- Commit hash: pending until commit.

@@ -9,6 +9,7 @@ import type {
   AdminTenantPrivacyExport,
   AdminTenantSummary,
   AdminUsageOverview,
+  BackgroundJob,
   BusinessSession,
   LoginResponse,
   PortalAnalytics,
@@ -16,7 +17,8 @@ import type {
   PortalConversationDetail,
   PortalDocument,
   PortalLead,
-  PortalWidget
+  PortalWidget,
+  WorkerHeartbeat
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
@@ -72,6 +74,12 @@ export const portalApi = {
   },
   documents(token?: string | null) {
     return request<PortalDocument[]>("/business-portal/documents", { token });
+  },
+  jobs(token?: string | null) {
+    return request<BackgroundJob[]>("/business-portal/jobs", { token });
+  },
+  job(token: string | null, jobId: string) {
+    return request<BackgroundJob>(`/business-portal/jobs/${jobId}`, { token });
   },
   uploadDocument(token: string | null, filename: string, content: string) {
     return request<PortalDocument>("/business-portal/documents", {
@@ -215,6 +223,12 @@ export const adminApi = {
   },
   health(token?: string | null) {
     return request<AdminHealth>("/admin/health", { token });
+  },
+  jobs(token?: string | null) {
+    return request<BackgroundJob[]>("/admin/jobs", { token });
+  },
+  workerHeartbeats(token?: string | null) {
+    return request<WorkerHeartbeat[]>("/admin/worker-heartbeats", { token });
   },
   auditLogs(token?: string | null) {
     return request<AdminAuditLog[]>("/admin/audit-logs", { token });

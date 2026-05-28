@@ -17,7 +17,7 @@ class RagIngestionService:
     def __init__(
         self,
         session: Session,
-        embedding_provider: EmbeddingProvider,
+        embedding_provider: EmbeddingProvider | None,
         settings: Settings | None = None,
     ) -> None:
         self.session = session
@@ -33,16 +33,53 @@ class RagIngestionService:
         storage_path: str | None = None,
     ) -> KnowledgeDocument:
         """Create document metadata and store tenant-scoped chunks."""
-        document = KnowledgeDocument(
+        document = self.create_pending_document(
             tenant_id=tenant_id,
             filename=filename,
             content_type=content_type,
             storage_path=storage_path,
             status="processing",
         )
+        return self.process_document_bytes(
+            document=document,
+            content=content,
+            content_type=content_type,
+        )
+
+    def create_pending_document(
+        self,
+        tenant_id: str,
+        filename: str,
+        content_type: str | None = "text/plain",
+        storage_path: str | None = None,
+        status: str = "queued",
+    ) -> KnowledgeDocument:
+        """Create tenant document metadata before async processing."""
+        document = KnowledgeDocument(
+            tenant_id=tenant_id,
+            filename=filename,
+            content_type=content_type,
+            storage_path=storage_path,
+            status=status,
+        )
         self.session.add(document)
         self.session.flush()
+        return document
 
+    def process_document_bytes(
+        self,
+        document: KnowledgeDocument,
+        content: bytes,
+        content_type: str | None = "text/plain",
+        *,
+        raise_on_failure: bool = False,
+    ) -> KnowledgeDocument:
+        """Process content for an existing tenant document row."""
+        document.status = "processing"
+        document.error_message = None
+        for chunk in list(document.chunks):
+            self.session.delete(chunk)
+        self.session.flush()
         try:
             text = extract_text(content, content_type)
             chunks = chunk_text(
@@ -52,11 +89,13 @@ class RagIngestionService:
             )
             if not chunks:
                 raise ValueError("Document does not contain extractable text")
+            if self.embedding_provider is None:
+                raise RuntimeError("Embedding provider is required to process documents")
             embeddings = self.embedding_provider.embed_texts(chunks)
             for index, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=True)):
                 self.session.add(
                     DocumentChunk(
-                        tenant_id=tenant_id,
+                        tenant_id=document.tenant_id,
                         document_id=document.id,
                         chunk_index=index,
                         content=chunk,
@@ -69,6 +108,8 @@ class RagIngestionService:
         except Exception as exc:
             document.status = "failed"
             document.error_message = str(exc)
+            if raise_on_failure:
+                raise
         finally:
             self.session.flush()
 

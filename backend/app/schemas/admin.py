@@ -184,8 +184,45 @@ class AdminHealthResponse(BaseModel):
 
     status: str
     database: str
+    queued_jobs: int = 0
+    running_jobs: int = 0
+    failed_jobs: int = 0
+    active_workers: int = 0
     app_version: str
     environment: str
+
+
+class AdminJobResponse(BaseModel):
+    """Super-admin background job status without raw payload data."""
+
+    id: str
+    tenant_id: str | None
+    queue_name: str
+    job_type: str
+    status: str
+    attempts: int
+    max_attempts: int
+    scheduled_at: datetime | None
+    started_at: datetime | None
+    completed_at: datetime | None
+    failed_at: datetime | None
+    locked_by: str | None
+    last_error: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminWorkerHeartbeatResponse(BaseModel):
+    """Worker heartbeat visible to super admins."""
+
+    worker_id: str
+    queue_name: str
+    status: str
+    hostname: str | None
+    pid: int | None
+    current_job_id: str | None
+    last_seen_at: datetime
+    stopping_at: datetime | None
 
 
 class AdminSupportLeadResponse(BaseModel):

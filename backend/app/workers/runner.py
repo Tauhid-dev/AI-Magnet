@@ -1,25 +1,22 @@
-"""Minimal worker process entrypoint for local deployment wiring."""
+"""Background worker process entrypoint."""
 
 from __future__ import annotations
 
 import logging
 import signal
-import time
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging
+from app.db.session import get_session_factory_for_url
+from app.jobs.processor import BackgroundJobProcessor
+from app.jobs.redis_queue import RedisWakeQueue
 
 
 def run() -> None:
-    """Run a small long-lived worker process until stopped.
-
-    The MVP currently performs ingestion and notification work synchronously.
-    This process gives Docker Compose a stable worker service to attach future
-    retryable jobs to without introducing a queue framework before it is needed.
-    """
+    """Run the durable job worker until stopped."""
     settings = get_settings()
     settings.validate_runtime_security()
-    configure_logging(settings.log_level)
+    configure_logging(settings.log_level, settings.log_format)
     logger = logging.getLogger("app.workers.runner")
     should_stop = False
 
@@ -29,9 +26,21 @@ def run() -> None:
 
     signal.signal(signal.SIGTERM, handle_stop)
     signal.signal(signal.SIGINT, handle_stop)
-    logger.info("Worker process started in %s mode", settings.environment)
+    session_factory = get_session_factory_for_url(settings.database_url, settings.debug)
+    processor = BackgroundJobProcessor(session_factory, settings=settings)
+    redis_queue = RedisWakeQueue(settings)
+    logger.info(
+        "Worker process started in %s mode on queue %s",
+        settings.environment,
+        settings.worker_queue_name,
+    )
     while not should_stop:
-        time.sleep(5)
+        processed_job = processor.process_one()
+        if should_stop:
+            break
+        if processed_job is None:
+            redis_queue.wait(settings.worker_poll_interval_seconds)
+    processor.mark_stopping()
     logger.info("Worker process stopped")
 
 

@@ -44,6 +44,10 @@ AUTH_COOKIE_SECURE=true
 WIDGET_REQUIRE_ALLOWED_ORIGINS=true
 POSTGRES_PASSWORD=<strong-random-password>
 DATABASE_URL=postgresql+psycopg://ai_magnet:<strong-random-password>@postgres:5432/ai_magnet
+REDIS_URL=redis://redis:6379/0
+WORKER_QUEUE_NAME=default
+WORKER_REDIS_QUEUE_KEY=ai-magnet:jobs:default
+WORKER_DEFAULT_MAX_ATTEMPTS=3
 EMAIL_PROVIDER=smtp
 SMTP_HOST=<smtp-host>
 SMTP_USERNAME=<smtp-username>
@@ -84,6 +88,22 @@ The production compose file intentionally exposes only:
 - `443:443` for HTTPS traffic.
 
 The production `postgres` and `redis` services do not publish host ports and are attached to an internal Docker network only.
+
+## Background Worker
+
+PR-05 replaces the placeholder worker with a durable database-backed job queue and Redis wake signal. The `worker` service runs:
+
+```bash
+python -m app.workers.runner
+```
+
+The worker health check validates database and Redis reachability:
+
+```bash
+python -m app.workers.healthcheck
+```
+
+Operational status is available through `GET /admin/health`, `GET /admin/jobs`, and `GET /admin/worker-heartbeats`. See `docs/worker-queue.md` for job types, retry behavior, and visibility rules.
 
 ## Production Start
 

@@ -154,6 +154,30 @@ class Settings:
     redis_url: str = field(
         default_factory=lambda: os.getenv("REDIS_URL", "redis://redis:6379/0")
     )
+    worker_queue_name: str = field(
+        default_factory=lambda: os.getenv("WORKER_QUEUE_NAME", "default")
+    )
+    worker_redis_queue_key: str = field(
+        default_factory=lambda: os.getenv("WORKER_REDIS_QUEUE_KEY", "ai-magnet:jobs:default")
+    )
+    worker_poll_interval_seconds: int = field(
+        default_factory=lambda: int(os.getenv("WORKER_POLL_INTERVAL_SECONDS", "5"))
+    )
+    worker_heartbeat_interval_seconds: int = field(
+        default_factory=lambda: int(os.getenv("WORKER_HEARTBEAT_INTERVAL_SECONDS", "15"))
+    )
+    worker_job_lock_timeout_seconds: int = field(
+        default_factory=lambda: int(os.getenv("WORKER_JOB_LOCK_TIMEOUT_SECONDS", "900"))
+    )
+    worker_default_max_attempts: int = field(
+        default_factory=lambda: int(os.getenv("WORKER_DEFAULT_MAX_ATTEMPTS", "3"))
+    )
+    worker_retry_base_seconds: int = field(
+        default_factory=lambda: int(os.getenv("WORKER_RETRY_BASE_SECONDS", "30"))
+    )
+    worker_retry_max_seconds: int = field(
+        default_factory=lambda: int(os.getenv("WORKER_RETRY_MAX_SECONDS", "300"))
+    )
 
     ai_provider: str = field(
         default_factory=lambda: os.getenv("AI_PROVIDER", "openai-compatible")
@@ -261,6 +285,22 @@ class Settings:
             issues.append("REDIS_URL must be a redis:// or rediss:// URL")
         if "localhost" in self.redis_url or "127.0.0.1" in self.redis_url:
             issues.append("REDIS_URL must use the private Docker/service hostname in production")
+        if not self.worker_queue_name.strip():
+            issues.append("WORKER_QUEUE_NAME must be set in production")
+        if not self.worker_redis_queue_key.strip():
+            issues.append("WORKER_REDIS_QUEUE_KEY must be set in production")
+        if self.worker_poll_interval_seconds <= 0:
+            issues.append("WORKER_POLL_INTERVAL_SECONDS must be greater than 0 in production")
+        if self.worker_heartbeat_interval_seconds <= 0:
+            issues.append("WORKER_HEARTBEAT_INTERVAL_SECONDS must be greater than 0 in production")
+        if self.worker_job_lock_timeout_seconds <= 0:
+            issues.append("WORKER_JOB_LOCK_TIMEOUT_SECONDS must be greater than 0 in production")
+        if self.worker_default_max_attempts <= 0:
+            issues.append("WORKER_DEFAULT_MAX_ATTEMPTS must be greater than 0 in production")
+        if self.worker_retry_base_seconds < 0:
+            issues.append("WORKER_RETRY_BASE_SECONDS must be zero or greater in production")
+        if self.worker_retry_max_seconds < self.worker_retry_base_seconds:
+            issues.append("WORKER_RETRY_MAX_SECONDS must be greater than or equal to base retry")
         if self.ai_provider == "openai-compatible" and is_placeholder(self.ai_api_key):
             issues.append("AI_API_KEY must be set for the OpenAI-compatible provider")
         if self.email_provider != "smtp":

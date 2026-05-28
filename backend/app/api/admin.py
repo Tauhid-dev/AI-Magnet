@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from sqlalchemy import func, select
@@ -20,7 +20,16 @@ from app.api.session_cookies import (
 )
 from app.core.config import Settings, get_settings
 from app.core.rate_limit import enforce_rate_limit
+from app.db.base import utc_now
 from app.db.session import get_db_session
+from app.jobs.service import (
+    BackgroundJobService,
+    JOB_STATUS_FAILED,
+    JOB_STATUS_QUEUED,
+    JOB_STATUS_RETRY_SCHEDULED,
+    JOB_STATUS_RUNNING,
+)
+from app.models.job import BackgroundJob, WorkerHeartbeat
 from app.models.tenant import Business, BusinessUser, Tenant
 from app.models.usage import AuditLog, GlobalAuditLog, UsageLog
 from app.schemas.admin import (
@@ -29,6 +38,7 @@ from app.schemas.admin import (
     AdminBusinessResponse,
     AdminBusinessUserResponse,
     AdminHealthResponse,
+    AdminJobResponse,
     AdminLoginRequest,
     AdminLoginResponse,
     AdminSessionResponse,
@@ -47,6 +57,7 @@ from app.schemas.admin import (
     AdminTenantUsageSummaryResponse,
     AdminUsageEventResponse,
     AdminUsageOverviewResponse,
+    AdminWorkerHeartbeatResponse,
 )
 
 
@@ -585,17 +596,58 @@ def get_admin_health(
     """Return backend health details for super admins."""
     database = "ok"
     status_value = "ok"
+    queued_jobs = 0
+    running_jobs = 0
+    failed_jobs = 0
+    active_workers = 0
     try:
         session.execute(select(func.count(Tenant.id))).scalar()
+        queued_jobs = job_count(session, [JOB_STATUS_QUEUED, JOB_STATUS_RETRY_SCHEDULED])
+        running_jobs = job_count(session, [JOB_STATUS_RUNNING])
+        failed_jobs = job_count(session, [JOB_STATUS_FAILED])
+        worker_cutoff = utc_now() - timedelta(
+            seconds=settings.worker_heartbeat_interval_seconds * 4
+        )
+        active_workers = session.scalar(
+            select(func.count(WorkerHeartbeat.worker_id)).where(
+                WorkerHeartbeat.status.in_(["idle", "running"]),
+                WorkerHeartbeat.last_seen_at >= worker_cutoff,
+            )
+        ) or 0
     except Exception:
         database = "error"
         status_value = "degraded"
     return AdminHealthResponse(
         status=status_value,
         database=database,
+        queued_jobs=queued_jobs,
+        running_jobs=running_jobs,
+        failed_jobs=failed_jobs,
+        active_workers=active_workers,
         app_version=settings.app_version,
         environment=settings.environment,
     )
+
+
+@router.get("/jobs", response_model=list[AdminJobResponse])
+def list_jobs(
+    _admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+) -> list[AdminJobResponse]:
+    """List recent background jobs without exposing raw payload content."""
+    return [admin_job_response(job) for job in BackgroundJobService(session).list_jobs()]
+
+
+@router.get("/worker-heartbeats", response_model=list[AdminWorkerHeartbeatResponse])
+def list_worker_heartbeats(
+    _admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+) -> list[AdminWorkerHeartbeatResponse]:
+    """List recent worker heartbeat rows."""
+    return [
+        worker_heartbeat_response(heartbeat)
+        for heartbeat in BackgroundJobService(session).list_worker_heartbeats()
+    ]
 
 
 @router.get("/audit-logs", response_model=list[AdminAuditLogResponse])
@@ -705,4 +757,46 @@ def audit_log_response(event: AuditLog | GlobalAuditLog) -> AdminAuditLogRespons
         target_id=event.target_id,
         attributes=event.attributes or {},
         created_at=event.created_at,
+    )
+
+
+def job_count(session: Session, statuses: list[str]) -> int:
+    """Count jobs in any of the provided statuses."""
+    return session.scalar(
+        select(func.count(BackgroundJob.id)).where(BackgroundJob.status.in_(statuses))
+    ) or 0
+
+
+def admin_job_response(job: BackgroundJob) -> AdminJobResponse:
+    """Map a job for super-admin visibility without raw payload content."""
+    return AdminJobResponse(
+        id=job.id,
+        tenant_id=job.tenant_id,
+        queue_name=job.queue_name,
+        job_type=job.job_type,
+        status=job.status,
+        attempts=job.attempts,
+        max_attempts=job.max_attempts,
+        scheduled_at=job.scheduled_at,
+        started_at=job.started_at,
+        completed_at=job.completed_at,
+        failed_at=job.failed_at,
+        locked_by=job.locked_by,
+        last_error=job.last_error,
+        created_at=job.created_at,
+        updated_at=job.updated_at,
+    )
+
+
+def worker_heartbeat_response(heartbeat: WorkerHeartbeat) -> AdminWorkerHeartbeatResponse:
+    """Map a worker heartbeat for super-admin visibility."""
+    return AdminWorkerHeartbeatResponse(
+        worker_id=heartbeat.worker_id,
+        queue_name=heartbeat.queue_name,
+        status=heartbeat.status,
+        hostname=heartbeat.hostname,
+        pid=heartbeat.pid,
+        current_job_id=heartbeat.current_job_id,
+        last_seen_at=heartbeat.last_seen_at,
+        stopping_at=heartbeat.stopping_at,
     )

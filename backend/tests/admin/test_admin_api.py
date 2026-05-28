@@ -14,6 +14,7 @@ from app.main import create_app
 from app.models import (
     AdminUser,
     AuditLog,
+    BackgroundJob,
     BusinessUser,
     Conversation,
     GlobalAuditLog,
@@ -21,6 +22,7 @@ from app.models import (
     Message,
     Tenant,
     UsageLog,
+    WorkerHeartbeat,
 )
 from app.tenants.service import TenantService
 from fastapi.testclient import TestClient
@@ -316,6 +318,19 @@ def test_admin_usage_health_and_support_context_are_limited(monkeypatch):
                     event_source="widget",
                     attributes={"safe": True},
                 ),
+                BackgroundJob(
+                    tenant_id=tenant.id,
+                    job_type="test.job",
+                    payload={},
+                    status="queued",
+                    scheduled_at=utc_now(),
+                ),
+                WorkerHeartbeat(
+                    worker_id="test-worker",
+                    queue_name="default",
+                    status="idle",
+                    last_seen_at=utc_now(),
+                ),
             ]
         )
         session.commit()
@@ -324,6 +339,11 @@ def test_admin_usage_health_and_support_context_are_limited(monkeypatch):
 
         usage_response = client.get("/admin/usage", headers=auth_header(token))
         health_response = client.get("/admin/health", headers=auth_header(token))
+        jobs_response = client.get("/admin/jobs", headers=auth_header(token))
+        workers_response = client.get(
+            "/admin/worker-heartbeats",
+            headers=auth_header(token),
+        )
         support_response = client.get(
             f"/admin/tenants/{tenant.id}/support-context",
             headers=auth_header(token),
@@ -334,6 +354,13 @@ def test_admin_usage_health_and_support_context_are_limited(monkeypatch):
         assert usage_response.json()["messages_total"] == 1
         assert health_response.status_code == 200
         assert health_response.json()["database"] == "ok"
+        assert health_response.json()["queued_jobs"] == 1
+        assert health_response.json()["active_workers"] == 1
+        assert jobs_response.status_code == 200
+        assert jobs_response.json()[0]["job_type"] == "test.job"
+        assert "payload" not in jobs_response.json()[0]
+        assert workers_response.status_code == 200
+        assert workers_response.json()[0]["worker_id"] == "test-worker"
         assert support_response.status_code == 200
         lead_payload = support_response.json()["recent_leads"][0]
         assert lead_payload["has_contact"] is True

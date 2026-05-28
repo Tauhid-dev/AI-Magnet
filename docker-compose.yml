@@ -12,6 +12,14 @@ x-backend-environment: &backend-environment
   ADMIN_PORTAL_SESSION_TTL_MINUTES: ${ADMIN_PORTAL_SESSION_TTL_MINUTES:-240}
   DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ai_tradie:ai_tradie@postgres:5432/ai_tradie}
   REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  WORKER_QUEUE_NAME: ${WORKER_QUEUE_NAME:-default}
+  WORKER_REDIS_QUEUE_KEY: ${WORKER_REDIS_QUEUE_KEY:-ai-magnet:jobs:default}
+  WORKER_POLL_INTERVAL_SECONDS: ${WORKER_POLL_INTERVAL_SECONDS:-5}
+  WORKER_HEARTBEAT_INTERVAL_SECONDS: ${WORKER_HEARTBEAT_INTERVAL_SECONDS:-15}
+  WORKER_JOB_LOCK_TIMEOUT_SECONDS: ${WORKER_JOB_LOCK_TIMEOUT_SECONDS:-900}
+  WORKER_DEFAULT_MAX_ATTEMPTS: ${WORKER_DEFAULT_MAX_ATTEMPTS:-3}
+  WORKER_RETRY_BASE_SECONDS: ${WORKER_RETRY_BASE_SECONDS:-30}
+  WORKER_RETRY_MAX_SECONDS: ${WORKER_RETRY_MAX_SECONDS:-300}
   AI_PROVIDER: ${AI_PROVIDER:-openai-compatible}
   AI_API_BASE_URL: ${AI_API_BASE_URL:-https://api.openai.com/v1}
   AI_API_KEY: ${AI_API_KEY:-}
@@ -66,6 +74,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.workers.healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   frontend:
     image: node:22-alpine

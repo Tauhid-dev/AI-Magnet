@@ -341,6 +341,7 @@ def test_business_portal_updates_own_lead_status_only(monkeypatch):
 
 def test_business_portal_document_upload_and_widget_key_are_tenant_scoped(monkeypatch):
     with create_test_session() as session:
+        monkeypatch.setattr("app.jobs.redis_queue.RedisWakeQueue.notify", lambda *_args: True)
         tenant, _user = seed_business_user(
             session,
             "Demo Plumbing",
@@ -368,9 +369,14 @@ def test_business_portal_document_upload_and_widget_key_are_tenant_scoped(monkey
             "/business-portal/analytics",
             headers=auth_header(token),
         )
+        jobs_response = client.get("/business-portal/jobs", headers=auth_header(token))
 
         assert document_response.status_code == 200
-        assert document_response.json()["status"] == "ingested"
+        assert document_response.json()["status"] == "queued"
+        assert document_response.json()["job_id"]
+        assert jobs_response.status_code == 200
+        assert jobs_response.json()[0]["id"] == document_response.json()["job_id"]
+        assert jobs_response.json()[0]["status"] == "queued"
         assert widget_response.status_code == 200
         assert widget_response.json()["widget_key"].startswith("wm_live_")
         assert widget_response.json()["embed_code"]
