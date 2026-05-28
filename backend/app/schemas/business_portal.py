@@ -115,7 +115,19 @@ class PortalWidgetResponse(BaseModel):
     key_prefix: str | None
     widget_key: str | None = None
     embed_code: str | None
-    allowed_origins: str | None
+    allowed_origins: list[str]
+
+
+class PortalWidgetKeyCreateRequest(BaseModel):
+    """Widget key creation request with explicit allowed browser origins."""
+
+    allowed_origins: list[str] = Field(default_factory=list)
+
+
+class PortalWidgetOriginsUpdateRequest(BaseModel):
+    """Widget allowed origin update request."""
+
+    allowed_origins: list[str] = Field(default_factory=list)
 
 
 class PortalAnalyticsBreakdownResponse(BaseModel):

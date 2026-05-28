@@ -125,6 +125,23 @@ def test_security_headers_are_added_to_api_responses(monkeypatch):
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
     assert "camera=()" in response.headers["Permissions-Policy"]
+    assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
+
+
+def test_production_runtime_requires_rate_limits_and_widget_origin_enforcement(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("ENABLE_API_DOCS", "false")
+    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "https://portal.example")
+    monkeypatch.setenv("BUSINESS_PORTAL_SESSION_SECRET", "business-secret-for-production")
+    monkeypatch.setenv("ADMIN_PORTAL_SESSION_SECRET", "admin-secret-for-production")
+    monkeypatch.setenv("RATE_LIMIT_ENABLED", "false")
+    monkeypatch.setenv("WIDGET_REQUIRE_ALLOWED_ORIGINS", "false")
+    get_settings.cache_clear()
+
+    with pytest.raises(RuntimeError, match="RATE_LIMIT_ENABLED"):
+        create_app()
+
+    get_settings.cache_clear()
 
 
 def test_cross_portal_tokens_are_not_accepted_for_sensitive_routes(monkeypatch):

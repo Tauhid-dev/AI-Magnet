@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.chat.service import ChatService
 from app.core.config import Settings, get_settings
+from app.core.rate_limit import enforce_rate_limit
 from app.db.session import get_db_session
 from app.providers.ai.base import ChatCompletionProvider, EmbeddingProvider
 from app.providers.ai.factory import get_chat_completion_provider, get_embedding_provider
@@ -54,24 +55,43 @@ def get_chat_service(
     )
 
 
-def get_widget_service(session: Session = Depends(get_db_session)) -> WidgetService:
+def get_widget_service(
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> WidgetService:
     """Return the widget service for request handling."""
-    return WidgetService(session)
+    return WidgetService(session, settings)
 
 
 @router.post("/conversations", response_model=ConversationStartResponse)
 def start_conversation(
+    request: Request,
     payload: ConversationStartRequest,
+    settings: Settings = Depends(get_settings),
     widget_service: WidgetService = Depends(get_widget_service),
     chat_service: ChatService = Depends(get_chat_service),
 ) -> ConversationStartResponse:
     """Start a tenant-scoped widget conversation."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="chat_start_public",
+        identifiers=[payload.widget_key[:16]],
+        limit=settings.rate_limit_chat_start_per_minute,
+    )
     resolution = widget_service.resolve_widget_key(payload.widget_key, payload.origin)
     if resolution is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or inactive widget key",
         )
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="chat_start_tenant_widget",
+        identifiers=[resolution.tenant_id, resolution.widget.id],
+        limit=settings.rate_limit_chat_start_per_minute,
+    )
     result = chat_service.start_conversation(
         widget_resolution=resolution,
         visitor_label=payload.visitor_label,
@@ -88,18 +108,34 @@ def start_conversation(
     response_model=ConversationMessageResponse,
 )
 def post_conversation_message(
+    request: Request,
     conversation_id: str,
     payload: ConversationMessageRequest,
+    settings: Settings = Depends(get_settings),
     widget_service: WidgetService = Depends(get_widget_service),
     chat_service: ChatService = Depends(get_chat_service),
 ) -> ConversationMessageResponse:
     """Store a visitor message and return a tenant-scoped AI answer."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="chat_message_public",
+        identifiers=[payload.widget_key[:16], conversation_id],
+        limit=settings.rate_limit_chat_message_per_minute,
+    )
     resolution = widget_service.resolve_widget_key(payload.widget_key, payload.origin)
     if resolution is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or inactive widget key",
         )
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="chat_message_tenant_widget",
+        identifiers=[resolution.tenant_id, resolution.widget.id],
+        limit=settings.rate_limit_chat_message_per_minute,
+    )
     result = chat_service.handle_visitor_message(
         widget_resolution=resolution,
         conversation_id=conversation_id,

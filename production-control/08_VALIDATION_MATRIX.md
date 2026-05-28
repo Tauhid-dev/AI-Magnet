@@ -7,9 +7,9 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Requirement | Phase | Unit | Integration/API | Migration/DB | Frontend/E2E | Security | CI/static | VPS/staging/manual | Current status | Evidence model |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Verified business/admin auth | PR-01 | required | required | required if schema changes | required | required | required | manual smoke | pass | backend tests, frontend build, migration upgrade/downgrade |
-| Secure cookie/token/CSRF/CSP session strategy | PR-01/PR-02 | required | required | optional | required | required | required | manual browser | partial | cookie/token storage tests pass; CSRF/CSP review remains PR-02 |
-| Rate limiting and abuse controls | PR-02 | required | required | optional | optional | required | required | manual curl/abuse checks | not_run | tests and config evidence |
-| Widget origin/key controls | PR-02 | required | required | optional | required | required | required | manual embed test | not_run | positive/negative origin tests |
+| Secure cookie/token/CSRF/CSP session strategy | PR-01/PR-02 | required | required | optional | required | required | required | manual browser | pass | HttpOnly cookie sessions, CSRF confirmation header tests, CSP/security headers |
+| Rate limiting and abuse controls | PR-02 | required | required | optional | optional | required | required | manual curl/abuse checks | pass | App-level limiter tests and production env validation |
+| Widget origin/key controls | PR-02 | required | required | optional | required | required | required | manual embed test | pass | Positive/negative origin tests and lifecycle API tests |
 | Tenant DB integrity | PR-03 | required | required | required | optional | required | required | staging migration | not_run | migration and cross-tenant attack tests |
 | Privacy export/delete/offboarding | PR-03 | required | required | required | required if UI | required | required | manual lifecycle test | not_run | deletion/export fixtures |
 | Global admin audit events | PR-03 | required | required | required if schema changes | required if UI | required | required | manual audit review | not_run | audit trail tests |
@@ -50,3 +50,16 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Backend full test suite | pass | `python3 -m pytest backend/tests` - 48 passed |
 | Backend lint | pass | `python3 -m ruff check backend` |
 | Frontend typecheck/lint/test/build | pass | `npm run typecheck`, `npm test`, `npm run lint`, `npm run build` |
+
+## PR-02 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Business/admin login and public endpoint rate limiting | pass | `backend/app/core/rate_limit.py`; business login/widget init tests |
+| Widget origin enforcement | pass | `backend/tests/chat/test_chat_api.py` positive/negative origin coverage |
+| Widget key lifecycle controls | pass | `backend/tests/business/test_business_portal_api.py` create/update origins/rotate/disable/revoke coverage |
+| Cookie-auth CSRF confirmation and CSP headers | pass | `backend/tests/business/test_business_portal_api.py`; `backend/tests/security/test_security_boundaries.py` |
+| Backend full test suite | pass | `python3 -m pytest backend/tests` - 54 passed |
+| Backend lint | pass | `python3 -m ruff check backend/app backend/tests` |
+| Frontend typecheck/lint/test/build | pass | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |
+| Migration/DB changes | pass | No schema migration required for PR-02 |

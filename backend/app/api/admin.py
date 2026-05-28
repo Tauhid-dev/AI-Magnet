@@ -7,11 +7,17 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.audit.service import AuditService
 from app.admin.auth import AdminPortalAuthService, AdminPortalSession
 from app.admin.service import AdminService, TenantMetrics
-from app.api.session_cookies import clear_session_cookie, get_session_token, set_session_cookie
-from app.audit.service import AuditService
+from app.api.session_cookies import (
+    clear_session_cookie,
+    get_session_token_with_source,
+    require_csrf_header_for_cookie_session,
+    set_session_cookie,
+)
 from app.core.config import Settings, get_settings
+from app.core.rate_limit import enforce_rate_limit
 from app.db.session import get_db_session
 from app.models.tenant import Business, BusinessUser, Tenant
 from app.models.usage import AuditLog, UsageLog
@@ -50,17 +56,20 @@ def get_current_admin_session(
     settings: Settings = Depends(get_settings),
 ) -> AdminPortalSession:
     """Resolve a cookie or bearer token to a super admin session."""
-    token = get_session_token(
+    resolved_token = get_session_token_with_source(
         request,
         authorization,
         cookie_name=settings.admin_portal_cookie_name,
     )
-    if token is None:
+    if resolved_token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing super admin session",
         )
-    admin_session = AdminPortalAuthService(session, settings).verify_token(token)
+    require_csrf_header_for_cookie_session(request, resolved_token)
+    admin_session = AdminPortalAuthService(session, settings).verify_token(
+        resolved_token.token
+    )
     if admin_session is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -81,12 +90,20 @@ def admin_session_response(admin_session: AdminPortalSession) -> AdminSessionRes
 
 @router.post("/auth/login", response_model=AdminLoginResponse)
 def login(
+    request: Request,
     payload: AdminLoginRequest,
     response: Response,
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> AdminLoginResponse:
     """Create a signed session for an active super admin."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="admin_login",
+        identifiers=[payload.email],
+        limit=settings.rate_limit_login_per_minute,
+    )
     result = AdminPortalAuthService(session, settings).login(
         email=payload.email,
         password=payload.password,
@@ -148,11 +165,20 @@ def list_tenants(
 
 @router.post("/tenants", response_model=AdminTenantDetailResponse)
 def create_tenant(
+    request: Request,
     payload: AdminTenantCreateRequest,
     admin_session: AdminPortalSession = Depends(get_current_admin_session),
     session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
 ) -> AdminTenantDetailResponse:
     """Create a tenant and initial business account."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="admin_tenant_create",
+        identifiers=[admin_session.admin_id],
+        limit=settings.rate_limit_admin_write_per_minute,
+    )
     if payload.status not in ALLOWED_TENANT_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -217,12 +243,21 @@ def get_tenant(
 
 @router.patch("/tenants/{tenant_id}/status", response_model=AdminTenantDetailResponse)
 def update_tenant_status(
+    request: Request,
     tenant_id: str,
     payload: AdminTenantStatusUpdateRequest,
     admin_session: AdminPortalSession = Depends(get_current_admin_session),
     session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
 ) -> AdminTenantDetailResponse:
     """Update a tenant lifecycle status."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="admin_tenant_status_write",
+        identifiers=[admin_session.admin_id, tenant_id],
+        limit=settings.rate_limit_admin_write_per_minute,
+    )
     if payload.status not in ALLOWED_TENANT_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

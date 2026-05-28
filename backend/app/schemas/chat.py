@@ -8,21 +8,21 @@ from pydantic import BaseModel, Field
 class LeadFields(BaseModel):
     """Deterministic lead fields that can be supplied by the widget."""
 
-    customer_name: str | None = None
-    customer_email: str | None = None
-    customer_phone: str | None = None
-    job_type: str | None = None
-    suburb: str | None = None
-    urgency: str | None = None
-    notes: str | None = None
+    customer_name: str | None = Field(default=None, max_length=255)
+    customer_email: str | None = Field(default=None, max_length=255)
+    customer_phone: str | None = Field(default=None, max_length=80)
+    job_type: str | None = Field(default=None, max_length=120)
+    suburb: str | None = Field(default=None, max_length=120)
+    urgency: str | None = Field(default=None, max_length=80)
+    notes: str | None = Field(default=None, max_length=2000)
 
 
 class ConversationStartRequest(BaseModel):
     """Start a widget conversation."""
 
-    widget_key: str = Field(min_length=12)
+    widget_key: str = Field(min_length=12, max_length=256)
     visitor_label: str | None = Field(default=None, max_length=255)
-    origin: str | None = None
+    origin: str | None = Field(default=None, max_length=500)
 
 
 class ConversationStartResponse(BaseModel):
@@ -36,10 +36,10 @@ class ConversationStartResponse(BaseModel):
 class ConversationMessageRequest(BaseModel):
     """Post a visitor message to a conversation."""
 
-    widget_key: str = Field(min_length=12)
+    widget_key: str = Field(min_length=12, max_length=256)
     message: str = Field(min_length=1, max_length=4000)
     lead: LeadFields | None = None
-    origin: str | None = None
+    origin: str | None = Field(default=None, max_length=500)
 
 
 class LeadCaptureState(BaseModel):

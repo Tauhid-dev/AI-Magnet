@@ -56,3 +56,25 @@ Append-only ADR-lite log for production remediation.
   - SMS/WhatsApp MFA: rejected because those channels are explicitly deferred.
   - Email OTP only: rejected because email-only administrator proof is not strong enough for the critical admin-auth blocker.
 - Follow-up impact: PR-09 or a later admin UX pass should add guided MFA enrollment/rotation UI; PR-04 should address secret-handling hardening.
+
+## DEC-PR-20260528-006: In-Process Rate Limiter As PR-02 Safety Net
+
+- Date: 2026-05-28
+- Decision: Implement app-level in-memory rate limits now, with per-IP plus per-account/tenant/widget/conversation scopes, and leave distributed Redis/proxy enforcement to PR-04/PR-05.
+- Reason: PR-02 must remove the immediate no-limit public API blocker without pulling queue/infrastructure work forward. The in-process limiter is deterministic, testable, and enough for a single-process controlled demo.
+- Affected files/phases: PR-02, `backend/app/core/rate_limit.py`, `backend/app/api/widget.py`, `backend/app/api/chat.py`, `backend/app/api/business_portal.py`, `backend/app/api/admin.py`.
+- Alternatives rejected:
+  - Nginx-only limits: rejected for PR-02 because local/API tests would not verify endpoint-specific tenant/widget/account policies.
+  - Redis-backed distributed limits: deferred because PR-05 owns the real Redis worker/queue reliability layer and PR-04 owns production topology.
+- Follow-up impact: PR-04/PR-05 must harden this into proxy/distributed controls before Gate B can pass in scaled production-like deployment.
+
+## DEC-PR-20260528-007: Widget Origins Required In Production, Optional In Local Dev
+
+- Date: 2026-05-28
+- Decision: Add normalized allowed-origin enforcement for widget keys and require `WIDGET_REQUIRE_ALLOWED_ORIGINS=true` for production startup, while keeping local default false for existing developer/demo flows.
+- Reason: Public widgets must not be embeddable from arbitrary domains in production, but local development and existing sample tests need a non-breaking path.
+- Affected files/phases: PR-02, `backend/app/widget/service.py`, `backend/app/api/business_portal.py`, `frontend/app/portal/widget/page.tsx`, `.env.example`.
+- Alternatives rejected:
+  - Always deny keys without origins in every environment: rejected because it would break existing local seed/demo usage abruptly.
+  - Wildcard origin support: rejected for beta scope because it weakens the control being added.
+- Follow-up impact: PR-04 must verify production environment variables and deployment runbooks set widget origin enforcement before any public/private internet demo.

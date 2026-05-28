@@ -5,14 +5,18 @@ from __future__ import annotations
 import hashlib
 import secrets
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import Settings, get_settings
 from app.models.widget import WidgetConfig
 
 
 WIDGET_KEY_PREFIX = "wm_live_"
+WIDGET_TERMINAL_STATUSES = {"revoked", "rotated"}
+WIDGET_ALLOWED_MUTABLE_STATUSES = {"active", "disabled"}
 
 
 def hash_widget_key(widget_key: str) -> str:
@@ -36,8 +40,9 @@ class WidgetResolution:
 class WidgetService:
     """Manage and resolve public widget keys."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, settings: Settings | None = None) -> None:
         self.session = session
+        self.settings = settings or get_settings()
 
     def generate_widget_key(self) -> str:
         """Generate a browser-safe public widget key."""
@@ -51,13 +56,16 @@ class WidgetService:
         allowed_origins: list[str] | None = None,
     ) -> WidgetConfig:
         """Create an active widget config without storing the raw key."""
+        serialized_origins = self._serialize_origins(allowed_origins)
+        if self.settings.widget_require_allowed_origins and not serialized_origins:
+            raise ValueError("At least one allowed origin is required for widget keys")
         widget = WidgetConfig(
             tenant_id=tenant_id,
             widget_key_hash=hash_widget_key(widget_key),
             key_prefix=widget_key_prefix(widget_key),
             name=name,
             status="active",
-            allowed_origins=self._serialize_origins(allowed_origins),
+            allowed_origins=serialized_origins,
         )
         self.session.add(widget)
         self.session.flush()
@@ -82,26 +90,128 @@ class WidgetService:
 
     def revoke_widget(self, widget_id: str, tenant_id: str) -> WidgetConfig | None:
         """Mark a tenant-owned widget as revoked."""
+        return self._set_widget_status(widget_id, tenant_id, "revoked")
+
+    def disable_widget(self, widget_id: str, tenant_id: str) -> WidgetConfig | None:
+        """Mark a tenant-owned widget as disabled without destroying its history."""
+        return self._set_widget_status(widget_id, tenant_id, "disabled")
+
+    def update_allowed_origins(
+        self,
+        widget_id: str,
+        tenant_id: str,
+        allowed_origins: list[str],
+    ) -> WidgetConfig | None:
+        """Replace allowed browser origins for a tenant-owned widget."""
+        widget = self._get_widget(widget_id, tenant_id)
+        if widget is None or widget.status in WIDGET_TERMINAL_STATUSES:
+            return None
+        serialized_origins = self._serialize_origins(allowed_origins)
+        if self.settings.widget_require_allowed_origins and not serialized_origins:
+            raise ValueError("At least one allowed origin is required for widget keys")
+        widget.allowed_origins = serialized_origins
+        self.session.flush()
+        return widget
+
+    def rotate_widget(
+        self,
+        widget_id: str,
+        tenant_id: str,
+        *,
+        new_widget_key: str,
+        allowed_origins: list[str] | None = None,
+    ) -> WidgetConfig | None:
+        """Revoke the old widget key and create a replacement key."""
+        widget = self._get_widget(widget_id, tenant_id)
+        if widget is None or widget.status in WIDGET_TERMINAL_STATUSES:
+            return None
+        serialized_origins = (
+            self._serialize_origins(allowed_origins)
+            if allowed_origins is not None
+            else widget.allowed_origins
+        )
+        if self.settings.widget_require_allowed_origins and not serialized_origins:
+            raise ValueError("At least one allowed origin is required for widget keys")
+        widget.status = "rotated"
+        replacement = WidgetConfig(
+            tenant_id=tenant_id,
+            widget_key_hash=hash_widget_key(new_widget_key),
+            key_prefix=widget_key_prefix(new_widget_key),
+            name=widget.name,
+            status="active",
+            allowed_origins=serialized_origins,
+        )
+        self.session.add(replacement)
+        self.session.flush()
+        return replacement
+
+    def parsed_allowed_origins(self, widget: WidgetConfig) -> list[str]:
+        """Return normalized origins for API responses."""
+        if not widget.allowed_origins:
+            return []
+        return [
+            origin.strip()
+            for origin in widget.allowed_origins.splitlines()
+            if origin.strip()
+        ]
+
+    def _get_widget(self, widget_id: str, tenant_id: str) -> WidgetConfig | None:
         statement = select(WidgetConfig).where(
             WidgetConfig.id == widget_id,
             WidgetConfig.tenant_id == tenant_id,
         )
-        widget = self.session.scalars(statement).first()
+        return self.session.scalars(statement).first()
+
+    def _set_widget_status(
+        self,
+        widget_id: str,
+        tenant_id: str,
+        new_status: str,
+    ) -> WidgetConfig | None:
+        widget = self._get_widget(widget_id, tenant_id)
         if widget is None:
             return None
-        widget.status = "revoked"
+        if (
+            new_status not in WIDGET_ALLOWED_MUTABLE_STATUSES
+            and new_status not in WIDGET_TERMINAL_STATUSES
+        ):
+            raise ValueError("Unsupported widget status")
+        widget.status = new_status
         self.session.flush()
         return widget
 
     def _serialize_origins(self, origins: list[str] | None) -> str | None:
         if not origins:
             return None
-        return "\n".join(sorted({origin.strip() for origin in origins if origin.strip()}))
+        normalized = sorted({normalize_origin(origin) for origin in origins if origin.strip()})
+        if len(normalized) > 20:
+            raise ValueError("A widget key can have at most 20 allowed origins")
+        return "\n".join(normalized) if normalized else None
 
     def _origin_allowed(self, allowed_origins: str | None, request_origin: str | None) -> bool:
         if not allowed_origins:
-            return True
+            return not self.settings.widget_require_allowed_origins
         if not request_origin:
             return False
+        try:
+            normalized_request_origin = normalize_origin(request_origin)
+        except ValueError:
+            return False
         allowed = {origin.strip().lower() for origin in allowed_origins.splitlines()}
-        return request_origin.strip().lower() in allowed
+        return normalized_request_origin.lower() in allowed
+
+
+def normalize_origin(origin: str) -> str:
+    """Normalize browser origin strings and reject path/query wildcards."""
+    parsed = urlparse(origin.strip())
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.hostname is None:
+        raise ValueError("Allowed origins must be absolute http(s) origins")
+    if parsed.path not in {"", "/"} or parsed.params or parsed.query or parsed.fragment:
+        raise ValueError("Allowed origins must not include path, query, or fragment")
+    hostname = parsed.hostname.lower()
+    try:
+        port_value = parsed.port
+    except ValueError as exc:
+        raise ValueError("Allowed origins must include a valid port") from exc
+    port = f":{port_value}" if port_value else ""
+    return f"{parsed.scheme.lower()}://{hostname}{port}"

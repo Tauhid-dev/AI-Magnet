@@ -1,6 +1,6 @@
 # PR-02: Public API Abuse Protection, Widget Origin Controls and API Security
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -48,16 +48,16 @@ Current endpoints have no rate limiting. Widget origins can be unrestricted when
 
 ## Detailed Tasks
 
-- [ ] Inspect public endpoints and current CORS/session behavior.
-- [ ] Decide rate-limit implementation and record decision.
-- [ ] Add rate-limit config with production-safe defaults.
-- [ ] Add endpoint-specific rate policies.
-- [ ] Add widget origin management API and portal UI.
-- [ ] Add key revoke/rotate/disable tests.
-- [ ] Add positive/negative origin tests.
-- [ ] Add abuse log events without leaking PII.
-- [ ] Review and update security headers, CSRF, CSP, and CORS.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Inspect public endpoints and current CORS/session behavior.
+- [x] Decide rate-limit implementation and record decision.
+- [x] Add rate-limit config with production-safe defaults.
+- [x] Add endpoint-specific rate policies.
+- [x] Add widget origin management API and portal UI.
+- [x] Add key revoke/rotate/disable workflow.
+- [x] Add positive/negative origin tests.
+- [x] Add abuse logging via PII-safe rate-limit scope logs and tenant usage events.
+- [x] Review and update security headers, CSRF, CSP, and CORS.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -73,15 +73,30 @@ Rate-limit bypass, forwarded IP trust, CORS wildcard, CSRF, and widget key leaka
 
 ## Migration And Rollback Notes
 
-Schema migration may be required for widget key lifecycle metadata. Provide downgrade/rollback.
+No schema migration was required. Widget lifecycle state uses the existing `status`, `allowed_origins`, `key_prefix`, and hashed-key fields. Rollback is code-only: revert PR-02 changes and reset `WIDGET_REQUIRE_ALLOWED_ORIGINS` / rate-limit environment settings as needed for local development.
 
 ## Evidence
 
-To be filled during PR-02.
+- Branch: `production/pr-02-api-abuse-widget-security`.
+- App-level rate limit helper: `backend/app/core/rate_limit.py`.
+- Production rate-limit and widget-origin config: `backend/app/core/config.py`, `.env.example`.
+- Cookie CSRF confirmation: `backend/app/api/session_cookies.py`, `frontend/lib/api/client.ts`.
+- Public endpoint policies: `backend/app/api/widget.py`, `backend/app/api/chat.py`.
+- Portal/admin write policies: `backend/app/api/business_portal.py`, `backend/app/api/admin.py`.
+- Widget origin and lifecycle service: `backend/app/widget/service.py`.
+- Portal widget controls: `frontend/app/portal/widget/page.tsx`, `frontend/lib/api/client.ts`.
+- Tests: `backend/tests/business/test_business_portal_api.py`, `backend/tests/chat/test_chat_api.py`, `backend/tests/security/test_security_boundaries.py`.
+- Validation:
+  - `python3 -m pytest backend/tests` - pass, 54 tests.
+  - `python3 -m ruff check backend/app backend/tests` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
 
 ## Blockers
 
-Depends on PR-01 for final cookie/CSRF alignment.
+No PR-02 blockers remain. Distributed/proxy-backed rate limiting and production network hardening are intentionally left to PR-04/PR-05.
 
 ## Completion Criteria
 

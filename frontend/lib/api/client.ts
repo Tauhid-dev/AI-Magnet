@@ -30,6 +30,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const headers: Record<string, string> = {
     "Content-Type": "application/json"
   };
+  if (options.method && options.method !== "GET") {
+    headers["X-AI-Magnet-CSRF"] = "1";
+  }
   if (options.token && options.token !== COOKIE_SESSION_TOKEN) {
     headers.Authorization = `Bearer ${options.token}`;
   }
@@ -97,8 +100,35 @@ export const portalApi = {
   widget(token?: string | null) {
     return request<PortalWidget>("/business-portal/widget", { token });
   },
-  createWidgetKey(token?: string | null) {
+  createWidgetKey(token: string | null, allowedOrigins: string[]) {
     return request<PortalWidget>("/business-portal/widget/keys", {
+      token,
+      method: "POST",
+      body: { allowed_origins: allowedOrigins }
+    });
+  },
+  updateWidgetOrigins(token: string | null, widgetId: string, allowedOrigins: string[]) {
+    return request<PortalWidget>(`/business-portal/widget/${widgetId}/origins`, {
+      token,
+      method: "PATCH",
+      body: { allowed_origins: allowedOrigins }
+    });
+  },
+  rotateWidgetKey(token: string | null, widgetId: string, allowedOrigins?: string[]) {
+    return request<PortalWidget>(`/business-portal/widget/${widgetId}/rotate`, {
+      token,
+      method: "POST",
+      body: allowedOrigins ? { allowed_origins: allowedOrigins } : undefined
+    });
+  },
+  disableWidgetKey(token: string | null, widgetId: string) {
+    return request<PortalWidget>(`/business-portal/widget/${widgetId}/disable`, {
+      token,
+      method: "POST"
+    });
+  },
+  revokeWidgetKey(token: string | null, widgetId: string) {
+    return request<PortalWidget>(`/business-portal/widget/${widgetId}/revoke`, {
       token,
       method: "POST"
     });
