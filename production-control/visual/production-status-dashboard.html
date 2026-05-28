@@ -118,19 +118,19 @@
     <section class="grid summary">
       <div class="card">
         <h2>Current State</h2>
-        <div class="metric">PR-07 verified</div>
-        <p>Auth, abuse controls, tenant integrity, production infrastructure guardrails, durable worker queue controls, secure website/sitemap ingestion, and secure document ingestion are implemented in the repository.</p>
+        <div class="metric">PR-08 verified</div>
+        <p>Auth, abuse controls, tenant integrity, production infrastructure guardrails, durable worker queue controls, secure ingestion, and grounded RAG citations/safety controls are implemented in the repository.</p>
       </div>
       <div class="card">
         <h2>Next Permitted Phase</h2>
-        <div class="metric">PR-08</div>
-        <p>Scalable RAG Retrieval, Citations, Safety and Quality Evaluation.</p>
+        <div class="metric">PR-09</div>
+        <p>Customer Onboarding, Agent Testing and Widget Installation Experience.</p>
       </div>
       <div class="card">
         <h2>Progress</h2>
-        <div class="metric">8 / 13 phases</div>
-        <div class="progress"><span style="width: 62%;"></span></div>
-        <p>PR-00 through PR-07 are verified.</p>
+        <div class="metric">9 / 13 phases</div>
+        <div class="progress"><span style="width: 69%;"></span></div>
+        <p>PR-00 through PR-08 are verified.</p>
       </div>
       <div class="card">
         <h2>Launch Gate</h2>
@@ -142,13 +142,14 @@
     <section>
       <h2>Critical Blockers</h2>
       <div class="blockers">
-        <div class="blocker">PR-08 scalable RAG retrieval, citations, thresholds, and safety evaluation are not implemented</div>
+        <div class="blocker">PR-09 customer onboarding, knowledge setup, agent testing, and widget installation UX are not beta-complete</div>
+        <div class="blocker">PR-10 monitoring, metering, quotas, and cost controls are not implemented</div>
         <div class="blocker">Scanned-document OCR runtime remains gated</div>
         <div class="blocker">First controlled real-site crawl smoke remains pending</div>
         <div class="blocker">First controlled document-upload smoke remains pending</div>
         <div class="blocker">First VPS TLS/firewall validation remains pending</div>
         <div class="blocker">First encrypted backup and restore drill remains pending</div>
-        <div class="blocker">First live worker/Redis and PostgreSQL/pgvector smoke remains pending</div>
+        <div class="blocker">First live worker/Redis and PostgreSQL/pgvector RAG smoke remains pending</div>
       </div>
     </section>
 
@@ -163,8 +164,8 @@
         <div class="card phase verified"><h3>PR-05: Queue and Worker</h3><p>Status: verified. Durable jobs, Redis wake signals, retries, failure visibility, worker health, and async ingestion/notification jobs are implemented.</p></div>
         <div class="card phase verified"><h3>PR-06: Website/Sitemap Ingestion</h3><p>Status: verified. Tenant source tracking, SSRF-safe crawling, crawl history, queued indexing jobs, and portal controls are implemented.</p></div>
         <div class="card phase verified"><h3>PR-07: Document Ingestion</h3><p>Status: verified. Secure file upload, private storage, PDF/DOCX extraction, gated OCR path, and refresh/delete controls are implemented.</p></div>
-        <div class="card phase high"><h3>PR-08: RAG Quality</h3><p>Status: next, not started. Adds SQL pgvector retrieval, citations, thresholds, safety evals.</p></div>
-        <div class="card phase pending"><h3>PR-09: Onboarding UX</h3><p>Status: not started. Adds customer setup, agent test, widget installation UX.</p></div>
+        <div class="card phase verified"><h3>PR-08: RAG Quality</h3><p>Status: verified. SQL pgvector retrieval path, citations, thresholds, no-answer fallback, and safety evals are implemented.</p></div>
+        <div class="card phase high"><h3>PR-09: Onboarding UX</h3><p>Status: next, not started. Adds customer setup, agent test, widget installation UX.</p></div>
         <div class="card phase pending"><h3>PR-10: Monitoring and Quotas</h3><p>Status: not started. Adds ops visibility, metering, quotas, and cost controls.</p></div>
         <div class="card phase pending"><h3>PR-11: Paid Beta Controls</h3><p>Status: not started. Adds entitlements/billing or manual paid-beta controls.</p></div>
         <div class="card phase pending"><h3>PR-12: Final Launch Gate</h3><p>Status: not started. Final audit and explicit owner approval before production.</p></div>

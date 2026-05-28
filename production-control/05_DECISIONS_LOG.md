@@ -167,3 +167,25 @@ Append-only ADR-lite log for production remediation.
   - Add full OCR runtime immediately: deferred because OCR engine selection, resource limits, malware/quarantine flow, and operational costs need a dedicated hardening pass.
   - Add cloud object storage immediately: deferred because the PR-04 OCI VPS topology does not yet require external storage, and a local abstraction keeps the path replaceable later.
 - Follow-up impact: PR-08 can now assume tenant document content exists but must still add scalable SQL pgvector retrieval, citations, thresholds, and RAG safety evaluation. A later OCR/storage hardening pass may replace the local storage backend or add an external scanner without changing the API contract.
+
+## DEC-PR-20260529-016: SQL pgvector Retrieval With SQLite Test Fallback
+
+- Date: 2026-05-29
+- Decision: Implement PR-08 production retrieval with a PostgreSQL/pgvector SQL query that filters by tenant and ingested document status inside the database, while retaining a SQLite/Python scoring fallback only for local unit tests.
+- Reason: Production must avoid loading every tenant chunk into Python, but the existing local test suite uses in-memory SQLite. Keeping both paths lets CI verify tenant filtering, citations, thresholds, and safety behavior without requiring a local PostgreSQL service for every unit test.
+- Affected files/phases: PR-08, `backend/app/rag/retrieval.py`, `backend/migrations/versions/20260529_0011_pr08_pgvector_retrieval_indexes.py`, `backend/tests/rag/test_ingestion_and_retrieval.py`, `docs/rag-quality.md`.
+- Alternatives rejected:
+  - Keep Python-side scoring as the production path: rejected because it was the audited scalability blocker.
+  - Require PostgreSQL for every local test: deferred because the current repo keeps a fast SQLite unit test path; staging/VPS PostgreSQL smoke remains a release-gate validation.
+- Follow-up impact: PR-10 should add retrieval latency/cost dashboards and quota enforcement. PR-12 must include production-equivalent PostgreSQL/pgvector retrieval smoke before launch.
+
+## DEC-PR-20260529-017: No-Answer Fallback Before LLM Invocation
+
+- Date: 2026-05-29
+- Decision: When no tenant-owned chunks clear the configured similarity threshold, return `RAG_NO_ANSWER_MESSAGE` directly instead of asking the LLM to improvise.
+- Reason: The beta product must fail safely when the knowledge base is empty or irrelevant. Avoiding an LLM call in the no-context path reduces hallucination risk and avoids unnecessary provider cost.
+- Affected files/phases: PR-08, `backend/app/chat/service.py`, `backend/app/core/config.py`, `.env.example`, `.env.production.example`, `docker-compose*.yml`, `backend/tests/rag/test_rag_safety_eval.py`.
+- Alternatives rejected:
+  - Always call the LLM with "no context": rejected because it encourages plausible unsupported answers.
+  - Hardcode the fallback copy in the service: rejected because launch copy should be configurable by environment.
+- Follow-up impact: PR-09 may tune the displayed no-answer copy in the agent test/widget UX; PR-10 can meter saved no-context provider calls.

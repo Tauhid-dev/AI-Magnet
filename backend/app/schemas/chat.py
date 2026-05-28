@@ -51,6 +51,20 @@ class LeadCaptureState(BaseModel):
     next_prompt: str | None = None
 
 
+class CitationSource(BaseModel):
+    """Source metadata for a grounded chat answer citation."""
+
+    citation_id: str
+    document_id: str
+    chunk_id: str
+    chunk_index: int
+    score: float
+    filename: str
+    source_type: str
+    source_title: str | None = None
+    source_url: str | None = None
+
+
 class ConversationMessageResponse(BaseModel):
     """Assistant response and persisted message identifiers."""
 
@@ -59,4 +73,9 @@ class ConversationMessageResponse(BaseModel):
     assistant_message_id: str
     assistant_message: str
     retrieved_chunk_count: int
+    citations: list[CitationSource] = Field(default_factory=list)
+    answer_status: str = "answered"
+    retrieval_latency_ms: int = 0
+    retrieval_top_score: float | None = None
+    rag_safety_flags: list[str] = Field(default_factory=list)
     lead_capture: LeadCaptureState

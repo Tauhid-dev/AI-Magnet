@@ -115,6 +115,9 @@
       origin: window.location.origin,
     }).then(function (payload) {
       appendMessage("Assistant", payload.assistant_message);
+      if (payload.citations && payload.citations.length) {
+        appendCitations(payload.citations);
+      }
       if (payload.lead_capture && payload.lead_capture.next_prompt) {
         appendMessage("Assistant", payload.lead_capture.next_prompt);
       }
@@ -144,6 +147,30 @@
     messages.scrollTop = messages.scrollHeight;
   }
 
+  function appendCitations(citations) {
+    var item = document.createElement("div");
+    item.style.cssText = [
+      "margin:-4px 0 10px",
+      "padding:8px 10px",
+      "border-radius:8px",
+      "background:#eef6ff",
+      "border:1px solid #bfdbfe",
+      "color:#1e3a5f",
+      "font-size:12px",
+    ].join(";");
+    var rows = citations.slice(0, 3).map(function (citation) {
+      var label = citation.source_title || citation.source_url || citation.filename || "Source";
+      var prefix = escapeHtml(citation.citation_id || "Source");
+      if (citation.source_url) {
+        return "<div><strong>" + prefix + ":</strong> <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"" + escapeAttribute(citation.source_url) + "\">" + escapeHtml(label) + "</a></div>";
+      }
+      return "<div><strong>" + prefix + ":</strong> " + escapeHtml(label) + "</div>";
+    });
+    item.innerHTML = "<strong>Sources</strong>" + rows.join("");
+    messages.appendChild(item);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (character) {
       return {
@@ -154,5 +181,9 @@
         "'": "&#039;",
       }[character];
     });
+  }
+
+  function escapeAttribute(value) {
+    return escapeHtml(value).replace(/`/g, "&#096;");
   }
 })();
