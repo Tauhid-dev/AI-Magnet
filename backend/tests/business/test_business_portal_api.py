@@ -5,6 +5,7 @@ from sqlalchemy.pool import StaticPool
 import app.models  # noqa: F401
 from app.core.config import get_settings
 from app.core.passwords import hash_password
+from app.core.rate_limit import rate_limiter
 from app.db.base import Base, utc_now
 from app.db.session import get_db_session
 from app.main import create_app
@@ -29,6 +30,7 @@ def create_client(session, monkeypatch):
     monkeypatch.setenv("AI_PROVIDER", "test")
     monkeypatch.setenv("AI_EMBEDDING_DIMENSIONS", "16")
     monkeypatch.setenv("BUSINESS_PORTAL_SESSION_SECRET", "test-secret")
+    rate_limiter.reset()
     get_settings.cache_clear()
     app = create_app()
 
@@ -188,6 +190,39 @@ def test_business_portal_locks_after_repeated_failed_passwords(monkeypatch):
         assert user.locked_until is not None
 
 
+def test_business_portal_login_rate_limit_blocks_repeated_attempts(monkeypatch):
+    with create_test_session() as session:
+        seed_business_user(
+            session,
+            "Rate Limited Plumbing",
+            "rate-limited",
+            "limit@example.test",
+        )
+        session.commit()
+        monkeypatch.setenv("RATE_LIMIT_LOGIN_PER_MINUTE", "1")
+        client = create_client(session, monkeypatch)
+
+        first_response = client.post(
+            "/business-portal/auth/login",
+            json={
+                "tenant_slug": "rate-limited",
+                "email": "limit@example.test",
+                "password": "wrong-password",
+            },
+        )
+        limited_response = client.post(
+            "/business-portal/auth/login",
+            json={
+                "tenant_slug": "rate-limited",
+                "email": "limit@example.test",
+                "password": "wrong-password",
+            },
+        )
+
+        assert first_response.status_code == 401
+        assert limited_response.status_code == 429
+
+
 def test_business_portal_blocks_cross_tenant_lead_and_conversation(monkeypatch):
     with create_test_session() as session:
         tenant_a, _user_a = seed_business_user(
@@ -343,3 +378,104 @@ def test_business_portal_document_upload_and_widget_key_are_tenant_scoped(monkey
         assert analytics_response.json()["widget_status"] == "active"
         stored_document = session.scalars(select(KnowledgeDocument)).one()
         assert stored_document.tenant_id == tenant.id
+
+
+def test_business_cookie_write_requires_csrf_header(monkeypatch):
+    with create_test_session() as session:
+        seed_business_user(
+            session,
+            "Cookie Plumbing",
+            "cookie-plumbing",
+            "owner@cookie.example",
+        )
+        session.commit()
+        client = create_client(session, monkeypatch)
+
+        login_response = client.post(
+            "/business-portal/auth/login",
+            json={
+                "tenant_slug": "cookie-plumbing",
+                "email": "owner@cookie.example",
+                "password": "correct-password",
+            },
+        )
+        blocked_response = client.post(
+            "/business-portal/widget/keys",
+            json={"allowed_origins": ["https://cookie.example"]},
+        )
+        allowed_response = client.post(
+            "/business-portal/widget/keys",
+            headers={"X-AI-Magnet-CSRF": "1"},
+            json={"allowed_origins": ["https://cookie.example"]},
+        )
+
+        assert login_response.status_code == 200
+        assert blocked_response.status_code == 403
+        assert allowed_response.status_code == 200
+
+
+def test_business_portal_widget_key_lifecycle_controls(monkeypatch):
+    with create_test_session() as session:
+        seed_business_user(
+            session,
+            "Lifecycle Plumbing",
+            "lifecycle-plumbing",
+            "owner@lifecycle.example",
+        )
+        session.commit()
+        client = create_client(session, monkeypatch)
+        token = login(client, "lifecycle-plumbing", "owner@lifecycle.example")
+
+        create_response = client.post(
+            "/business-portal/widget/keys",
+            headers=auth_header(token),
+            json={"allowed_origins": ["https://first.example"]},
+        )
+        created_widget = create_response.json()
+        widget_id = created_widget["id"]
+        original_key = created_widget["widget_key"]
+
+        update_response = client.patch(
+            f"/business-portal/widget/{widget_id}/origins",
+            headers=auth_header(token),
+            json={"allowed_origins": ["https://second.example"]},
+        )
+        rotate_response = client.post(
+            f"/business-portal/widget/{widget_id}/rotate",
+            headers=auth_header(token),
+            json={"allowed_origins": ["https://second.example"]},
+        )
+        rotated_widget = rotate_response.json()
+        new_key = rotated_widget["widget_key"]
+        old_key_response = client.post(
+            "/widget/init",
+            json={"widget_key": original_key, "origin": "https://second.example"},
+        )
+        new_key_response = client.post(
+            "/widget/init",
+            json={"widget_key": new_key, "origin": "https://second.example"},
+        )
+        disable_response = client.post(
+            f"/business-portal/widget/{rotated_widget['id']}/disable",
+            headers=auth_header(token),
+        )
+        disabled_key_response = client.post(
+            "/widget/init",
+            json={"widget_key": new_key, "origin": "https://second.example"},
+        )
+        revoke_response = client.post(
+            f"/business-portal/widget/{rotated_widget['id']}/revoke",
+            headers=auth_header(token),
+        )
+
+        assert create_response.status_code == 200
+        assert update_response.status_code == 200
+        assert update_response.json()["allowed_origins"] == ["https://second.example"]
+        assert rotate_response.status_code == 200
+        assert old_key_response.status_code == 401
+        assert new_key_response.status_code == 200
+        assert disable_response.status_code == 200
+        assert disable_response.json()["status"] == "disabled"
+        assert disabled_key_response.status_code == 401
+        assert revoke_response.status_code == 200
+        assert revoke_response.json()["status"] == "revoked"

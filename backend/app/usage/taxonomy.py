@@ -15,6 +15,10 @@ class UsageEventType:
     DOCUMENT_INGESTED = "document_ingested"
     DOCUMENT_INGESTION_FAILED = "document_ingestion_failed"
     WIDGET_KEY_CREATED = "widget_key_created"
+    WIDGET_KEY_ROTATED = "widget_key_rotated"
+    WIDGET_KEY_DISABLED = "widget_key_disabled"
+    WIDGET_KEY_REVOKED = "widget_key_revoked"
+    WIDGET_ORIGINS_UPDATED = "widget_origins_updated"
     LEAD_STATUS_UPDATED = "lead_status_updated"
 
 
@@ -38,6 +42,10 @@ TENANT_USAGE_EVENTS = frozenset(
         UsageEventType.DOCUMENT_INGESTED,
         UsageEventType.DOCUMENT_INGESTION_FAILED,
         UsageEventType.WIDGET_KEY_CREATED,
+        UsageEventType.WIDGET_KEY_ROTATED,
+        UsageEventType.WIDGET_KEY_DISABLED,
+        UsageEventType.WIDGET_KEY_REVOKED,
+        UsageEventType.WIDGET_ORIGINS_UPDATED,
         UsageEventType.LEAD_STATUS_UPDATED,
     }
 )

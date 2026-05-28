@@ -92,6 +92,36 @@ class Settings:
     auth_lockout_minutes: int = field(
         default_factory=lambda: int(os.getenv("AUTH_LOCKOUT_MINUTES", "15"))
     )
+    rate_limit_enabled: bool = field(
+        default_factory=lambda: parse_bool(os.getenv("RATE_LIMIT_ENABLED"), default=True)
+    )
+    rate_limit_window_seconds: int = field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+    )
+    rate_limit_login_per_minute: int = field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_LOGIN_PER_MINUTE", "20"))
+    )
+    rate_limit_widget_init_per_minute: int = field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_WIDGET_INIT_PER_MINUTE", "120"))
+    )
+    rate_limit_chat_start_per_minute: int = field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_CHAT_START_PER_MINUTE", "60"))
+    )
+    rate_limit_chat_message_per_minute: int = field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_CHAT_MESSAGE_PER_MINUTE", "120"))
+    )
+    rate_limit_portal_write_per_minute: int = field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_PORTAL_WRITE_PER_MINUTE", "60"))
+    )
+    rate_limit_admin_write_per_minute: int = field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_ADMIN_WRITE_PER_MINUTE", "30"))
+    )
+    widget_require_allowed_origins: bool = field(
+        default_factory=lambda: parse_bool(
+            os.getenv("WIDGET_REQUIRE_ALLOWED_ORIGINS"),
+            default=False,
+        )
+    )
 
     database_url: str = field(
         default_factory=lambda: os.getenv(
@@ -162,6 +192,20 @@ class Settings:
             issues.append("CORS_ALLOWED_ORIGINS must not contain '*' in production")
         if self.enable_api_docs:
             issues.append("ENABLE_API_DOCS must be false in production")
+        if not self.rate_limit_enabled:
+            issues.append("RATE_LIMIT_ENABLED must be true in production")
+        if self.rate_limit_window_seconds <= 0:
+            issues.append("RATE_LIMIT_WINDOW_SECONDS must be greater than 0 in production")
+        if self.rate_limit_login_per_minute <= 0:
+            issues.append("RATE_LIMIT_LOGIN_PER_MINUTE must be greater than 0 in production")
+        if self.rate_limit_widget_init_per_minute <= 0:
+            issues.append("RATE_LIMIT_WIDGET_INIT_PER_MINUTE must be greater than 0 in production")
+        if self.rate_limit_chat_start_per_minute <= 0:
+            issues.append("RATE_LIMIT_CHAT_START_PER_MINUTE must be greater than 0 in production")
+        if self.rate_limit_chat_message_per_minute <= 0:
+            issues.append("RATE_LIMIT_CHAT_MESSAGE_PER_MINUTE must be greater than 0 in production")
+        if not self.widget_require_allowed_origins:
+            issues.append("WIDGET_REQUIRE_ALLOWED_ORIGINS must be true in production")
         return issues
 
     def validate_runtime_security(self) -> None:

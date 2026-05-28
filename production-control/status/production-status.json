@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "PR-02",
-    "last_completed_phase": "PR-01",
-    "next_permitted_phase": "PR-02",
+    "active_phase": "PR-03",
+    "last_completed_phase": "PR-02",
+    "next_permitted_phase": "PR-03",
     "production_go_no_go": "NO-GO beyond controlled internal demo with synthetic/sample data",
-    "overall_status": "pr01_auth_verified_next_pr02"
+    "overall_status": "pr02_api_abuse_controls_verified_next_pr03"
   },
   "launch_gates": [
     {
@@ -139,20 +139,26 @@
     {
       "phase_id": "PR-02",
       "title": "Public API Abuse Protection, Widget Origin Controls and API Security",
-      "status": "not_started",
-      "completion_percent": 0,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-01"
       ],
       "priority": "p0",
       "criticality": "critical_launch_blocker",
-      "validation_status": "not_run",
+      "validation_status": "pass",
       "last_updated": "2026-05-28",
       "evidence_links": [
-        "production-control/phases/PR-02_PUBLIC_API_ABUSE_PROTECTION_WIDGET_ORIGIN_CONTROLS_AND_API_SECURITY.md"
+        "production-control/phases/PR-02_PUBLIC_API_ABUSE_PROTECTION_WIDGET_ORIGIN_CONTROLS_AND_API_SECURITY.md",
+        "backend/app/core/rate_limit.py",
+        "backend/app/widget/service.py",
+        "frontend/app/portal/widget/page.tsx",
+        "backend/tests/business/test_business_portal_api.py",
+        "backend/tests/chat/test_chat_api.py",
+        "backend/tests/security/test_security_boundaries.py"
       ],
-      "branch": null,
-      "commit": null
+      "branch": "production/pr-02-api-abuse-widget-security",
+      "commit": "pending"
     },
     {
       "phase_id": "PR-03",
@@ -362,7 +368,6 @@
     }
   ],
   "critical_blockers": [
-    "Public endpoint rate limiting and abuse controls",
     "PostgreSQL must not publish host port 5432 in production",
     "Redis must not publish host port 6379 in production",
     "Production HTTPS/TLS/HSTS and renewal path",
@@ -371,7 +376,7 @@
   "high_production_requirements": [
     {
       "item": "Secure browser session/token strategy with CSRF/CSP review",
-      "phase": "PR-01"
+      "phase": "PR-01/PR-02"
     },
     {
       "item": "Complete production secret validation for session, database, Redis, AI provider, SMTP/email provider, and frontend/API configuration",

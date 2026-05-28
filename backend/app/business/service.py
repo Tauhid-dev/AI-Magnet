@@ -87,6 +87,14 @@ class BusinessPortalService:
         )
         return self.session.scalars(statement).first()
 
+    def latest_widget(self) -> WidgetConfig | None:
+        statement = (
+            select(WidgetConfig)
+            .where(WidgetConfig.tenant_id == self.tenant_id)
+            .order_by(WidgetConfig.created_at.desc())
+        )
+        return self.session.scalars(statement).first()
+
     def analytics(self) -> TenantAnalyticsSnapshot:
         return AnalyticsService(self.session).tenant_snapshot(self.tenant_id)
 

@@ -16,7 +16,8 @@ from app.rag.ingestion import RagIngestionService
 from app.tenants.service import TenantService
 from app.widget.service import WidgetService
 from app.main import create_app
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
+from app.core.rate_limit import rate_limiter
 from fastapi.testclient import TestClient
 
 
@@ -42,6 +43,8 @@ def create_test_session():
 
 
 def create_client(session, embedding_provider, chat_provider):
+    rate_limiter.reset()
+    get_settings.cache_clear()
     app = create_app()
 
     def override_db():
@@ -59,6 +62,23 @@ def seed_tenant_with_widget(session, name: str, slug: str, widget_key: str):
         tenant_id=tenant.id,
         widget_key=widget_key,
         name=f"{name} widget",
+    )
+    return tenant, widget
+
+
+def seed_tenant_with_origin_widget(
+    session,
+    name: str,
+    slug: str,
+    widget_key: str,
+    allowed_origins: list[str],
+):
+    tenant = TenantService(session).create_tenant(name, slug)
+    widget = WidgetService(session).create_widget_config(
+        tenant_id=tenant.id,
+        widget_key=widget_key,
+        name=f"{name} widget",
+        allowed_origins=allowed_origins,
     )
     return tenant, widget
 
@@ -122,6 +142,60 @@ def test_widget_init_rejects_revoked_key():
         response = client.post("/widget/init", json={"widget_key": widget_key})
 
         assert response.status_code == 401
+
+
+def test_widget_init_enforces_allowed_origin():
+    with create_test_session() as session:
+        widget_key = "wm_live_origin_widget_a"
+        seed_tenant_with_origin_widget(
+            session,
+            "Tenant A Plumbing",
+            "tenant-a",
+            widget_key,
+            ["https://allowed.example"],
+        )
+        session.commit()
+        client = create_client(
+            session,
+            DeterministicEmbeddingProvider(16),
+            RecordingChatProvider(),
+        )
+
+        allowed_response = client.post(
+            "/widget/init",
+            json={"widget_key": widget_key, "origin": "https://allowed.example"},
+        )
+        missing_origin_response = client.post(
+            "/widget/init",
+            json={"widget_key": widget_key},
+        )
+        wrong_origin_response = client.post(
+            "/widget/init",
+            json={"widget_key": widget_key, "origin": "https://evil.example"},
+        )
+
+        assert allowed_response.status_code == 200
+        assert missing_origin_response.status_code == 401
+        assert wrong_origin_response.status_code == 401
+
+
+def test_widget_init_rate_limit_blocks_repeated_requests(monkeypatch):
+    with create_test_session() as session:
+        widget_key = "wm_live_rate_widget_a"
+        seed_tenant_with_widget(session, "Tenant A Plumbing", "tenant-a", widget_key)
+        session.commit()
+        monkeypatch.setenv("RATE_LIMIT_WIDGET_INIT_PER_MINUTE", "1")
+        client = create_client(
+            session,
+            DeterministicEmbeddingProvider(16),
+            RecordingChatProvider(),
+        )
+
+        first_response = client.post("/widget/init", json={"widget_key": widget_key})
+        limited_response = client.post("/widget/init", json={"widget_key": widget_key})
+
+        assert first_response.status_code == 200
+        assert limited_response.status_code == 429
 
 
 def test_conversation_message_uses_only_current_tenant_rag_context_and_captures_lead():

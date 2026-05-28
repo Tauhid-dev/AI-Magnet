@@ -8,19 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-PR-02: Public API Abuse Protection, Widget Origin Controls and API Security.
+PR-03: Tenant Isolation, Data Lifecycle, Privacy and Database Integrity.
 
-Status: not_started. PR-01 is verified and PR-02 is the next permitted phase.
+Status: not_started. PR-01 and PR-02 are verified and PR-03 is the next permitted phase.
 
 ## Last Completed Phase
 
-PR-01.
+PR-02.
 
 ## Next Permitted Phase
 
-`Implement production phase PR-02`
+`Implement production phase PR-03`
 
-Do not start PR-03 or later until PR-02 is implemented or explicitly marked blocked with safe independent subtasks documented.
+Do not start PR-04 or later until PR-03 is implemented or explicitly marked blocked with safe independent subtasks documented.
 
 ## Production Go/No-Go
 
@@ -37,10 +37,10 @@ Do not start PR-03 or later until PR-02 is implemented or explicitly marked bloc
 - Audit date: 2026-05-23.
 - Production readiness score: 35/100.
 - PR-01 implemented production password auth, admin MFA support, HttpOnly browser session cookies, session revocation, failed-login lockout, frontend login/logout updates, and validation tests.
+- PR-02 implemented app-level public/API rate limiting, CSRF confirmation for cookie-auth unsafe writes, CSP/security-header review, production widget-origin enforcement config, widget key lifecycle APIs, portal controls, and validation tests.
 
 ## Unresolved Critical Risks
 
-- Public endpoint rate limiting and abuse controls are missing.
 - PostgreSQL must not publish host port 5432 in production.
 - Redis must not publish host port 6379 in production and must be protected on private networking.
 - Production HTTPS/TLS/HSTS and renewal path are missing.
@@ -48,7 +48,6 @@ Do not start PR-03 or later until PR-02 is implemented or explicitly marked bloc
 
 ## Unresolved High Risks
 
-- CSRF/CSP review and broader public API security hardening remain PR-02 work.
 - Production secret validation is incomplete.
 - Live PostgreSQL plus pgvector validation is missing.
 - Tenant privacy lifecycle, export, delete, and offboarding are missing.
@@ -63,17 +62,16 @@ Do not start PR-03 or later until PR-02 is implemented or explicitly marked bloc
 
 ## Last Validation Commands
 
-Latest PR-01 validation commands:
+Latest PR-02 validation commands:
 
-- `python3 -m pytest backend/tests` - pass, 48 tests.
-- `python3 -m ruff check backend` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr01_alembic.db python3 -m alembic -c backend/alembic.ini upgrade head` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr01_alembic.db python3 -m alembic -c backend/alembic.ini downgrade base` - pass.
-- `npm run typecheck` - pass.
-- `npm test` - pass.
 - `npm run lint` - pass.
+- `npm run typecheck` - pass.
+- `python3 -m pytest backend/tests` - pass, 54 tests.
+- `python3 -m ruff check backend/app backend/tests` - pass.
+- `npm test` - pass.
 - `npm run build` - pass.
 - `python3 -m json.tool production-control/status/production-status.json` - pass.
+- `git diff --check` - pass.
 
 ## Important Links
 

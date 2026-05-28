@@ -67,7 +67,7 @@ export type PortalWidget = {
   key_prefix: string | null;
   widget_key: string | null;
   embed_code: string | null;
-  allowed_origins: string | null;
+  allowed_origins: string[];
 };
 
 export type AnalyticsBreakdown = {

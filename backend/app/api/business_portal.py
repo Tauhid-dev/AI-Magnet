@@ -8,9 +8,15 @@ from sqlalchemy.orm import Session
 from app.business.auth import BusinessPortalAuthService, BusinessPortalSession
 from app.business.service import BusinessPortalService
 from app.audit.service import AuditService
+from app.api.session_cookies import (
+    clear_session_cookie,
+    get_session_token_with_source,
+    require_csrf_header_for_cookie_session,
+    set_session_cookie,
+)
 from app.core.config import Settings, get_settings
+from app.core.rate_limit import enforce_rate_limit
 from app.db.session import get_db_session
-from app.api.session_cookies import clear_session_cookie, get_session_token, set_session_cookie
 from app.providers.ai.factory import get_embedding_provider
 from app.rag.ingestion import RagIngestionService
 from app.schemas.business_portal import (
@@ -26,6 +32,8 @@ from app.schemas.business_portal import (
     PortalLeadResponse,
     PortalLeadStatusUpdateRequest,
     PortalMessageResponse,
+    PortalWidgetKeyCreateRequest,
+    PortalWidgetOriginsUpdateRequest,
     PortalUsageEventResponse,
     PortalWidgetResponse,
 )
@@ -43,17 +51,20 @@ def get_current_business_session(
     settings: Settings = Depends(get_settings),
 ) -> BusinessPortalSession:
     """Resolve a cookie or bearer token to a tenant-scoped business session."""
-    token = get_session_token(
+    resolved_token = get_session_token_with_source(
         request,
         authorization,
         cookie_name=settings.business_portal_cookie_name,
     )
-    if token is None:
+    if resolved_token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing business portal session",
         )
-    portal_session = BusinessPortalAuthService(session, settings).verify_token(token)
+    require_csrf_header_for_cookie_session(request, resolved_token)
+    portal_session = BusinessPortalAuthService(session, settings).verify_token(
+        resolved_token.token
+    )
     if portal_session is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -76,12 +87,20 @@ def session_response(session: BusinessPortalSession) -> BusinessPortalSessionRes
 
 @router.post("/auth/login", response_model=BusinessPortalLoginResponse)
 def login(
+    request: Request,
     payload: BusinessPortalLoginRequest,
     response: Response,
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> BusinessPortalLoginResponse:
     """Create a signed business portal session for an active user."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_login",
+        identifiers=[payload.tenant_slug, payload.email],
+        limit=settings.rate_limit_login_per_minute,
+    )
     result = BusinessPortalAuthService(session, settings).login(
         tenant_slug=payload.tenant_slug,
         email=payload.email,
@@ -173,12 +192,20 @@ def list_documents(
 
 @router.post("/documents", response_model=PortalDocumentResponse)
 def create_document(
+    request: Request,
     payload: PortalDocumentCreateRequest,
     portal_session: BusinessPortalSession = Depends(get_current_business_session),
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> PortalDocumentResponse:
     """Ingest a text document for the current tenant."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_documents_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
     embedding_provider = get_embedding_provider(settings)
     document = RagIngestionService(
         session=session,
@@ -233,12 +260,21 @@ def get_lead(
 
 @router.patch("/leads/{lead_id}/status", response_model=PortalLeadResponse)
 def update_lead_status(
+    request: Request,
     lead_id: str,
     payload: PortalLeadStatusUpdateRequest,
     portal_session: BusinessPortalSession = Depends(get_current_business_session),
     session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
 ) -> PortalLeadResponse:
     """Update a current tenant lead lifecycle status."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_lead_status_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
     service = BusinessPortalService(session, portal_session.tenant_id)
     current_lead = service.get_lead(lead_id)
     if current_lead is None:
@@ -312,31 +348,45 @@ def get_widget_setup(
     session: Session = Depends(get_db_session),
 ) -> PortalWidgetResponse:
     """Return widget setup details for the current tenant."""
-    widget = BusinessPortalService(session, portal_session.tenant_id).active_widget()
+    widget = BusinessPortalService(session, portal_session.tenant_id).latest_widget()
     if widget is None:
         return PortalWidgetResponse(
             id=None,
             status="not_configured",
             key_prefix=None,
             embed_code=None,
-            allowed_origins=None,
+            allowed_origins=[],
         )
     return widget_response(widget)
 
 
 @router.post("/widget/keys", response_model=PortalWidgetResponse)
 def create_widget_key(
+    request: Request,
+    payload: PortalWidgetKeyCreateRequest | None = None,
     portal_session: BusinessPortalSession = Depends(get_current_business_session),
     session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
 ) -> PortalWidgetResponse:
     """Create a new active widget key and return it once."""
-    service = WidgetService(session)
-    widget_key = service.generate_widget_key()
-    widget = service.create_widget_config(
-        tenant_id=portal_session.tenant_id,
-        widget_key=widget_key,
-        name=f"{portal_session.tenant_name} website widget",
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_widget_key_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
     )
+    service = WidgetService(session, settings)
+    widget_key = service.generate_widget_key()
+    try:
+        widget = service.create_widget_config(
+            tenant_id=portal_session.tenant_id,
+            widget_key=widget_key,
+            name=f"{portal_session.tenant_name} website widget",
+            allowed_origins=(payload.allowed_origins if payload else []),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     UsageService(session).record_event(
         tenant_id=portal_session.tenant_id,
         event_type=UsageEventType.WIDGET_KEY_CREATED,
@@ -345,6 +395,146 @@ def create_widget_key(
     )
     session.commit()
     return widget_response(widget, widget_key=widget_key)
+
+
+@router.patch("/widget/{widget_id}/origins", response_model=PortalWidgetResponse)
+def update_widget_origins(
+    request: Request,
+    widget_id: str,
+    payload: PortalWidgetOriginsUpdateRequest,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalWidgetResponse:
+    """Replace allowed origins for a tenant-owned widget."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_widget_origins_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    service = WidgetService(session, settings)
+    try:
+        widget = service.update_allowed_origins(
+            widget_id,
+            portal_session.tenant_id,
+            payload.allowed_origins,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if widget is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")
+    UsageService(session).record_event(
+        tenant_id=portal_session.tenant_id,
+        event_type=UsageEventType.WIDGET_ORIGINS_UPDATED,
+        event_source=UsageEventSource.BUSINESS_PORTAL,
+        attributes={
+            "widget_config_id": widget.id,
+            "key_prefix": widget.key_prefix,
+            "origin_count": len(service.parsed_allowed_origins(widget)),
+        },
+    )
+    session.commit()
+    return widget_response(widget)
+
+
+@router.post("/widget/{widget_id}/disable", response_model=PortalWidgetResponse)
+def disable_widget_key(
+    request: Request,
+    widget_id: str,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalWidgetResponse:
+    """Disable a tenant-owned widget key."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_widget_disable",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    widget = WidgetService(session, settings).disable_widget(widget_id, portal_session.tenant_id)
+    if widget is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")
+    UsageService(session).record_event(
+        tenant_id=portal_session.tenant_id,
+        event_type=UsageEventType.WIDGET_KEY_DISABLED,
+        event_source=UsageEventSource.BUSINESS_PORTAL,
+        attributes={"widget_config_id": widget.id, "key_prefix": widget.key_prefix},
+    )
+    session.commit()
+    return widget_response(widget)
+
+
+@router.post("/widget/{widget_id}/revoke", response_model=PortalWidgetResponse)
+def revoke_widget_key(
+    request: Request,
+    widget_id: str,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalWidgetResponse:
+    """Revoke a tenant-owned widget key permanently."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_widget_revoke",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    widget = WidgetService(session, settings).revoke_widget(widget_id, portal_session.tenant_id)
+    if widget is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")
+    UsageService(session).record_event(
+        tenant_id=portal_session.tenant_id,
+        event_type=UsageEventType.WIDGET_KEY_REVOKED,
+        event_source=UsageEventSource.BUSINESS_PORTAL,
+        attributes={"widget_config_id": widget.id, "key_prefix": widget.key_prefix},
+    )
+    session.commit()
+    return widget_response(widget)
+
+
+@router.post("/widget/{widget_id}/rotate", response_model=PortalWidgetResponse)
+def rotate_widget_key(
+    request: Request,
+    widget_id: str,
+    payload: PortalWidgetOriginsUpdateRequest | None = None,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalWidgetResponse:
+    """Rotate a tenant-owned widget key and return the replacement key once."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_widget_rotate",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    service = WidgetService(session, settings)
+    new_widget_key = service.generate_widget_key()
+    try:
+        widget = service.rotate_widget(
+            widget_id,
+            portal_session.tenant_id,
+            new_widget_key=new_widget_key,
+            allowed_origins=(payload.allowed_origins if payload else None),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if widget is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")
+    UsageService(session).record_event(
+        tenant_id=portal_session.tenant_id,
+        event_type=UsageEventType.WIDGET_KEY_ROTATED,
+        event_source=UsageEventSource.BUSINESS_PORTAL,
+        attributes={"widget_config_id": widget.id, "key_prefix": widget.key_prefix},
+    )
+    session.commit()
+    return widget_response(widget, widget_key=new_widget_key)
 
 
 @router.get("/analytics", response_model=PortalAnalyticsResponse)
@@ -428,18 +618,25 @@ def conversation_response(conversation, message_count: int) -> PortalConversatio
 
 def widget_response(widget, widget_key: str | None = None) -> PortalWidgetResponse:
     """Map widget config to response."""
-    display_key = widget_key or f"{widget.key_prefix}..."
-    embed_code = (
-        '<script src="./chat-widget.js" '
-        'data-api-base-url="https://api.example.com" '
-        f'data-widget-key="{display_key}" '
-        'data-title="Ask our AI receptionist"></script>'
-    )
+    display_key = widget_key or "PASTE_FULL_WIDGET_KEY_HERE"
+    embed_code = None
+    if widget.status == "active":
+        embed_code = (
+            '<script src="./chat-widget.js" '
+            'data-api-base-url="https://api.example.com" '
+            f'data-widget-key="{display_key}" '
+            'data-title="Ask our AI receptionist"></script>'
+        )
+    allowed_origins = [
+        origin.strip()
+        for origin in (widget.allowed_origins or "").splitlines()
+        if origin.strip()
+    ]
     return PortalWidgetResponse(
         id=widget.id,
         status=widget.status,
         key_prefix=widget.key_prefix,
         widget_key=widget_key,
         embed_code=embed_code,
-        allowed_origins=widget.allowed_origins,
+        allowed_origins=allowed_origins,
     )
