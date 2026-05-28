@@ -77,11 +77,13 @@ Rules:
 
 ## AI and RAG Privacy
 
-RAG retrieval must filter by tenant before scoring and returning chunks. Similar documents from another tenant must not influence answers.
+RAG retrieval must filter by tenant before scoring and returning chunks. Similar documents from another tenant must not influence answers. PR-08 uses a PostgreSQL/pgvector retrieval query with tenant and `knowledge_documents.status = 'ingested'` filters inside SQL for production, with a SQLite-only fallback for local tests.
 
 Website and sitemap ingestion must also remain tenant-scoped. PR-06 stores each approved source in `website_sources`, each crawl row in `website_crawl_pages`, and each generated document with source metadata on `knowledge_documents`. The crawler rejects unsafe SSRF targets, revalidates redirects, applies crawl limits, respects basic `robots.txt` disallow rules, and only ingests URLs that match the approved source domain.
 
 Document ingestion must remain tenant-scoped and private. PR-07 stores uploaded files under `DOCUMENT_STORAGE_ROOT`, never in public frontend/Nginx paths, and file-backed jobs carry only `document_id` instead of raw bytes. Upload validation enforces allowed beta types, size limits, filename sanitisation, MIME/extension/signature checks, UTF-8 text checks, DOCX package checks, PDF signature checks, and deterministic basic malware screening. Scanned PDFs fail closed with `ocr_status=required` until a production OCR path is explicitly enabled and validated.
+
+Retrieved RAG excerpts are untrusted reference material. PR-08 wraps excerpts with source labels, returns source citations to the chat API/widget, records prompt-injection pattern flags, and returns the configured no-answer fallback without calling the LLM when no tenant chunk clears the similarity threshold.
 
 AI provider configuration must come from environment variables:
 

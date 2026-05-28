@@ -1,6 +1,6 @@
 # PR-08: Scalable RAG Retrieval, Citations, Safety and Quality Evaluation
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -47,15 +47,15 @@ Current retrieval loads all tenant chunks and scores in Python. Chat responses d
 
 ## Detailed Tasks
 
-- [ ] Inspect current vector type, migrations, and retrieval tests.
-- [ ] Implement SQL pgvector retrieval with tenant filter.
-- [ ] Add thresholds and no-answer fallback.
-- [ ] Add citations/source response schema.
-- [ ] Add citation display where appropriate.
-- [ ] Add prompt-injection safety handling.
-- [ ] Add RAG eval fixture suite.
-- [ ] Add latency/token/cost measurement seam.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Inspect current vector type, migrations, and retrieval tests.
+- [x] Implement SQL pgvector retrieval with tenant filter.
+- [x] Add thresholds and no-answer fallback.
+- [x] Add citations/source response schema.
+- [x] Add citation display where appropriate.
+- [x] Add prompt-injection safety handling.
+- [x] Add RAG eval fixture suite.
+- [x] Add latency/token/cost measurement seam.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -75,11 +75,21 @@ Index changes or source metadata changes require reversible migrations and perfo
 
 ## Evidence
 
-To be filled during PR-08.
+- SQL pgvector retrieval path with tenant/status filters: `backend/app/rag/retrieval.py`.
+- PostgreSQL retrieval indexes: `backend/migrations/versions/20260529_0011_pr08_pgvector_retrieval_indexes.py`.
+- RAG safety prompt assembly and prompt-injection pattern flags: `backend/app/rag/safety.py`.
+- Chat API citation response and RAG metadata: `backend/app/schemas/chat.py`, `backend/app/api/chat.py`, `backend/app/chat/service.py`.
+- Widget citation display: `widget/chat-widget.js`.
+- RAG quality documentation: `docs/rag-quality.md`.
+- RAG/citation/safety evaluation fixtures: `backend/tests/rag/test_rag_safety_eval.py`.
+- Retrieval threshold/citation tests: `backend/tests/rag/test_ingestion_and_retrieval.py`.
+- Validation:
+  - `backend/.venv/bin/python -m pytest backend/tests/rag/test_ingestion_and_retrieval.py backend/tests/rag/test_rag_safety_eval.py backend/tests/chat/test_chat_api.py` - pass, 15 tests.
+  - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
 
 ## Blockers
 
-Requires source provenance from PR-06/PR-07.
+No repository-controlled PR-08 blockers remain. Production-equivalent PostgreSQL/pgvector staging smoke remains release-gate evidence before real customer pilot.
 
 ## Completion Criteria
 

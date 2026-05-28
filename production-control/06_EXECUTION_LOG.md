@@ -310,3 +310,50 @@ Append-only production phase run history.
   - PR-08 still owns SQL pgvector retrieval, source citations, thresholds, prompt-injection handling, and RAG quality evaluation.
 - Next phase permitted: PR-08.
 - Commit hash: pending until commit.
+
+## 2026-05-29 - PR-08: Scalable RAG Retrieval, Citations, Safety and Quality Evaluation
+
+- Instruction received: `Implement production phase PR-08`.
+- Phase selected: PR-08.
+- Branch: `production/pr-08-scalable-rag-citations-safety`.
+- Files changed:
+  - RAG retrieval/safety/config: `backend/app/rag/retrieval.py`, `backend/app/rag/safety.py`, `backend/app/core/config.py`, `.env.example`, `.env.production.example`, `docker-compose.yml`, `docker-compose.prod.yml`.
+  - Chat/API/widget integration: `backend/app/chat/service.py`, `backend/app/api/chat.py`, `backend/app/schemas/chat.py`, `widget/chat-widget.js`.
+  - Database/docs/tests: `backend/migrations/versions/20260529_0011_pr08_pgvector_retrieval_indexes.py`, `backend/tests/rag/test_ingestion_and_retrieval.py`, `backend/tests/rag/test_rag_safety_eval.py`, `docs/rag-quality.md`, `docs/security.md`.
+  - Production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Replaced the production retrieval path with PostgreSQL/pgvector SQL scoring that filters by `tenant_id` and ingested document status inside the query.
+  - Added bounded top-K and similarity-threshold settings, PostgreSQL retrieval indexes, and a SQLite-only fallback for local unit tests.
+  - Added source citations through chat responses and widget display, including document/chunk/source metadata.
+  - Added RAG safety prompt assembly that treats retrieved excerpts as untrusted reference material, flags prompt-injection patterns, and returns a configurable no-answer fallback without an LLM call when retrieval has no supported context.
+  - Added usage metadata seams for retrieval latency, citation counts, top score, safety flags, prompt/response chars, and estimated token counts for PR-10 quota/cost work.
+  - Added RAG evaluation tests for grounded answers, missing knowledge, wrong-tenant protection, malicious instructions, citation correctness, and threshold behavior.
+- Validations run/result:
+  - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
+  - `backend/.venv/bin/python -m pytest backend/tests/rag/test_ingestion_and_retrieval.py backend/tests/rag/test_rag_safety_eval.py backend/tests/chat/test_chat_api.py` - pass, 15 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 87 tests.
+  - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr08_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr08_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0010` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `docker compose config` - pass.
+  - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+  - Production compose port check for `postgres` and `redis` - pass, no published host ports.
+  - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass.
+  - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+  - Secret pattern scan - pass, no matches.
+  - `npm audit --audit-level=high` - pass for high severity; npm reported moderate transitive PostCSS advisories through Next.js.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
+- Known gaps:
+  - Production-equivalent PostgreSQL/pgvector RAG smoke was not run locally and remains release-gate evidence before real customer pilot.
+  - RAG answer quality will still need continued fixture expansion and real beta-site tuning.
+  - PR-09 onboarding, knowledge setup, agent testing, and widget installation UX are still missing.
+  - PR-10 monitoring, metering, quotas, and cost controls are still missing.
+  - OCR runtime remains gated; scanned PDFs are not claimed as OCR-processed.
+- Next phase permitted: PR-09.
+- Commit hash: pending until commit.

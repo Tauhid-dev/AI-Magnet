@@ -207,6 +207,22 @@ class Settings:
         default_factory=lambda: int(os.getenv("RAG_CHUNK_OVERLAP", "100"))
     )
     rag_top_k: int = field(default_factory=lambda: int(os.getenv("RAG_TOP_K", "5")))
+    rag_similarity_threshold: float = field(
+        default_factory=lambda: float(os.getenv("RAG_SIMILARITY_THRESHOLD", "0.12"))
+    )
+    rag_max_context_chars: int = field(
+        default_factory=lambda: int(os.getenv("RAG_MAX_CONTEXT_CHARS", "6000"))
+    )
+    rag_no_answer_message: str = field(
+        default_factory=lambda: os.getenv(
+            "RAG_NO_ANSWER_MESSAGE",
+            (
+                "I do not have enough information in this business knowledge base "
+                "to answer that confidently. Could you share a few more details so "
+                "the business can follow up?"
+            ),
+        )
+    )
     website_crawl_user_agent: str = field(
         default_factory=lambda: os.getenv(
             "WEBSITE_CRAWL_USER_AGENT",
@@ -340,6 +356,14 @@ class Settings:
             issues.append("WORKER_RETRY_BASE_SECONDS must be zero or greater in production")
         if self.worker_retry_max_seconds < self.worker_retry_base_seconds:
             issues.append("WORKER_RETRY_MAX_SECONDS must be greater than or equal to base retry")
+        if self.rag_top_k <= 0:
+            issues.append("RAG_TOP_K must be greater than 0 in production")
+        if not 0 <= self.rag_similarity_threshold <= 1:
+            issues.append("RAG_SIMILARITY_THRESHOLD must be between 0 and 1 in production")
+        if self.rag_max_context_chars <= 0:
+            issues.append("RAG_MAX_CONTEXT_CHARS must be greater than 0 in production")
+        if not self.rag_no_answer_message.strip():
+            issues.append("RAG_NO_ANSWER_MESSAGE must be set in production")
         if self.website_crawl_timeout_seconds <= 0:
             issues.append("WEBSITE_CRAWL_TIMEOUT_SECONDS must be greater than 0 in production")
         if self.website_crawl_max_pages <= 0:

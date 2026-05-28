@@ -23,7 +23,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Real queue worker and job visibility | PR-05 | required | required | required if schema changes | required if UI | required | required | manual worker smoke | pass | job enqueue/process/retry/failure/idempotency tests, job APIs, worker health check config |
 | Website/sitemap ingestion SSRF safety | PR-06 | required | required | required | required | required | required | staging safe crawl | pass | malicious URL tests, redirect/private DNS tests, crawl status, source UI, and migration smoke pass; controlled real-site crawl remains release-gate evidence |
 | Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | pass | upload validation, DOCX/PDF extraction/OCR gate tests, tenant API refresh/delete tests, private storage and worker tests |
-| SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | not_run | eval fixtures and source checks |
+| SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | pass | SQL retrieval path, citation/schema/widget tests, RAG safety fixtures, SQLite migration smoke; production-equivalent pgvector smoke remains release-gate evidence |
 | Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | not_run | e2e tests and UX checklist |
 | Monitoring/metering/quotas/cost controls | PR-10 | required | required | required | required if UI | required | required | manual alert/limit checks | not_run | metrics and quota tests |
 | Billing/entitlements/paid-beta controls | PR-11 | required | required | required | required | required | required | manual paid-beta review | not_run | entitlement tests and gate record |
@@ -145,3 +145,24 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Dependency and static security scans | pass | `pip-audit`; `bandit`; secret pattern scan; `npm audit --audit-level=high` passed high threshold with moderate Next.js/PostCSS advisory noted |
 | OCR runtime | partial | Scanned PDFs fail closed with `ocr_status=required`; production OCR engine remains gated and not claimed in PR-07 |
 | Controlled customer-document upload smoke | not_run | Repository phase does not upload real customer documents; run before real pilot usage |
+
+## PR-08 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| SQL pgvector retrieval path with tenant/status filters | pass | `backend/app/rag/retrieval.py`; `backend/migrations/versions/20260529_0011_pr08_pgvector_retrieval_indexes.py` |
+| Retrieval citations and source provenance | pass | `backend/tests/rag/test_ingestion_and_retrieval.py`; chat API citation response tests |
+| No-answer fallback and threshold behavior | pass | `backend/tests/rag/test_ingestion_and_retrieval.py`; `backend/tests/rag/test_rag_safety_eval.py` |
+| Prompt-injection handling for retrieved content and visitor prompts | pass | `backend/app/rag/safety.py`; `backend/tests/rag/test_rag_safety_eval.py` |
+| Wrong-tenant retrieval protection | pass | `backend/tests/rag/test_rag_safety_eval.py`; existing chat tenant isolation tests |
+| Usage metering seam for latency/token/citation metadata | pass | `backend/tests/rag/test_rag_safety_eval.py`; `backend/app/chat/service.py` |
+| Widget citation display | pass | `widget/chat-widget.js`; backend response fixture coverage |
+| Backend focused PR-08 tests | pass | `backend/.venv/bin/python -m pytest backend/tests/rag/test_ingestion_and_retrieval.py backend/tests/rag/test_rag_safety_eval.py backend/tests/chat/test_chat_api.py` - 15 passed |
+| Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 87 passed |
+| Backend compile | pass | `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` |
+| Backend lint | pass | `backend/.venv/bin/python -m ruff check backend/app backend/tests` |
+| Migration upgrade/downgrade | pass | SQLite upgrade head and downgrade to `20260529_0010` |
+| Compose static config | pass | `docker compose config`; `docker compose --env-file .env.production.example -f docker-compose.prod.yml config`; production data-service port check |
+| Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
+| Dependency and static security scans | pass | `pip-audit`; `bandit`; secret pattern scan; `npm audit --audit-level=high` passed high threshold with moderate Next.js/PostCSS advisory noted |
+| Production-equivalent PostgreSQL/pgvector smoke | not_run | Repository phase does not run live/staging PostgreSQL; run before Gate C using `scripts/validate_pgvector_migrations.sh` and controlled tenant RAG smoke |

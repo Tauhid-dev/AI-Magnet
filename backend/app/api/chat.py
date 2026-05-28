@@ -13,6 +13,7 @@ from app.providers.ai.base import ChatCompletionProvider, EmbeddingProvider
 from app.providers.ai.factory import get_chat_completion_provider, get_embedding_provider
 from app.rag.retrieval import RagRetrievalService
 from app.schemas.chat import (
+    CitationSource,
     ConversationMessageRequest,
     ConversationMessageResponse,
     ConversationStartRequest,
@@ -46,7 +47,7 @@ def get_chat_service(
     chat_provider: ChatCompletionProvider = Depends(get_chat_completion_provider_dependency),
 ) -> ChatService:
     """Return the chat service for request handling."""
-    retrieval_service = RagRetrievalService(session, embedding_provider)
+    retrieval_service = RagRetrievalService(session, embedding_provider, settings=settings)
     return ChatService(
         session=session,
         retrieval_service=retrieval_service,
@@ -153,6 +154,24 @@ def post_conversation_message(
         assistant_message_id=result.assistant_message.id,
         assistant_message=result.assistant_message.content,
         retrieved_chunk_count=len(result.retrieved_results),
+        citations=[
+            CitationSource(
+                citation_id=citation.citation_id,
+                document_id=citation.document_id,
+                chunk_id=citation.chunk_id,
+                chunk_index=citation.chunk_index,
+                score=citation.score,
+                filename=citation.filename,
+                source_type=citation.source_type,
+                source_title=citation.source_title,
+                source_url=citation.source_url,
+            )
+            for citation in result.citations
+        ],
+        answer_status=result.answer_status,
+        retrieval_latency_ms=result.retrieval_latency_ms,
+        retrieval_top_score=result.retrieval_top_score,
+        rag_safety_flags=result.rag_safety_flags,
         lead_capture=LeadCaptureState(
             lead_id=result.lead_capture.lead.id if result.lead_capture.lead else None,
             captured_fields=result.lead_capture.captured_fields,

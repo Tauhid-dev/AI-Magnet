@@ -8,7 +8,7 @@ from app.db.base import Base
 from app.models import DocumentChunk, KnowledgeDocument
 from app.providers.ai.deterministic import DeterministicEmbeddingProvider
 from app.rag.ingestion import RagIngestionService
-from app.rag.retrieval import RagRetrievalService
+from app.rag.retrieval import RagRetrievalService, vector_literal_for_pgvector
 from app.tenants.service import TenantService
 
 
@@ -113,3 +113,52 @@ def test_retrieval_filters_by_tenant_before_scoring():
 
         assert results
         assert {result.chunk.tenant_id for result in results} == {tenant_a.id}
+
+
+def test_retrieval_returns_source_citations_and_thresholds_results():
+    with create_test_session() as session:
+        tenant = TenantService(session).create_tenant("Tenant A Plumbing", "tenant-a")
+        ingestion_service, provider = create_ingestion_service(session)
+
+        document = ingestion_service.create_pending_document(
+            tenant_id=tenant.id,
+            filename="blocked-drains.md",
+            content_type="text/markdown",
+            source_type="website_page",
+            source_title="Blocked Drain Services",
+            status="processing",
+        )
+        document.source_url = "https://tenant.example/blocked-drains"
+        ingestion_service.process_document_bytes(
+            document=document,
+            content=b"blocked drain emergency plumbing hot water repair",
+            content_type="text/markdown",
+        )
+        session.commit()
+
+        service = RagRetrievalService(session, provider)
+        results = service.retrieve(
+            tenant_id=tenant.id,
+            query="blocked drain emergency repair",
+            limit=3,
+            min_score=0.1,
+        )
+        excluded = service.retrieve(
+            tenant_id=tenant.id,
+            query="blocked drain emergency repair",
+            limit=3,
+            min_score=1.01,
+        )
+
+        assert results
+        citation = results[0].citation
+        assert citation.citation_id == "S1"
+        assert citation.document_id == document.id
+        assert citation.source_title == "Blocked Drain Services"
+        assert citation.source_url == "https://tenant.example/blocked-drains"
+        assert citation.source_type == "website_page"
+        assert excluded == []
+
+
+def test_pgvector_literal_formats_query_embedding_for_sql_parameter():
+    assert vector_literal_for_pgvector([0.125, 1.0, -2.5]) == "[0.125,1,-2.5]"
