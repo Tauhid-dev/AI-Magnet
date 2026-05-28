@@ -16,13 +16,13 @@ Required:
 
 - No real customer data.
 - No public production claim.
-- Clear warning that auth, rate limiting, infrastructure, backups, and ingestion are not production-ready.
+- Clear warning that infrastructure, backups, queueing, ingestion, RAG quality, monitoring, quotas, and billing are not production-ready.
 
 ## Gate B: Secure Private Internet Demo
 
 Current status: NO-GO.
 
-PR-01 is verified. PR-02, PR-03, PR-04, and PR-05 remain required before this gate can move.
+PR-01, PR-02, and PR-03 are verified. PR-04 and PR-05 remain required before this gate can move.
 
 Requires verified:
 

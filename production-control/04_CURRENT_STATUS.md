@@ -8,19 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-PR-03: Tenant Isolation, Data Lifecycle, Privacy and Database Integrity.
+PR-04: Production Infrastructure, TLS, Secrets, Backups and CI Security.
 
-Status: not_started. PR-01 and PR-02 are verified and PR-03 is the next permitted phase.
+Status: not_started. PR-01, PR-02, and PR-03 are verified and PR-04 is the next permitted phase.
 
 ## Last Completed Phase
 
-PR-02.
+PR-03.
 
 ## Next Permitted Phase
 
-`Implement production phase PR-03`
+`Implement production phase PR-04`
 
-Do not start PR-04 or later until PR-03 is implemented or explicitly marked blocked with safe independent subtasks documented.
+Do not start PR-05 or later until PR-04 is implemented or explicitly marked blocked with safe independent subtasks documented.
 
 ## Production Go/No-Go
 
@@ -38,6 +38,7 @@ Do not start PR-04 or later until PR-03 is implemented or explicitly marked bloc
 - Production readiness score: 35/100.
 - PR-01 implemented production password auth, admin MFA support, HttpOnly browser session cookies, session revocation, failed-login lockout, frontend login/logout updates, and validation tests.
 - PR-02 implemented app-level public/API rate limiting, CSRF confirmation for cookie-auth unsafe writes, CSP/security-header review, production widget-origin enforcement config, widget key lifecycle APIs, portal controls, and validation tests.
+- PR-03 implemented same-tenant database integrity constraints, tenant offboarding/export/delete lifecycle APIs, global admin audit logs that survive tenant deletion, PII-redacted audit attributes, frontend admin lifecycle controls, and validation tests.
 
 ## Unresolved Critical Risks
 
@@ -50,8 +51,6 @@ Do not start PR-04 or later until PR-03 is implemented or explicitly marked bloc
 
 - Production secret validation is incomplete.
 - Live PostgreSQL plus pgvector validation is missing.
-- Tenant privacy lifecycle, export, delete, and offboarding are missing.
-- Global administrator audit-event handling is incomplete.
 - CI lacks dependency vulnerability, secret, and static security scanning.
 - Structured logs, request/correlation IDs, and PII-safe logging controls are incomplete.
 - Worker queue processing is a placeholder.
@@ -62,15 +61,19 @@ Do not start PR-04 or later until PR-03 is implemented or explicitly marked bloc
 
 ## Last Validation Commands
 
-Latest PR-02 validation commands:
+Latest PR-03 validation commands:
 
+- `python3 -m pytest backend/tests/security/test_pr03_tenant_integrity.py backend/tests/admin/test_admin_api.py` - pass, 9 tests.
+- `python3 -m pytest backend/tests` - pass, 56 tests.
+- `python3 -m ruff check backend/app backend/tests` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr03_alembic_20260528_2.db python3 -m alembic -c backend/alembic.ini upgrade head` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr03_alembic_20260528_2.db python3 -m alembic -c backend/alembic.ini downgrade 20260528_0006` - pass.
 - `npm run lint` - pass.
 - `npm run typecheck` - pass.
-- `python3 -m pytest backend/tests` - pass, 54 tests.
-- `python3 -m ruff check backend/app backend/tests` - pass.
 - `npm test` - pass.
 - `npm run build` - pass.
 - `python3 -m json.tool production-control/status/production-status.json` - pass.
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
 - `git diff --check` - pass.
 
 ## Important Links

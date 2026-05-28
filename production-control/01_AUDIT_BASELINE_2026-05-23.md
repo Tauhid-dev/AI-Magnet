@@ -48,12 +48,12 @@ This PR-00 run inspected current code and config enough to classify the audit bl
 |---|---|---|---|
 | Business auth is email-only | Critical open | Resolved in PR-01: business login now requires password verification, failed-login lockout, session version, logout revocation, and tests | PR-01 |
 | Admin auth is email-only | Critical open | Resolved in PR-01: admin login now requires password verification and supports required TOTP MFA, lockout, session revocation, and tests | PR-01 |
-| Secure browser session strategy missing | High open | Mostly resolved in PR-01: frontend no longer stores bearer tokens and browser sessions use HttpOnly cookies; CSRF/CSP review remains in PR-02 | PR-01/PR-02 |
-| Rate limiting missing | Critical open | Still open: no app or Nginx rate-limit config found | PR-02 |
-| Widget origin controls incomplete | High open | Still open: `allowed_origins` can be unset and portal creates unrestricted keys | PR-02 |
-| Tenant DB integrity incomplete | High open | Still open: tenant_id exists, but composite same-tenant parent/child constraints are absent | PR-03 |
-| Privacy export/delete/offboarding missing | High open | Still open: no tenant export/delete/offboarding workflow found | PR-03 |
-| Global admin audit handling incomplete | High open | Still open: tenant-scoped audit logs exist; global non-tenant admin events need model/strategy | PR-03 |
+| Secure browser session strategy missing | High open | Resolved across PR-01/PR-02: frontend no longer stores bearer tokens, browser sessions use HttpOnly cookies, unsafe cookie-auth writes require CSRF confirmation, and CSP is set | PR-01/PR-02 |
+| Rate limiting missing | Critical open | Mitigated in PR-02: app-level rate limits cover public/login/widget/admin surfaces; distributed/proxy enforcement remains PR-04/PR-05 | PR-02 |
+| Widget origin controls incomplete | High open | Mitigated in PR-02: normalized allowed-origin enforcement and key lifecycle controls were added; production env enforcement remains PR-04 validation | PR-02 |
+| Tenant DB integrity incomplete | High open | Resolved in PR-03: composite same-tenant constraints and attack tests cover high-risk parent/child links | PR-03 |
+| Privacy export/delete/offboarding missing | High open | Resolved in PR-03 for beta-scope admin workflows: export, offboarding, retention, and confirmed deletion APIs/UI were added | PR-03 |
+| Global admin audit handling incomplete | High open | Resolved in PR-03: `global_audit_logs` records platform admin actions and deletion-surviving evidence with redacted attributes | PR-03 |
 | PostgreSQL host port exposed in dev Compose | Critical production blocker | Still open for production: `docker-compose.yml` publishes `${POSTGRES_PORT:-5432}:5432` | PR-04 |
 | Redis host port exposed in dev Compose | Critical production blocker | Still open for production: `docker-compose.yml` publishes `${REDIS_PORT:-6379}:6379` | PR-04 |
 | HTTPS/TLS/HSTS missing | Critical open | Still open: `infra/nginx/default.conf` listens on `80` only | PR-04 |

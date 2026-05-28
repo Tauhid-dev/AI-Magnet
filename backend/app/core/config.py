@@ -122,6 +122,9 @@ class Settings:
             default=False,
         )
     )
+    privacy_default_retention_days: int = field(
+        default_factory=lambda: int(os.getenv("PRIVACY_DEFAULT_RETENTION_DAYS", "30"))
+    )
 
     database_url: str = field(
         default_factory=lambda: os.getenv(
@@ -206,6 +209,8 @@ class Settings:
             issues.append("RATE_LIMIT_CHAT_MESSAGE_PER_MINUTE must be greater than 0 in production")
         if not self.widget_require_allowed_origins:
             issues.append("WIDGET_REQUIRE_ALLOWED_ORIGINS must be true in production")
+        if self.privacy_default_retention_days <= 0:
+            issues.append("PRIVACY_DEFAULT_RETENTION_DAYS must be greater than 0 in production")
         return issues
 
     def validate_runtime_security(self) -> None:

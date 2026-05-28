@@ -94,3 +94,39 @@ Append-only production phase run history.
   - Gate B remains NO-GO until PR-03, PR-04, and PR-05 are also verified.
 - Next phase permitted: PR-03.
 - Commit hash: pending until commit.
+
+## 2026-05-28 - PR-03: Tenant Isolation, Data Lifecycle, Privacy and Database Integrity
+
+- Instruction received: `Implement production phase PR-03`.
+- Phase selected: PR-03.
+- Branch: `production/pr-03-tenant-privacy-db-integrity`.
+- Files changed:
+  - Backend models/migration/config: `.env.example`, `backend/app/models/*`, `backend/app/core/config.py`, `backend/app/core/privacy.py`, `backend/migrations/versions/20260528_0007_pr03_tenant_privacy_integrity.py`.
+  - Backend admin/audit APIs: `backend/app/admin/service.py`, `backend/app/api/admin.py`, `backend/app/audit/service.py`, `backend/app/schemas/admin.py`.
+  - Frontend admin/API: `frontend/app/admin/tenants/[tenantId]/page.tsx`, `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`.
+  - Tests/docs/status: `backend/tests/security/test_pr03_tenant_integrity.py`, `backend/tests/admin/test_admin_api.py`, `docs/security.md`, and production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Added database same-tenant integrity constraints for business users, document chunks, messages, leads, notification settings, and notification deliveries.
+  - Added tenant lifecycle fields for offboarding, deletion request time, and retention deadline.
+  - Added admin privacy export, offboard, and confirmed tenant deletion endpoints with frontend admin controls.
+  - Added global admin audit logs that survive tenant deletion and redact likely PII in audit attributes.
+  - Added migration checks that fail before constraints if existing cross-tenant relationships are detected.
+- Validations run/result:
+  - `python3 -m pytest backend/tests/security/test_pr03_tenant_integrity.py backend/tests/admin/test_admin_api.py` - pass, 9 tests.
+  - `python3 -m pytest backend/tests` - pass, 56 tests.
+  - `python3 -m ruff check backend/app backend/tests` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr03_alembic_20260528_2.db python3 -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr03_alembic_20260528_2.db python3 -m alembic -c backend/alembic.ini downgrade 20260528_0006` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
+- Known gaps:
+  - Gate B remains NO-GO until PR-04 and PR-05 are also verified.
+  - PR-04 must still deliver production TLS/HSTS, private PostgreSQL/Redis topology, secret validation, backups/restore, CI scans, production PostgreSQL/pgvector validation, and minimum operational logging/correlation IDs.
+  - Privacy lifecycle is beta-scope platform admin controlled; customer self-service export/delete UX remains outside PR-03.
+- Next phase permitted: PR-04.
+- Commit hash: pending until commit.

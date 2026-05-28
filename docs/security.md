@@ -14,6 +14,8 @@
 
 Every tenant-owned model must include `tenant_id`. Service and route queries must filter by the verified tenant context before returning records.
 
+PR-03 adds database-level same-tenant protections for the high-risk parent/child relationships. Composite constraints now prevent a child row from referencing a parent owned by a different tenant for business users, document chunks, messages, leads, notification settings, and notification deliveries.
+
 High-risk paths that require tests:
 
 - Business portal leads.
@@ -28,11 +30,12 @@ High-risk paths that require tests:
 
 Business portal sessions and super admin sessions use separate HMAC secrets and token payloads. A token from one portal must not authorize the other portal.
 
+Production authentication now uses password verification, session-version revocation, failed-login lockout, HttpOnly/SameSite cookies for browser sessions, and admin TOTP enforcement when MFA is enabled. Unsafe cookie-authenticated writes require `X-AI-Magnet-CSRF`.
+
 Production hardening still required before public launch:
 
-- Replace email-only MVP login with passwordless magic link, password plus MFA, or external identity provider.
-- Add rate limiting to login and public widget endpoints.
-- Add session revocation or rotation strategy.
+- Add admin MFA enrollment/rotation UX.
+- Move abuse controls from single-process app memory to production proxy/distributed enforcement where needed.
 - Add operational incident response runbooks.
 
 ## Production Runtime Guardrails
@@ -56,6 +59,9 @@ Rules:
 - Limit support context to operational fields and contact-presence flags unless full access is explicitly required.
 - Do not log request bodies containing conversation content or contact details.
 - Send only relevant tenant knowledge and recent chat context to the AI provider.
+- Redact likely PII fields before writing audit attributes.
+- Use the admin privacy export endpoint for tenant review requests instead of ad hoc database dumps.
+- Use tenant offboarding and confirmed deletion workflows to enforce beta-scope retention/deletion decisions.
 
 ## AI and RAG Privacy
 
@@ -79,9 +85,12 @@ Audit these actions:
 - Tenant detail access.
 - Tenant support context access.
 - Tenant status changes.
-- Future destructive actions such as deletion or export.
+- Privacy export generation.
+- Tenant offboarding.
+- Tenant data deletion.
+- Admin login/logout and global administrative actions.
 
-Audit logs should avoid secrets and raw customer message bodies.
+Tenant audit logs remain scoped by `tenant_id`. Global admin audit logs are stored separately so critical administrative evidence can survive tenant deletion. Audit logs should avoid secrets and raw customer message bodies.
 
 ## Deployment Security
 
@@ -97,8 +106,10 @@ Before production:
 
 ## Current Residual Risks
 
-- MVP auth is not production-grade yet.
-- No rate limiting exists yet.
 - No automated backup job exists yet.
 - No TLS certificate automation is included yet.
+- PostgreSQL and Redis production networking still need private topology validation.
+- Production secret validation and CI security scans are incomplete.
+- Live PostgreSQL plus pgvector migration/startup validation is missing.
+- Structured request/correlation logging still needs production hardening.
 - Worker queue framework is not selected yet; the current worker service is deployment wiring.

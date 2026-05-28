@@ -52,6 +52,9 @@ class AdminTenantSummaryResponse(BaseModel):
     name: str
     slug: str
     status: str
+    offboarded_at: datetime | None = None
+    deletion_requested_at: datetime | None = None
+    data_retention_until: datetime | None = None
     created_at: datetime
     updated_at: datetime
     metrics: AdminTenantMetricsResponse
@@ -102,6 +105,36 @@ class AdminTenantStatusUpdateRequest(BaseModel):
     """Update tenant lifecycle status."""
 
     status: str = Field(min_length=1, max_length=40)
+
+
+class AdminTenantOffboardRequest(BaseModel):
+    """Mark a tenant for offboarding and retention tracking."""
+
+    retention_days: int | None = Field(default=None, ge=1, le=3650)
+
+
+class AdminTenantDeleteRequest(BaseModel):
+    """Explicit confirmation for destructive tenant data deletion."""
+
+    confirm_slug: str = Field(min_length=1, max_length=120)
+    confirm_delete: bool = False
+
+
+class AdminTenantDeleteResponse(BaseModel):
+    """Response after tenant data deletion."""
+
+    tenant_id: str
+    tenant_slug: str
+    status: str
+    global_audit_id: str
+
+
+class AdminTenantPrivacyExportResponse(BaseModel):
+    """Beta-scope tenant data export response."""
+
+    tenant_id: str
+    generated_at: datetime
+    data: dict[str, Any]
 
 
 class AdminUsageOverviewResponse(BaseModel):
@@ -196,10 +229,11 @@ class AdminSupportContextResponse(BaseModel):
 
 
 class AdminAuditLogResponse(BaseModel):
-    """Tenant-scoped audit log row."""
+    """Tenant-scoped or global audit log row."""
 
     id: str
-    tenant_id: str
+    scope: str
+    tenant_id: str | None
     actor_id: str | None
     action: str
     target_type: str | None

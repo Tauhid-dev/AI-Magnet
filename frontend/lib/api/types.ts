@@ -130,6 +130,9 @@ export type AdminTenantSummary = {
   name: string;
   slug: string;
   status: string;
+  offboarded_at: string | null;
+  deletion_requested_at: string | null;
+  data_retention_until: string | null;
   created_at: string;
   updated_at: string;
   metrics: AdminTenantMetrics;
@@ -222,11 +225,25 @@ export type AdminSupportContext = {
 
 export type AdminAuditLog = {
   id: string;
-  tenant_id: string;
+  scope: "tenant" | "global";
+  tenant_id: string | null;
   actor_id: string | null;
   action: string;
   target_type: string | null;
   target_id: string | null;
   attributes: Record<string, unknown>;
   created_at: string;
+};
+
+export type AdminTenantPrivacyExport = {
+  tenant_id: string;
+  generated_at: string;
+  data: Record<string, unknown>;
+};
+
+export type AdminTenantDeleteResponse = {
+  tenant_id: string;
+  tenant_slug: string;
+  status: string;
+  global_audit_id: string;
 };

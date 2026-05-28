@@ -78,3 +78,25 @@ Append-only ADR-lite log for production remediation.
   - Always deny keys without origins in every environment: rejected because it would break existing local seed/demo usage abruptly.
   - Wildcard origin support: rejected for beta scope because it weakens the control being added.
 - Follow-up impact: PR-04 must verify production environment variables and deployment runbooks set widget origin enforcement before any public/private internet demo.
+
+## DEC-PR-20260528-008: Enforce Same-Tenant Relationships With Composite Constraints
+
+- Date: 2026-05-28
+- Decision: Add parent unique constraints and child composite foreign keys for tenant-owned relationships where cross-tenant linkage would be dangerous: business users to businesses, chunks to documents, messages/leads to conversations, notification settings to businesses, and notification deliveries to leads.
+- Reason: Application-layer `tenant_id` filters are necessary but not sufficient for production SaaS data ownership. The database should reject wrong-tenant parent/child references even if a future service bug attempts to create them.
+- Affected files/phases: PR-03, `backend/app/models/*`, `backend/migrations/versions/20260528_0007_pr03_tenant_privacy_integrity.py`, `backend/tests/security/test_pr03_tenant_integrity.py`.
+- Alternatives rejected:
+  - Rely only on service filters: rejected because it leaves data integrity dependent on every caller being correct.
+  - Add PostgreSQL row-level security in PR-03: deferred because the current migration/test stack is SQLAlchemy/Alembic-centric and RLS policy design should happen alongside production PostgreSQL validation in PR-04/PR-12 if chosen.
+- Follow-up impact: Future migrations must preserve same-tenant constraints for new tenant-owned relationships.
+
+## DEC-PR-20260528-009: Preserve Admin Evidence Outside Tenant Cascades
+
+- Date: 2026-05-28
+- Decision: Add `global_audit_logs` for platform-wide administrator actions and retain tenant-scoped audit logs for ordinary tenant events. Global audit attributes are redacted before storage, and tenant deletion writes retained global evidence before removing tenant data.
+- Reason: Tenant-scoped audit logs cascade with tenant deletion, which is appropriate for tenant-owned logs but unsafe for platform evidence of export/offboarding/deletion actions.
+- Affected files/phases: PR-03, `backend/app/models/usage.py`, `backend/app/audit/service.py`, `backend/app/admin/service.py`, `backend/app/api/admin.py`.
+- Alternatives rejected:
+  - Make existing `audit_logs.tenant_id` nullable: rejected because it weakens the clear tenant-scoped table contract and would require broader query/UI changes.
+  - Retain all tenant audit logs forever: rejected because it conflicts with deletion/offboarding goals for beta privacy lifecycle.
+- Follow-up impact: PR-04/PR-10 must extend PII-safe structured logging and operational audit review without exposing raw customer content.

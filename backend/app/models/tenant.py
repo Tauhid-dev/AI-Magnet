@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, ForeignKeyConstraint, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, IdMixin, TenantScopedMixin, TimestampMixin
@@ -18,6 +18,19 @@ class Tenant(IdMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(120), nullable=False, unique=True, index=True)
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="active", index=True)
+    offboarded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    deletion_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    data_retention_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
 
     businesses: Mapped[list[Business]] = relationship(
         back_populates="tenant",
@@ -29,7 +42,10 @@ class Business(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     """Business profile owned by a tenant."""
 
     __tablename__ = "businesses"
-    __table_args__ = (UniqueConstraint("tenant_id", "name", name="uq_business_tenant_name"),)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "name", name="uq_business_tenant_name"),
+        UniqueConstraint("tenant_id", "id", name="uq_businesses_tenant_id_id"),
+    )
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -43,7 +59,14 @@ class BusinessUser(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     """Tenant-scoped user account for business portal access."""
 
     __tablename__ = "business_users"
-    __table_args__ = (UniqueConstraint("tenant_id", "email", name="uq_business_user_tenant_email"),)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "email", name="uq_business_user_tenant_email"),
+        ForeignKeyConstraint(
+            ["tenant_id", "business_id"],
+            ["businesses.tenant_id", "businesses.id"],
+            name="fk_business_users_business_same_tenant",
+        ),
+    )
 
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)

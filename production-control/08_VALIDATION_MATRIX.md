@@ -10,9 +10,9 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Secure cookie/token/CSRF/CSP session strategy | PR-01/PR-02 | required | required | optional | required | required | required | manual browser | pass | HttpOnly cookie sessions, CSRF confirmation header tests, CSP/security headers |
 | Rate limiting and abuse controls | PR-02 | required | required | optional | optional | required | required | manual curl/abuse checks | pass | App-level limiter tests and production env validation |
 | Widget origin/key controls | PR-02 | required | required | optional | required | required | required | manual embed test | pass | Positive/negative origin tests and lifecycle API tests |
-| Tenant DB integrity | PR-03 | required | required | required | optional | required | required | staging migration | not_run | migration and cross-tenant attack tests |
-| Privacy export/delete/offboarding | PR-03 | required | required | required | required if UI | required | required | manual lifecycle test | not_run | deletion/export fixtures |
-| Global admin audit events | PR-03 | required | required | required if schema changes | required if UI | required | required | manual audit review | not_run | audit trail tests |
+| Tenant DB integrity | PR-03 | required | required | required | optional | required | required | staging migration | pass | migration and cross-tenant attack tests |
+| Privacy export/delete/offboarding | PR-03 | required | required | required | required if UI | required | required | manual lifecycle test | pass | deletion/export fixtures and admin API/frontend controls |
+| Global admin audit events | PR-03 | required | required | required if schema changes | required if UI | required | required | manual audit review | pass | audit trail tests |
 | Production private DB/Redis topology | PR-04 | optional | optional | optional | optional | required | required | required | not_run | compose config, port scan, runbook |
 | TLS/HSTS/renewal path | PR-04 | optional | optional | optional | optional | required | required | required | not_run | Nginx config, certbot/renewal docs, header check |
 | Secret validation | PR-04 | required | required | optional | optional | required | required | manual env smoke | not_run | production startup failure tests |
@@ -63,3 +63,14 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Backend lint | pass | `python3 -m ruff check backend/app backend/tests` |
 | Frontend typecheck/lint/test/build | pass | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |
 | Migration/DB changes | pass | No schema migration required for PR-02 |
+
+## PR-03 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Same-tenant database constraints reject cross-tenant links | pass | `backend/tests/security/test_pr03_tenant_integrity.py` |
+| Privacy export/offboard/delete APIs and global audit | pass | `backend/tests/admin/test_admin_api.py` |
+| Backend full test suite | pass | `python3 -m pytest backend/tests` - 56 passed |
+| Backend lint | pass | `python3 -m ruff check backend/app backend/tests` |
+| Migration upgrade/downgrade | pass | Alembic SQLite upgrade head and downgrade to `20260528_0006` |
+| Frontend typecheck/lint/test/build | pass | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |

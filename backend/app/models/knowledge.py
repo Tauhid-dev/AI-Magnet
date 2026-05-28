@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import ForeignKeyConstraint, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, IdMixin, TenantScopedMixin, TimestampMixin
@@ -13,6 +13,9 @@ class KnowledgeDocument(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     """Uploaded knowledge document metadata for one tenant."""
 
     __tablename__ = "knowledge_documents"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_knowledge_documents_tenant_id_id"),
+    )
 
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     content_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -32,11 +35,16 @@ class DocumentChunk(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     __tablename__ = "document_chunks"
     __table_args__ = (
         UniqueConstraint("document_id", "chunk_index", name="uq_document_chunk_index"),
+        ForeignKeyConstraint(
+            ["tenant_id", "document_id"],
+            ["knowledge_documents.tenant_id", "knowledge_documents.id"],
+            name="fk_document_chunks_document_same_tenant",
+            ondelete="CASCADE",
+        ),
     )
 
     document_id: Mapped[str] = mapped_column(
         String(36),
-        ForeignKey("knowledge_documents.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
