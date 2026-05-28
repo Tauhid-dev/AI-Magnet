@@ -10,6 +10,7 @@ from app.leads.workflow import LeadWorkflowService
 from app.models.conversation import Conversation, Message
 from app.models.knowledge import KnowledgeDocument
 from app.models.lead import Lead
+from app.models.tenant import Business, Tenant
 from app.models.usage import UsageLog
 from app.models.widget import WidgetConfig
 
@@ -28,6 +29,39 @@ class BusinessPortalService:
             .order_by(KnowledgeDocument.created_at.desc())
         )
         return list(self.session.scalars(statement))
+
+    def tenant(self) -> Tenant | None:
+        """Return the current tenant row."""
+        return self.session.get(Tenant, self.tenant_id)
+
+    def primary_business(self) -> Business | None:
+        """Return the first business profile for the current tenant."""
+        statement = (
+            select(Business)
+            .where(Business.tenant_id == self.tenant_id)
+            .order_by(Business.created_at.asc())
+        )
+        return self.session.scalars(statement).first()
+
+    def update_primary_business(
+        self,
+        *,
+        name: str,
+        email: str | None,
+        phone: str | None,
+        website_url: str | None,
+    ) -> Business:
+        """Create or update the tenant's primary business profile."""
+        business = self.primary_business()
+        if business is None:
+            business = Business(tenant_id=self.tenant_id, name=name)
+            self.session.add(business)
+        business.name = name
+        business.email = email
+        business.phone = phone
+        business.website_url = website_url
+        self.session.flush()
+        return business
 
     def list_leads(self) -> list[Lead]:
         statement = (

@@ -24,7 +24,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Website/sitemap ingestion SSRF safety | PR-06 | required | required | required | required | required | required | staging safe crawl | pass | malicious URL tests, redirect/private DNS tests, crawl status, source UI, and migration smoke pass; controlled real-site crawl remains release-gate evidence |
 | Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | pass | upload validation, DOCX/PDF extraction/OCR gate tests, tenant API refresh/delete tests, private storage and worker tests |
 | SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | pass | SQL retrieval path, citation/schema/widget tests, RAG safety fixtures, SQLite migration smoke; production-equivalent pgvector smoke remains release-gate evidence |
-| Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | not_run | e2e tests and UX checklist |
+| Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | pass | backend API tests, frontend static/type/lint/build, authenticated browser smoke |
 | Monitoring/metering/quotas/cost controls | PR-10 | required | required | required | required if UI | required | required | manual alert/limit checks | not_run | metrics and quota tests |
 | Billing/entitlements/paid-beta controls | PR-11 | required | required | required | required | required | required | manual paid-beta review | not_run | entitlement tests and gate record |
 | Final production launch audit | PR-12 | required | required | required | required | required | required | required | not_run | final audit report and owner approval |
@@ -166,3 +166,21 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
 | Dependency and static security scans | pass | `pip-audit`; `bandit`; secret pattern scan; `npm audit --audit-level=high` passed high threshold with moderate Next.js/PostCSS advisory noted |
 | Production-equivalent PostgreSQL/pgvector smoke | not_run | Repository phase does not run live/staging PostgreSQL; run before Gate C using `scripts/validate_pgvector_migrations.sh` and controlled tenant RAG smoke |
+
+## PR-09 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Business profile onboarding API and safe website URL validation | pass | `backend/tests/business/test_business_portal_api.py`; `backend/app/api/business_portal.py` |
+| Source-grounded agent sandbox with tenant citations and no conversation persistence | pass | `backend/tests/business/test_business_portal_api.py`; `backend/app/api/business_portal.py` |
+| Widget branding/title API and embed snippet update | pass | `backend/tests/business/test_business_portal_api.py`; `frontend/app/portal/widget/page.tsx` |
+| Setup checklist and business profile UX | pass | `frontend/app/portal/onboarding/page.tsx`; `frontend/tests/static-check.mjs` |
+| Knowledge setup job visibility | pass | `frontend/app/portal/documents/page.tsx`; `frontend/tests/static-check.mjs` |
+| Agent test UX with source display | pass | `frontend/app/portal/agent/page.tsx`; `frontend/tests/static-check.mjs` |
+| Leads/conversations loading and error states | pass | `frontend/app/portal/leads/page.tsx`; `frontend/app/portal/conversations/page.tsx` |
+| Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
+| Backend focused PR-09 tests | pass | `backend/.venv/bin/python -m pytest backend/tests/business/test_business_portal_api.py` - 12 passed |
+| Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 89 passed |
+| Backend lint | pass | `backend/.venv/bin/python -m ruff check backend/app backend/tests` |
+| Authenticated browser smoke | pass | Local FastAPI + Next.js with temp SQLite tenant confirmed login, setup checklist, agent sandbox sources, and widget branding save |
+| Live customer onboarding smoke | not_run | Repository phase does not onboard a real customer; run during Gate C release validation |

@@ -9,13 +9,20 @@ import { getToken } from "../../../lib/auth/session";
 export default function LeadsPage() {
   const [leads, setLeads] = useState<PortalLead[]>([]);
   const [updatingLeadId, setUpdatingLeadId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
     if (!token) {
+      setLoading(false);
       return;
     }
-    portalApi.leads(token).then(setLeads);
+    portalApi
+      .leads(token)
+      .then(setLeads)
+      .catch(() => setError("Leads could not be loaded."))
+      .finally(() => setLoading(false));
   }, []);
 
   async function updateStatus(leadId: string, status: string) {
@@ -24,11 +31,14 @@ export default function LeadsPage() {
       return;
     }
     setUpdatingLeadId(leadId);
+    setError(null);
     try {
       const updatedLead = await portalApi.updateLeadStatus(token, leadId, status);
       setLeads((current) =>
         current.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead))
       );
+    } catch {
+      setError("Lead status could not be updated.");
     } finally {
       setUpdatingLeadId(null);
     }
@@ -40,7 +50,15 @@ export default function LeadsPage() {
         <h1 className="text-2xl font-semibold">Leads</h1>
         <p className="mt-1 text-sm text-muted">Captured enquiries for the current tenant.</p>
       </div>
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
       <div className="overflow-hidden rounded-lg border border-line bg-panel">
+        {loading ? (
+          <div className="p-4 text-sm text-muted">Loading leads...</div>
+        ) : (
         <table className="w-full border-collapse text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-muted">
             <tr>
@@ -111,6 +129,7 @@ export default function LeadsPage() {
             ) : null}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );

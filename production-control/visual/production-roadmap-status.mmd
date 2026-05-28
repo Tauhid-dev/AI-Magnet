@@ -8,8 +8,8 @@ flowchart TB
     PR06["PR-06<br/>Website/Sitemap Ingestion<br/>verified"]
     PR07["PR-07<br/>Document/PDF/DOCX Ingestion<br/>verified"]
     PR08["PR-08<br/>SQL pgvector, Citations, Safety<br/>verified"]
-    PR09["PR-09<br/>Onboarding and Widget UX<br/>next: not started<br/>HIGH"]
-    PR10["PR-10<br/>Monitoring, Metering, Quotas<br/>not started"]
+    PR09["PR-09<br/>Onboarding and Widget UX<br/>verified"]
+    PR10["PR-10<br/>Monitoring, Metering, Quotas<br/>next: not started<br/>HIGH"]
     PR11["PR-11<br/>Billing and Paid Beta<br/>not started"]
     PR12["PR-12<br/>Final Audit and Launch Gate<br/>not started"]
 
@@ -44,9 +44,9 @@ flowchart TB
     classDef gateOk fill:#e0f2fe,stroke:#0369a1,color:#082f49
     classDef gateNo fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08 verified
-    class PR09 high
-    class PR10,PR11,PR12 pending
+    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09 verified
+    class PR10 high
+    class PR11,PR12 pending
     class GateA gateOk
     class GateB,GateC,GateD,GateE gateNo
     class LegendVerified verified

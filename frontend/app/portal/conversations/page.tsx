@@ -9,13 +9,21 @@ import { getToken } from "../../../lib/auth/session";
 export default function ConversationsPage() {
   const [conversations, setConversations] = useState<PortalConversation[]>([]);
   const [selected, setSelected] = useState<PortalConversationDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
     if (!token) {
+      setLoading(false);
       return;
     }
-    portalApi.conversations(token).then(setConversations);
+    portalApi
+      .conversations(token)
+      .then(setConversations)
+      .catch(() => setError("Conversations could not be loaded."))
+      .finally(() => setLoading(false));
   }, []);
 
   async function selectConversation(conversationId: string) {
@@ -23,10 +31,24 @@ export default function ConversationsPage() {
     if (!token) {
       return;
     }
-    setSelected(await portalApi.conversation(token, conversationId));
+    setDetailLoading(true);
+    setError(null);
+    try {
+      setSelected(await portalApi.conversation(token, conversationId));
+    } catch {
+      setError("Conversation details could not be loaded.");
+    } finally {
+      setDetailLoading(false);
+    }
   }
 
   return (
+    <div className="space-y-4">
+      {error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
     <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
       <section className="rounded-lg border border-line bg-panel">
         <div className="border-b border-line p-4">
@@ -34,7 +56,8 @@ export default function ConversationsPage() {
           <p className="mt-1 text-sm text-muted">Widget chat history.</p>
         </div>
         <div className="divide-y divide-line">
-          {conversations.map((conversation) => (
+          {loading ? <div className="p-4 text-sm text-muted">Loading conversations...</div> : null}
+          {!loading && conversations.map((conversation) => (
             <button
               type="button"
               key={conversation.id}
@@ -48,11 +71,13 @@ export default function ConversationsPage() {
               <div className="mt-1 text-sm text-muted">{conversation.message_count} messages</div>
             </button>
           ))}
-          {conversations.length === 0 ? <div className="p-4 text-sm text-muted">No conversations yet.</div> : null}
+          {!loading && conversations.length === 0 ? <div className="p-4 text-sm text-muted">No conversations yet.</div> : null}
         </div>
       </section>
       <section className="min-h-96 rounded-lg border border-line bg-panel p-4">
-        {selected ? (
+        {detailLoading ? (
+          <div className="text-sm text-muted">Loading conversation...</div>
+        ) : selected ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between border-b border-line pb-3">
               <h2 className="font-semibold">{selected.visitor_label || "Website visitor"}</h2>
@@ -69,6 +94,7 @@ export default function ConversationsPage() {
           <div className="text-sm text-muted">Select a conversation.</div>
         )}
       </section>
+    </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # PR-09: Customer Onboarding, Agent Testing and Widget Installation Experience
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -43,15 +43,15 @@ The current portal has useful MVP screens, but a tenant cannot complete a produc
 
 ## Detailed Tasks
 
-- [ ] Map end-to-end tenant setup journey.
-- [ ] Add onboarding/business profile screens.
-- [ ] Add knowledge setup and job status UI.
-- [ ] Add agent sandbox with citations.
-- [ ] Add widget domain/key/branding controls.
-- [ ] Improve conversations/leads UX states.
-- [ ] Add responsive/accessibility checks.
-- [ ] Add browser/e2e tests.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Map end-to-end tenant setup journey.
+- [x] Add onboarding/business profile screens.
+- [x] Add knowledge setup and job status UI.
+- [x] Add agent sandbox with citations.
+- [x] Add widget domain/key/branding controls.
+- [x] Improve conversations/leads UX states.
+- [x] Add responsive/accessibility checks.
+- [x] Add browser/e2e tests.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -69,11 +69,15 @@ Schema changes may be needed for onboarding/profile/branding. Provide migrations
 
 ## Evidence
 
-To be filled during PR-09.
+- Backend profile, agent sandbox, widget branding, and tenant-scoped portal APIs: `backend/app/api/business_portal.py`, `backend/app/business/service.py`, `backend/app/schemas/business_portal.py`, `backend/app/widget/service.py`.
+- Frontend setup, agent test, knowledge-job, widget branding/copy, leads, and conversations UX: `frontend/app/portal/onboarding/page.tsx`, `frontend/app/portal/agent/page.tsx`, `frontend/app/portal/documents/page.tsx`, `frontend/app/portal/widget/page.tsx`, `frontend/app/portal/leads/page.tsx`, `frontend/app/portal/conversations/page.tsx`, `frontend/components/PortalShell.tsx`.
+- API client/types and static checks: `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`, `frontend/tests/static-check.mjs`.
+- Backend tests: `backend/tests/business/test_business_portal_api.py`.
+- Validation: `backend/.venv/bin/python -m pytest backend/tests/business/test_business_portal_api.py` passed, 12 tests; `backend/.venv/bin/python -m pytest backend/tests` passed, 89 tests; `backend/.venv/bin/python -m ruff check backend/app backend/tests` passed; `npm run test`, `npm run typecheck`, `npm run lint`, and `npm run build` passed; local browser smoke confirmed the portal login route and protected portal route fallback render through Next.js.
 
 ## Blockers
 
-Requires PR-08 source-grounded RAG behavior.
+No repository-controlled PR-09 blocker remains. PR-10 monitoring, quotas, metering, and cost controls are still required before real customer pilot gates can pass.
 
 ## Completion Criteria
 

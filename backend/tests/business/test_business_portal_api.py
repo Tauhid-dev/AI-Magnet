@@ -9,7 +9,11 @@ from app.core.rate_limit import rate_limiter
 from app.db.base import Base, utc_now
 from app.db.session import get_db_session
 from app.main import create_app
-from app.models import BusinessUser, Conversation, KnowledgeDocument, Lead, Message
+from app.models import Business, BusinessUser, Conversation, KnowledgeDocument, Lead, Message
+from app.models.usage import UsageLog
+from app.providers.ai.deterministic import DeterministicEmbeddingProvider
+from app.rag.ingestion import RagIngestionService
+from app.usage import UsageEventType
 from app.tenants.service import TenantService
 from fastapi.testclient import TestClient
 
@@ -386,6 +390,128 @@ def test_business_portal_document_upload_and_widget_key_are_tenant_scoped(monkey
         assert stored_document.tenant_id == tenant.id
 
 
+def test_business_portal_profile_update_supports_onboarding_and_safe_urls(monkeypatch):
+    with create_test_session() as session:
+        tenant, _user = seed_business_user(
+            session,
+            "Demo Plumbing",
+            "demo-plumbing",
+            "owner@example.test",
+        )
+        session.commit()
+        client = create_client(session, monkeypatch)
+        token = login(client, "demo-plumbing", "owner@example.test")
+
+        profile_response = client.get(
+            "/business-portal/profile",
+            headers=auth_header(token),
+        )
+        update_response = client.patch(
+            "/business-portal/profile",
+            headers=auth_header(token),
+            json={
+                "business_name": "Demo Plumbing Co",
+                "business_email": " bookings@example.test ",
+                "business_phone": " 0412345678 ",
+                "website_url": "https://demo.example/services",
+            },
+        )
+        unsafe_response = client.patch(
+            "/business-portal/profile",
+            headers=auth_header(token),
+            json={
+                "business_name": "Demo Plumbing Co",
+                "website_url": "http://127.0.0.1/admin",
+            },
+        )
+
+        assert profile_response.status_code == 200
+        assert profile_response.json()["tenant_id"] == tenant.id
+        assert update_response.status_code == 200
+        payload = update_response.json()
+        assert payload["business_name"] == "Demo Plumbing Co"
+        assert payload["business_email"] == "bookings@example.test"
+        assert payload["business_phone"] == "0412345678"
+        assert payload["website_url"] == "https://demo.example/services"
+        assert unsafe_response.status_code == 400
+
+        stored_business = session.scalars(
+            select(Business).where(Business.tenant_id == tenant.id)
+        ).one()
+        assert stored_business.name == "Demo Plumbing Co"
+        assert stored_business.website_url == "https://demo.example/services"
+
+
+def test_business_portal_agent_sandbox_returns_tenant_citations_without_conversation(
+    monkeypatch,
+):
+    with create_test_session() as session:
+        tenant_a, _user_a = seed_business_user(
+            session,
+            "Tenant A Plumbing",
+            "tenant-a",
+            "a@example.test",
+        )
+        tenant_b, _user_b = seed_business_user(
+            session,
+            "Tenant B Electrical",
+            "tenant-b",
+            "b@example.test",
+        )
+        monkeypatch.setenv("RAG_SIMILARITY_THRESHOLD", "0.0")
+        client = create_client(session, monkeypatch)
+        settings = get_settings()
+        embedding_provider = DeterministicEmbeddingProvider(16)
+        document_a = RagIngestionService(
+            session=session,
+            embedding_provider=embedding_provider,
+            settings=settings,
+        ).ingest_bytes(
+            tenant_id=tenant_a.id,
+            filename="tenant-a-services.md",
+            content=b"Tenant A handles blocked drains and hot water repairs in Bondi.",
+            content_type="text/markdown",
+        )
+        document_a.source_title = "Tenant A services"
+        document_b = RagIngestionService(
+            session=session,
+            embedding_provider=embedding_provider,
+            settings=settings,
+        ).ingest_bytes(
+            tenant_id=tenant_b.id,
+            filename="tenant-b-services.md",
+            content=b"Tenant B handles switchboards and lighting in Perth.",
+            content_type="text/markdown",
+        )
+        document_b.source_title = "Tenant B services"
+        session.commit()
+        token_a = login(client, "tenant-a", "a@example.test")
+
+        response = client.post(
+            "/business-portal/agent/test",
+            headers=auth_header(token_a),
+            json={"message": "Can you help with blocked drains in Bondi?"},
+        )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["answer_status"] == "answered"
+        assert payload["assistant_message"].startswith("Deterministic response:")
+        assert payload["retrieved_chunk_count"] >= 1
+        assert payload["citations"]
+        assert {citation["document_id"] for citation in payload["citations"]} == {
+            document_a.id
+        }
+        assert session.scalars(select(Conversation)).all() == []
+        usage_log = session.scalars(
+            select(UsageLog).where(
+                UsageLog.tenant_id == tenant_a.id,
+                UsageLog.event_type == UsageEventType.AGENT_SANDBOX_TESTED,
+            )
+        ).one()
+        assert usage_log.attributes["citation_count"] >= 1
+
+
 def test_business_cookie_write_requires_csrf_header(monkeypatch):
     with create_test_session() as session:
         seed_business_user(
@@ -441,6 +567,11 @@ def test_business_portal_widget_key_lifecycle_controls(monkeypatch):
         widget_id = created_widget["id"]
         original_key = created_widget["widget_key"]
 
+        branding_response = client.patch(
+            f"/business-portal/widget/{widget_id}/branding",
+            headers=auth_header(token),
+            json={"widget_title": "Ask Lifecycle Plumbing"},
+        )
         update_response = client.patch(
             f"/business-portal/widget/{widget_id}/origins",
             headers=auth_header(token),
@@ -475,6 +606,9 @@ def test_business_portal_widget_key_lifecycle_controls(monkeypatch):
         )
 
         assert create_response.status_code == 200
+        assert branding_response.status_code == 200
+        assert branding_response.json()["widget_title"] == "Ask Lifecycle Plumbing"
+        assert 'data-title="Ask Lifecycle Plumbing"' in branding_response.json()["embed_code"]
         assert update_response.status_code == 200
         assert update_response.json()["allowed_origins"] == ["https://second.example"]
         assert rotate_response.status_code == 200

@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "PR-09",
-    "last_completed_phase": "PR-08",
-    "next_permitted_phase": "PR-09",
+    "active_phase": "PR-10",
+    "last_completed_phase": "PR-09",
+    "next_permitted_phase": "PR-10",
     "production_go_no_go": "Gate B repository-ready with conditions; real customer, paid beta, and public production remain NO-GO",
-    "overall_status": "pr08_rag_quality_verified_next_pr09"
+    "overall_status": "pr09_onboarding_widget_ux_verified_next_pr10"
   },
   "launch_gates": [
     {
@@ -327,20 +327,26 @@
     {
       "phase_id": "PR-09",
       "title": "Customer Onboarding, Agent Testing and Widget Installation Experience",
-      "status": "not_started",
-      "completion_percent": 0,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-08"
       ],
       "priority": "p1",
       "criticality": "beta_workflow_blocker",
-      "validation_status": "not_run",
-      "last_updated": "2026-05-28",
+      "validation_status": "pass",
+      "last_updated": "2026-05-29",
       "evidence_links": [
-        "production-control/phases/PR-09_CUSTOMER_ONBOARDING_AGENT_TESTING_AND_WIDGET_INSTALLATION_EXPERIENCE.md"
+        "production-control/phases/PR-09_CUSTOMER_ONBOARDING_AGENT_TESTING_AND_WIDGET_INSTALLATION_EXPERIENCE.md",
+        "backend/app/api/business_portal.py",
+        "backend/tests/business/test_business_portal_api.py",
+        "frontend/app/portal/onboarding/page.tsx",
+        "frontend/app/portal/agent/page.tsx",
+        "frontend/app/portal/widget/page.tsx",
+        "frontend/tests/static-check.mjs"
       ],
-      "branch": null,
-      "commit": null
+      "branch": "production/pr-09-customer-onboarding-agent-widget-ux",
+      "commit": "pending"
     },
     {
       "phase_id": "PR-10",
@@ -420,7 +426,6 @@
     }
   ],
     "critical_blockers": [
-        "Customer onboarding, knowledge setup, agent testing, and widget installation UX remain pending in PR-09",
         "Full monitoring, metering, quotas, and cost controls remain pending in PR-10",
         "Billing/entitlement controls remain pending in PR-11",
         "Scanned-document OCR runtime remains gated and unimplemented",

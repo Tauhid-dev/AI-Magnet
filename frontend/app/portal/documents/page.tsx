@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { StatusPill } from "../../../components/StatusPill";
 import { portalApi } from "../../../lib/api/client";
 import type {
+  BackgroundJob,
   PortalDocument,
   PortalWebsiteCrawlPage,
   PortalWebsiteSource
@@ -16,6 +17,7 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<PortalDocument[]>([]);
   const [sources, setSources] = useState<PortalWebsiteSource[]>([]);
   const [pages, setPages] = useState<PortalWebsiteCrawlPage[]>([]);
+  const [jobs, setJobs] = useState<BackgroundJob[]>([]);
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
   const [filename, setFilename] = useState("services.txt");
   const [content, setContent] = useState("");
@@ -34,13 +36,20 @@ export default function DocumentsPage() {
     if (!token) {
       return;
     }
-    const [documentRows, sourceRows] = await Promise.all([
-      portalApi.documents(token),
-      portalApi.websiteSources(token)
-    ]);
-    setDocuments(documentRows);
-    setSources(sourceRows);
-    setActiveSourceId((current) => current || sourceRows[0]?.id || null);
+    setError(null);
+    try {
+      const [documentRows, sourceRows, jobRows] = await Promise.all([
+        portalApi.documents(token),
+        portalApi.websiteSources(token),
+        portalApi.jobs(token)
+      ]);
+      setDocuments(documentRows);
+      setSources(sourceRows);
+      setJobs(jobRows);
+      setActiveSourceId((current) => current || sourceRows[0]?.id || null);
+    } catch {
+      setError("Knowledge status could not be loaded.");
+    }
   }, []);
 
   const loadPages = useCallback(async (sourceId: string | null) => {
@@ -198,6 +207,9 @@ export default function DocumentsPage() {
   }
 
   const activeSource = sources.find((source) => source.id === activeSourceId) || null;
+  const activeJobs = jobs.filter((job) =>
+    ["queued", "running", "retry_scheduled"].includes(job.status)
+  );
 
   return (
     <div className="space-y-6">
@@ -257,6 +269,48 @@ export default function DocumentsPage() {
           </button>
         </div>
       </form>
+
+      <section className="rounded-lg border border-line bg-panel p-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Indexing jobs</h2>
+            <p className="mt-1 text-sm text-muted">Recent tenant-owned ingestion and crawl work.</p>
+          </div>
+          <button
+            className="rounded-md border border-line px-3 py-2 text-sm font-semibold text-ink"
+            type="button"
+            onClick={loadKnowledge}
+          >
+            Refresh
+          </button>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {jobs.slice(0, 8).map((job) => (
+            <div className="rounded-md border border-line p-3 text-sm" key={job.id}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate font-semibold">{job.job_type}</span>
+                <StatusPill value={job.status} />
+              </div>
+              <div className="mt-2 text-xs text-muted">
+                Attempts {job.attempts}/{job.max_attempts}
+              </div>
+              {job.last_error ? (
+                <div className="mt-2 line-clamp-2 text-xs text-red-700">{job.last_error}</div>
+              ) : null}
+            </div>
+          ))}
+          {jobs.length === 0 ? (
+            <div className="rounded-md bg-slate-50 p-4 text-sm text-muted">
+              No indexing jobs have been created yet.
+            </div>
+          ) : null}
+        </div>
+        {activeJobs.length > 0 ? (
+          <div className="mt-3 text-sm text-muted">
+            {activeJobs.length} active job{activeJobs.length === 1 ? "" : "s"} in progress.
+          </div>
+        ) : null}
+      </section>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
         <div className="overflow-hidden rounded-lg border border-line bg-panel">

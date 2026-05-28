@@ -113,6 +113,21 @@ class WidgetService:
         self.session.flush()
         return widget
 
+    def update_branding(
+        self,
+        widget_id: str,
+        tenant_id: str,
+        *,
+        name: str,
+    ) -> WidgetConfig | None:
+        """Update beta-scope widget display branding for a tenant-owned widget."""
+        widget = self._get_widget(widget_id, tenant_id)
+        if widget is None or widget.status in WIDGET_TERMINAL_STATUSES:
+            return None
+        widget.name = name.strip()
+        self.session.flush()
+        return widget
+
     def rotate_widget(
         self,
         widget_id: str,
