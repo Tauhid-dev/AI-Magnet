@@ -34,12 +34,16 @@ from app.schemas.business_portal import (
     PortalLeadStatusUpdateRequest,
     PortalMessageResponse,
     PortalJobResponse,
+    PortalWebsiteCrawlPageResponse,
+    PortalWebsiteSourceCreateRequest,
+    PortalWebsiteSourceResponse,
     PortalWidgetKeyCreateRequest,
     PortalWidgetOriginsUpdateRequest,
     PortalUsageEventResponse,
     PortalWidgetResponse,
 )
 from app.usage import UsageEventSource, UsageEventType, UsageService
+from app.rag.website_ingestion import WebsiteIngestionService
 from app.widget.service import WidgetService
 
 
@@ -185,6 +189,10 @@ def list_documents(
             content_type=document.content_type,
             status=document.status,
             error_message=document.error_message,
+            source_type=document.source_type,
+            source_url=document.source_url,
+            source_title=document.source_title,
+            website_source_id=document.website_source_id,
             job_id=None,
             created_at=document.created_at,
             updated_at=document.updated_at,
@@ -232,10 +240,137 @@ def create_document(
         content_type=document.content_type,
         status=document.status,
         error_message=document.error_message,
+        source_type=document.source_type,
+        source_url=document.source_url,
+        source_title=document.source_title,
+        website_source_id=document.website_source_id,
         job_id=job_result.job.id,
         created_at=document.created_at,
         updated_at=document.updated_at,
     )
+
+
+@router.get("/website-sources", response_model=list[PortalWebsiteSourceResponse])
+def list_website_sources(
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> list[PortalWebsiteSourceResponse]:
+    """List tenant-approved website and sitemap sources."""
+    sources = WebsiteIngestionService(session, settings=settings).list_sources(
+        portal_session.tenant_id
+    )
+    return [website_source_response(source) for source in sources]
+
+
+@router.post("/website-sources", response_model=PortalWebsiteSourceResponse)
+def create_website_source(
+    request: Request,
+    payload: PortalWebsiteSourceCreateRequest,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalWebsiteSourceResponse:
+    """Create a tenant-approved website/sitemap source and queue ingestion."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_website_source_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    service = WebsiteIngestionService(session, settings=settings)
+    try:
+        source = service.create_source(
+            tenant_id=portal_session.tenant_id,
+            url=payload.url,
+            source_type=payload.source_type,
+            max_pages=payload.max_pages,
+            max_depth=payload.max_depth,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    job_result = BackgroundJobService(session, settings).enqueue_website_crawl(
+        tenant_id=portal_session.tenant_id,
+        source_id=source.id,
+    )
+    service.set_source_job(source, job_result.job.id)
+    session.commit()
+    return website_source_response(source)
+
+
+@router.post("/website-sources/{source_id}/refresh", response_model=PortalWebsiteSourceResponse)
+def refresh_website_source(
+    request: Request,
+    source_id: str,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalWebsiteSourceResponse:
+    """Queue a refresh crawl for a tenant-owned website/sitemap source."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_website_source_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    service = WebsiteIngestionService(session, settings=settings)
+    source = service.get_source(portal_session.tenant_id, source_id)
+    if source is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Website source not found")
+    job_result = BackgroundJobService(session, settings).enqueue_website_crawl(
+        tenant_id=portal_session.tenant_id,
+        source_id=source.id,
+    )
+    service.set_source_job(source, job_result.job.id)
+    session.commit()
+    return website_source_response(source)
+
+
+@router.delete("/website-sources/{source_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_website_source(
+    request: Request,
+    source_id: str,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> Response:
+    """Delete a tenant-owned source and generated knowledge documents."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_website_source_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    deleted_count = WebsiteIngestionService(session, settings=settings).delete_source(
+        portal_session.tenant_id,
+        source_id,
+    )
+    if not deleted_count:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Website source not found")
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/website-sources/{source_id}/pages",
+    response_model=list[PortalWebsiteCrawlPageResponse],
+)
+def list_website_source_pages(
+    source_id: str,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> list[PortalWebsiteCrawlPageResponse]:
+    """List crawl page history for a tenant-owned source."""
+    service = WebsiteIngestionService(session, settings=settings)
+    source = service.get_source(portal_session.tenant_id, source_id)
+    if source is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Website source not found")
+    pages = service.list_pages(portal_session.tenant_id, source_id)
+    return [crawl_page_response(page) for page in pages]
 
 
 @router.get("/jobs", response_model=list[PortalJobResponse])
@@ -645,6 +780,42 @@ def portal_job_response(job: BackgroundJob) -> PortalJobResponse:
         last_error=job.last_error,
         created_at=job.created_at,
         updated_at=job.updated_at,
+    )
+
+
+def website_source_response(source) -> PortalWebsiteSourceResponse:
+    """Map a tenant website/sitemap source to a portal response."""
+    return PortalWebsiteSourceResponse(
+        id=source.id,
+        source_type=source.source_type,
+        root_url=source.root_url,
+        normalized_domain=source.normalized_domain,
+        status=source.status,
+        last_job_id=source.last_job_id,
+        last_error=source.last_error,
+        max_pages=source.max_pages,
+        max_depth=source.max_depth,
+        last_crawled_at=source.last_crawled_at,
+        created_at=source.created_at,
+        updated_at=source.updated_at,
+    )
+
+
+def crawl_page_response(page) -> PortalWebsiteCrawlPageResponse:
+    """Map a crawl page row to a portal response."""
+    return PortalWebsiteCrawlPageResponse(
+        id=page.id,
+        source_id=page.source_id,
+        url=page.url,
+        canonical_url=page.canonical_url,
+        title=page.title,
+        status=page.status,
+        http_status=page.http_status,
+        error_message=page.error_message,
+        document_id=page.document_id,
+        crawled_at=page.crawled_at,
+        created_at=page.created_at,
+        updated_at=page.updated_at,
     )
 
 

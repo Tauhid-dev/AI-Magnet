@@ -133,3 +133,25 @@ Append-only ADR-lite log for production remediation.
   - Keep the placeholder sleep worker: rejected because it leaves ingestion/notification workflows without reliable async execution.
   - Introduce Celery/RQ immediately: deferred because the current product needs observable durable jobs more than a larger framework, and the DB ledger remains compatible with adopting a larger queue later.
 - Follow-up impact: PR-06 and PR-07 should add website, sitemap, file extraction, and OCR jobs through this ledger; PR-10 should extend metrics/alerts around queue age, failures, and worker liveness.
+
+## DEC-PR-20260528-013: Authenticated Tenant Owner Website Approval For PR-06 Beta Scope
+
+- Date: 2026-05-28
+- Decision: PR-06 authorizes website/sitemap source submission through the authenticated business portal owner. If the business profile has a `website_url`, submitted sources must match that domain or its subdomains. If no business website is configured, the submitted source domain is recorded as the approved tenant source domain.
+- Reason: The beta workflow needs safe website/sitemap ingestion without delaying PR-06 for external DNS or file-based verification. Authenticated tenant ownership plus business-domain matching removes the immediate unrestricted crawler risk while preserving a practical onboarding path.
+- Affected files/phases: PR-06, `backend/app/rag/website_ingestion.py`, `backend/app/api/business_portal.py`, `frontend/app/portal/documents/page.tsx`, `docs/website-ingestion.md`.
+- Alternatives rejected:
+  - Require DNS TXT or hosted-file verification immediately: deferred because it is stronger but adds onboarding and support complexity before the controlled pilot phase.
+  - Allow arbitrary URLs for any tenant: rejected because it would weaken tenant source ownership and crawler abuse boundaries.
+- Follow-up impact: PR-09 customer onboarding may add guided domain verification UX if beta customers need stronger proof. PR-12 should re-evaluate whether authenticated-owner approval remains acceptable for launch.
+
+## DEC-PR-20260528-014: Ordinary HTTP Crawler First, Browser Crawling Deferred
+
+- Date: 2026-05-28
+- Decision: Implement PR-06 with a deterministic HTTP crawler, sitemap parser, HTML text extractor, robots.txt handling, SSRF protections, and bounded crawl settings. Browser/Playwright crawling remains conditional.
+- Reason: The audit classified browser crawling as conditional, not a production-security blocker. A normal HTTP crawler covers many SMB sites, is easier to bound safely, and avoids adding headless browser runtime and attack surface during PR-06.
+- Affected files/phases: PR-06, `backend/app/rag/web_fetcher.py`, `backend/app/rag/web_extraction.py`, `backend/app/rag/website_ingestion.py`.
+- Alternatives rejected:
+  - Add Playwright crawling now: rejected for PR-06 scope because it increases runtime complexity and SSRF/browser isolation requirements.
+  - Defer all website ingestion until PR-09: rejected because website/sitemap ingestion is a product workflow blocker and must exist before RAG quality and onboarding phases.
+- Follow-up impact: Add browser crawling only if controlled beta websites cannot be ingested through ordinary HTTP/sitemap paths.

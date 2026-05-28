@@ -76,6 +76,8 @@ Rules:
 
 RAG retrieval must filter by tenant before scoring and returning chunks. Similar documents from another tenant must not influence answers.
 
+Website and sitemap ingestion must also remain tenant-scoped. PR-06 stores each approved source in `website_sources`, each crawl row in `website_crawl_pages`, and each generated document with source metadata on `knowledge_documents`. The crawler rejects unsafe SSRF targets, revalidates redirects, applies crawl limits, respects basic `robots.txt` disallow rules, and only ingests URLs that match the approved source domain.
+
 AI provider configuration must come from environment variables:
 
 - `AI_PROVIDER`
@@ -124,3 +126,4 @@ Before production:
 - CI security scans exist, but PR-05 requires its first remote run to pass before relying on them as release evidence.
 - Live PostgreSQL plus pgvector migration/startup validation path exists, but has not been run against a VPS/staging database.
 - Durable worker queue code exists, but first live worker/Redis smoke validation remains a release check.
+- PR-06 website/sitemap crawler is bounded and SSRF-hardened in repository tests, but first controlled crawl against real customer-like websites remains a release check before pilot onboarding.

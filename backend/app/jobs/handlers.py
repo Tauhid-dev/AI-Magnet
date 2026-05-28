@@ -11,6 +11,7 @@ from app.core.config import Settings
 from app.jobs.service import (
     JOB_TYPE_NOTIFICATION_DELIVERY,
     JOB_TYPE_RAG_DOCUMENT_INGESTION,
+    JOB_TYPE_RAG_WEBSITE_CRAWL,
 )
 from app.models.job import BackgroundJob
 from app.models.knowledge import KnowledgeDocument
@@ -23,6 +24,7 @@ from app.notifications.service import (
 )
 from app.providers.ai.factory import get_embedding_provider
 from app.rag.ingestion import RagIngestionService
+from app.rag.website_ingestion import WebsiteIngestionService
 from app.usage import UsageEventSource, UsageEventType, UsageService
 
 
@@ -41,6 +43,7 @@ def get_default_handlers() -> Mapping[str, JobHandler]:
     """Return production job handlers by job type."""
     return {
         JOB_TYPE_RAG_DOCUMENT_INGESTION: handle_document_ingestion,
+        JOB_TYPE_RAG_WEBSITE_CRAWL: handle_website_crawl,
         JOB_TYPE_NOTIFICATION_DELIVERY: handle_notification_delivery,
     }
 
@@ -117,6 +120,32 @@ def handle_notification_delivery(
     if delivery.status == NOTIFICATION_STATUS_FAILED:
         raise PermanentJobError(delivery.error_message or "Notification delivery failed")
     raise RetryableJobError(f"Notification delivery ended in unexpected status {delivery.status}")
+
+
+def handle_website_crawl(
+    session: Session,
+    job: BackgroundJob,
+    settings: Settings,
+) -> dict[str, Any]:
+    """Crawl a tenant-approved website/sitemap source and ingest pages."""
+    tenant_id = require_tenant(job)
+    source_id = require_payload_string(job, "source_id")
+    try:
+        result = WebsiteIngestionService(
+            session=session,
+            settings=settings,
+            embedding_provider=get_embedding_provider(settings),
+        ).process_source(tenant_id=tenant_id, source_id=source_id)
+    except ValueError as exc:
+        raise PermanentJobError(str(exc)) from exc
+    return {
+        "source_id": result.source_id,
+        "status": result.status,
+        "pages_discovered": result.pages_discovered,
+        "pages_ingested": result.pages_ingested,
+        "pages_failed": result.pages_failed,
+        "pages_skipped": result.pages_skipped,
+    }
 
 
 def require_tenant(job: BackgroundJob) -> str:

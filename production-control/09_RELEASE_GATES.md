@@ -22,7 +22,7 @@ Required:
 
 Current status: REPOSITORY READY WITH CONDITIONS.
 
-PR-01 through PR-05 are verified in repository-controlled code and tests. Before operating a private internet demo, the owner still needs remote CI evidence plus VPS smoke validation for TLS, firewall exposure, worker health, Redis reachability, backups, restore, and PostgreSQL/pgvector migration checks.
+PR-01 through PR-06 are verified in repository-controlled code and tests. Before operating a private internet demo, the owner still needs remote CI evidence plus VPS smoke validation for TLS, firewall exposure, worker health, Redis reachability, backups, restore, PostgreSQL/pgvector migration checks, and any owner-approved controlled real-site crawl smoke.
 
 Requires verified:
 
@@ -31,6 +31,7 @@ Requires verified:
 - PR-03: tenant isolation/privacy/database integrity.
 - PR-04: production infrastructure, TLS, secrets, backups, CI security.
 - PR-05: real queue/worker reliability.
+- PR-06: secure website/sitemap ingestion, if the demo includes live website ingestion.
 
 ## Gate C: Real Customer Pilot
 
@@ -39,7 +40,7 @@ Current status: NO-GO.
 Requires verified:
 
 - PR-01 through PR-10.
-- Real customer data handling, ingestion, RAG safety, operational monitoring, quotas, and incident response.
+- Real customer data handling, secure document ingestion, RAG safety, operational monitoring, quotas, incident response, and controlled crawl evidence.
 - Owner approval for the specific customer pilot terms and data handling.
 
 ## Gate D: Paid Beta

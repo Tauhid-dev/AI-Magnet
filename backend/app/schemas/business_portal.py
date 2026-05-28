@@ -43,6 +43,10 @@ class PortalDocumentResponse(BaseModel):
     content_type: str | None
     status: str
     error_message: str | None
+    source_type: str = "manual_upload"
+    source_url: str | None = None
+    source_title: str | None = None
+    website_source_id: str | None = None
     job_id: str | None = None
     created_at: datetime
     updated_at: datetime
@@ -54,6 +58,49 @@ class PortalDocumentCreateRequest(BaseModel):
     filename: str = Field(min_length=1, max_length=255)
     content: str = Field(min_length=1)
     content_type: str = "text/plain"
+
+
+class PortalWebsiteSourceCreateRequest(BaseModel):
+    """Website or sitemap ingestion request."""
+
+    source_type: str = Field(min_length=1, max_length=40)
+    url: str = Field(min_length=8, max_length=2000)
+    max_pages: int | None = Field(default=None, ge=1, le=100)
+    max_depth: int | None = Field(default=None, ge=0, le=5)
+
+
+class PortalWebsiteSourceResponse(BaseModel):
+    """Tenant-owned website/sitemap source status."""
+
+    id: str
+    source_type: str
+    root_url: str
+    normalized_domain: str
+    status: str
+    last_job_id: str | None
+    last_error: str | None
+    max_pages: int
+    max_depth: int
+    last_crawled_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PortalWebsiteCrawlPageResponse(BaseModel):
+    """Crawl history row for a tenant website/sitemap source."""
+
+    id: str
+    source_id: str
+    url: str
+    canonical_url: str
+    title: str | None
+    status: str
+    http_status: int | None
+    error_message: str | None
+    document_id: str | None
+    crawled_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
 
 
 class PortalLeadResponse(BaseModel):

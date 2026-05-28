@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-        "active_phase": "PR-06",
-        "last_completed_phase": "PR-05",
-        "next_permitted_phase": "PR-06",
+        "active_phase": "PR-07",
+        "last_completed_phase": "PR-06",
+        "next_permitted_phase": "PR-07",
         "production_go_no_go": "Gate B repository-ready with conditions; real customer, paid beta, and public production remain NO-GO",
-        "overall_status": "pr05_worker_queue_verified_next_pr06"
+        "overall_status": "pr06_website_sitemap_ingestion_verified_next_pr07"
   },
   "launch_gates": [
     {
@@ -41,10 +41,11 @@
                 "PR-05"
             ],
             "remaining_conditions": [
-                "Remote CI evidence for PR-05 branch",
+                "Remote CI evidence for PR-06 branch",
                 "Owner-approved VPS smoke for TLS/firewall exposure",
                 "Worker health and Redis reachability smoke",
-                "Backup/restore and PostgreSQL/pgvector smoke evidence"
+                "Backup/restore and PostgreSQL/pgvector smoke evidence",
+                "Controlled real-site crawl smoke if private demo includes live website ingestion"
             ],
             "evidence_links": [
                 "production-control/09_RELEASE_GATES.md"
@@ -59,9 +60,9 @@
         "PR-02",
         "PR-03",
         "PR-04",
-        "PR-05",
-        "PR-06",
-        "PR-07",
+                "PR-05",
+                "PR-06",
+                "PR-07",
         "PR-08",
         "PR-09",
         "PR-10"
@@ -243,24 +244,34 @@
             "branch": "production/pr-05-real-async-queue-worker",
             "commit": "pending"
         },
-    {
-      "phase_id": "PR-06",
-      "title": "Secure Website and Sitemap Ingestion",
-      "status": "not_started",
-      "completion_percent": 0,
-      "dependencies": [
-        "PR-05"
-      ],
-      "priority": "p1",
-      "criticality": "product_workflow_blocker",
-      "validation_status": "not_run",
-      "last_updated": "2026-05-28",
-      "evidence_links": [
-        "production-control/phases/PR-06_SECURE_WEBSITE_AND_SITEMAP_INGESTION.md"
-      ],
-      "branch": null,
-      "commit": null
-    },
+        {
+            "phase_id": "PR-06",
+            "title": "Secure Website and Sitemap Ingestion",
+            "status": "verified",
+            "completion_percent": 100,
+            "dependencies": [
+                "PR-05"
+            ],
+            "priority": "p1",
+            "criticality": "product_workflow_blocker",
+            "validation_status": "pass",
+            "last_updated": "2026-05-28",
+            "evidence_links": [
+                "production-control/phases/PR-06_SECURE_WEBSITE_AND_SITEMAP_INGESTION.md",
+                "backend/app/models/knowledge.py",
+                "backend/app/rag/web_security.py",
+                "backend/app/rag/web_fetcher.py",
+                "backend/app/rag/web_extraction.py",
+                "backend/app/rag/website_ingestion.py",
+                "backend/app/jobs/handlers.py",
+                "backend/migrations/versions/20260528_0009_pr06_website_sitemap_ingestion.py",
+                "backend/tests/rag/test_website_ingestion.py",
+                "frontend/app/portal/documents/page.tsx",
+                "docs/website-ingestion.md"
+            ],
+            "branch": "production/pr-06-secure-website-sitemap-ingestion",
+            "commit": "pending"
+        },
     {
       "phase_id": "PR-07",
       "title": "Secure Document Ingestion, Storage and OCR Path",
@@ -393,9 +404,11 @@
       "rule": "Do not implement unless separately requested"
     }
   ],
-  "critical_blockers": [
+    "critical_blockers": [
+        "Secure document/PDF/DOCX ingestion remains pending in PR-07",
+        "First controlled real-site crawl smoke remains pending before pilot use of website ingestion",
         "First VPS validation of TLS, firewall, backup/restore, worker/Redis smoke, and pgvector smoke remains pending"
-  ],
+    ],
   "high_production_requirements": [
     {
             "item": "Full monitoring, metrics, alerts, quotas, cost controls, and log review",

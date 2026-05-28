@@ -19,7 +19,41 @@ export type PortalDocument = {
   content_type: string | null;
   status: string;
   error_message: string | null;
+  source_type: string;
+  source_url: string | null;
+  source_title: string | null;
+  website_source_id: string | null;
   job_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PortalWebsiteSource = {
+  id: string;
+  source_type: string;
+  root_url: string;
+  normalized_domain: string;
+  status: string;
+  last_job_id: string | null;
+  last_error: string | null;
+  max_pages: number;
+  max_depth: number;
+  last_crawled_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PortalWebsiteCrawlPage = {
+  id: string;
+  source_id: string;
+  url: string;
+  canonical_url: string;
+  title: string | null;
+  status: string;
+  http_status: number | null;
+  error_message: string | null;
+  document_id: string | null;
+  crawled_at: string | null;
   created_at: string;
   updated_at: string;
 };

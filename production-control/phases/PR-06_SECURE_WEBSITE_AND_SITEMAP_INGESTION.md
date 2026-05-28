@@ -1,6 +1,6 @@
 # PR-06: Secure Website and Sitemap Ingestion
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -46,15 +46,15 @@ The current MVP supports manual text/Markdown ingestion only. Real businesses ne
 
 ## Detailed Tasks
 
-- [ ] Inspect current document ingestion and tenant business website fields.
-- [ ] Design crawl/source models and job flow.
-- [ ] Implement URL/sitemap submission with tenant ownership.
-- [ ] Implement SSRF-safe fetch and redirect validation.
-- [ ] Implement crawl limits, deduplication, and status.
-- [ ] Add refresh/delete history.
-- [ ] Add portal UI for website/sitemap ingestion.
-- [ ] Add malicious URL and cross-tenant tests.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Inspect current document ingestion and tenant business website fields.
+- [x] Design crawl/source models and job flow.
+- [x] Implement URL/sitemap submission with tenant ownership.
+- [x] Implement SSRF-safe fetch and redirect validation.
+- [x] Implement crawl limits, deduplication, and status.
+- [x] Add refresh/delete history.
+- [x] Add portal UI for website/sitemap ingestion.
+- [x] Add malicious URL and cross-tenant tests.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -73,11 +73,30 @@ Expect new source/crawl/job tables. Reversible migrations required.
 
 ## Evidence
 
-To be filled during PR-06.
+- Backend source/crawl models and same-tenant constraints: `backend/app/models/knowledge.py`, `backend/migrations/versions/20260528_0009_pr06_website_sitemap_ingestion.py`.
+- SSRF URL validation and redirect checks: `backend/app/rag/web_security.py`, `backend/app/rag/web_fetcher.py`.
+- HTML/sitemap extraction and robots support: `backend/app/rag/web_extraction.py`, `backend/app/rag/robots.py`.
+- Crawl orchestration and tenant document indexing: `backend/app/rag/website_ingestion.py`.
+- Durable crawl job handler: `backend/app/jobs/service.py`, `backend/app/jobs/handlers.py`.
+- Business portal APIs and UI: `backend/app/api/business_portal.py`, `backend/app/schemas/business_portal.py`, `frontend/app/portal/documents/page.tsx`, `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`.
+- Security/operational documentation: `docs/website-ingestion.md`, `docs/security.md`.
+- Validation:
+  - `backend/.venv/bin/python -m pytest backend/tests/rag/test_website_ingestion.py` - pass, 13 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 76 tests.
+  - SQLite Alembic upgrade head and downgrade to `20260528_0008` - pass.
+  - `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
+  - `npm run typecheck` - pass.
+  - `npm run lint` - pass.
+
+## Residual Follow-Up
+
+- First controlled crawl against customer-like public sites remains a Gate B/Gate C release-gate smoke check.
+- Browser/Playwright crawling remains conditional and is not required unless ordinary HTTP crawling fails target beta sites.
+- Stronger DNS/file-based domain verification can be added later if beta risk requires it; PR-06 uses authenticated tenant ownership plus configured business-domain matching.
 
 ## Blockers
 
-Requires PR-05 queue/job status.
+None for repository implementation. Live controlled crawl smoke remains release-gate evidence.
 
 ## Completion Criteria
 
