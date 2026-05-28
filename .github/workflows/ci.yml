@@ -10,6 +10,7 @@ on:
       - master
       - main
       - "feature/**"
+      - "production/**"
 
 jobs:
   backend:
@@ -85,3 +86,62 @@ jobs:
 
       - name: Validate Docker Compose configuration
         run: docker compose config
+
+      - name: Validate production Docker Compose configuration
+        run: docker compose --env-file .env.production.example -f docker-compose.prod.yml config
+
+      - name: Verify production compose does not publish database services
+        run: |
+          docker compose --env-file .env.production.example -f docker-compose.prod.yml config > /tmp/ai-magnet-prod-compose.yml
+          if grep -A12 '^  postgres:' /tmp/ai-magnet-prod-compose.yml | grep -q 'published:'; then
+            echo "PostgreSQL must not publish a host port in production compose."
+            exit 1
+          fi
+          if grep -A12 '^  redis:' /tmp/ai-magnet-prod-compose.yml | grep -q 'published:'; then
+            echo "Redis must not publish a host port in production compose."
+            exit 1
+          fi
+
+  security:
+    name: Security scans
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install Python security scanners
+        run: python -m pip install pip-audit bandit
+
+      - name: Audit Python dependencies
+        run: pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt
+
+      - name: Static security scan backend
+        run: python -m bandit -q -r backend/app
+
+      - name: Secret pattern scan
+        run: |
+          if git grep -n -E '(sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY|xox[baprs]-[A-Za-z0-9-]{20,})' -- ':!docs/audit/**' ':!frontend/package-lock.json'; then
+            echo "Potential committed secret found."
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high

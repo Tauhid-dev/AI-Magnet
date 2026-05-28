@@ -13,13 +13,13 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Tenant DB integrity | PR-03 | required | required | required | optional | required | required | staging migration | pass | migration and cross-tenant attack tests |
 | Privacy export/delete/offboarding | PR-03 | required | required | required | required if UI | required | required | manual lifecycle test | pass | deletion/export fixtures and admin API/frontend controls |
 | Global admin audit events | PR-03 | required | required | required if schema changes | required if UI | required | required | manual audit review | pass | audit trail tests |
-| Production private DB/Redis topology | PR-04 | optional | optional | optional | optional | required | required | required | not_run | compose config, port scan, runbook |
-| TLS/HSTS/renewal path | PR-04 | optional | optional | optional | optional | required | required | required | not_run | Nginx config, certbot/renewal docs, header check |
-| Secret validation | PR-04 | required | required | optional | optional | required | required | manual env smoke | not_run | production startup failure tests |
-| Scheduled encrypted backups and restore | PR-04 | optional | optional | required | optional | required | required | required | not_run | backup artifact and restore drill |
-| Live PostgreSQL plus pgvector validation | PR-04 | optional | optional | required | optional | optional | required | required | not_run | migration and vector query smoke |
-| Dependency/secret/SAST CI scans | PR-04 | optional | optional | optional | optional | required | required | optional | not_run | CI job logs |
-| Structured logs/correlation IDs/PII-safe logging | PR-04/PR-10 | required | required | optional | optional | required | required | manual log review | not_run | tests and sample logs |
+| Production private DB/Redis topology | PR-04 | optional | optional | optional | optional | required | required | required | pass | production compose config, no published DB/Redis ports, runbook |
+| TLS/HSTS/renewal path | PR-04 | optional | optional | optional | optional | required | required | required | pass | Nginx TLS/HSTS templates, bootstrap template, certbot/renewal docs |
+| Secret validation | PR-04 | required | required | optional | optional | required | required | manual env smoke | pass | production startup failure/acceptance tests |
+| Scheduled encrypted backups and restore | PR-04 | optional | optional | required | optional | required | required | required | partial | scripts and restore runbook exist; first VPS restore drill pending |
+| Live PostgreSQL plus pgvector validation | PR-04 | optional | optional | required | optional | optional | required | required | partial | validation script exists; first staging/VPS run pending |
+| Dependency/secret/SAST CI scans | PR-04 | optional | optional | optional | optional | required | required | optional | partial | CI jobs added; first remote run pending |
+| Structured logs/correlation IDs/PII-safe logging | PR-04/PR-10 | required | required | optional | optional | required | required | manual log review | partial | request/correlation baseline tests pass; PR-10 owns full monitoring/log review |
 | Real queue worker and job visibility | PR-05 | required | required | required if schema changes | required if UI | required | required | manual worker smoke | not_run | job enqueue/process/retry tests |
 | Website/sitemap ingestion SSRF safety | PR-06 | required | required | required | required | required | required | staging safe crawl | not_run | malicious URL tests and crawl status |
 | Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | not_run | file fixtures and deletion tests |
@@ -74,3 +74,19 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Backend lint | pass | `python3 -m ruff check backend/app backend/tests` |
 | Migration upgrade/downgrade | pass | Alembic SQLite upgrade head and downgrade to `20260528_0006` |
 | Frontend typecheck/lint/test/build | pass | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |
+
+## PR-04 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Production secret/config validation | pass | `python3 -m pytest backend/tests/test_config.py backend/tests/test_health.py` - 8 passed |
+| Backend full test suite | pass | `python3 -m pytest backend/tests` - 59 passed |
+| Backend compile/lint | pass | `python3 -m compileall backend/app backend/tests backend/migrations`; `python3 -m ruff check backend/app backend/tests` |
+| Development compose static config | pass | `docker compose config` |
+| Production compose static config | pass | `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` |
+| Production DB/Redis no published ports | pass | Generated production compose checked for no `published:` ports under `postgres` or `redis` |
+| Backup/restore/pgvector script syntax | pass | `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` |
+| SQLite migration smoke | pass | `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr04_alembic_20260528.db python3 -m alembic -c backend/alembic.ini upgrade head` |
+| Frontend typecheck/lint/test/build | pass | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |
+| Docker image build | not_run | Attempted locally, but Docker daemon was unavailable |
+| Live VPS cert/backup/restore/pgvector smoke | not_run | Documented for release-gate execution; not executed in PR-04 |

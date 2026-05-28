@@ -1,19 +1,24 @@
 """FastAPI application entrypoint."""
 
+import logging
+from uuid import uuid4
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import get_settings
-from app.core.logging import configure_logging
+from app.core.logging import bind_request_id, configure_logging, reset_request_id
 from app.core.security import apply_security_headers
+
+request_logger = logging.getLogger("app.request")
 
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     settings = get_settings()
     settings.validate_runtime_security()
-    configure_logging(settings.log_level)
+    configure_logging(settings.log_level, settings.log_format)
 
     app = FastAPI(
         title=settings.app_name,
@@ -31,10 +36,26 @@ def create_app() -> FastAPI:
     )
 
     @app.middleware("http")
-    async def security_headers_middleware(_request, call_next):
-        response = await call_next(_request)
-        apply_security_headers(response.headers)
-        return response
+    async def request_context_middleware(request, call_next):
+        request_id = request.headers.get(settings.request_id_header) or str(uuid4())
+        token = bind_request_id(request_id)
+        response = None
+        try:
+            response = await call_next(request)
+            return response
+        finally:
+            status_code = getattr(response, "status_code", 500)
+            if response is not None:
+                response.headers[settings.request_id_header] = request_id
+                response.headers["X-Correlation-ID"] = request_id
+                apply_security_headers(response.headers)
+            request_logger.info(
+                "request_completed method=%s path=%s status_code=%s",
+                request.method,
+                request.url.path,
+                status_code,
+            )
+            reset_request_id(token)
 
     app.include_router(api_router)
     return app

@@ -46,6 +46,14 @@ In `APP_ENV=production`, the backend rejects startup when:
 - `ADMIN_PORTAL_SESSION_SECRET` is a known placeholder.
 - `CORS_ALLOWED_ORIGINS` contains `*`.
 - `ENABLE_API_DOCS=true`.
+- `AUTH_COOKIE_SECURE=false`.
+- `APP_LOG_FORMAT` is not `json`.
+- `DATABASE_URL` uses SQLite, default credentials, or placeholder credentials.
+- `REDIS_URL` points to localhost instead of a private service hostname.
+- OpenAI-compatible AI is selected without `AI_API_KEY`.
+- SMTP/email provider settings are missing.
+- `PUBLIC_BASE_URL` is not HTTPS.
+- `BACKUP_ENCRYPTION_PASSPHRASE` is missing or weak.
 
 Use strong random secrets from a password manager or cloud secret store. Do not commit `.env` files.
 
@@ -96,20 +104,22 @@ Tenant audit logs remain scoped by `tenant_id`. Global admin audit logs are stor
 
 Before production:
 
-- Terminate HTTPS at Nginx or a trusted upstream proxy.
-- Restrict database and Redis ports to private networking.
-- Configure backups and restore tests.
+- Use `docker-compose.prod.yml`, not the development `docker-compose.yml`.
+- Terminate HTTPS at Nginx or a trusted upstream proxy with HSTS enabled.
+- Restrict database and Redis to private Docker networking with no host port publishing.
+- Configure encrypted backups and restore tests.
 - Set `NEXT_PUBLIC_API_BASE_URL=/api` when serving through Nginx.
 - Disable API docs in production.
 - Replace local console email delivery with SMTP settings.
-- Review npm and Python dependency advisories.
+- Review npm and Python dependency advisories through CI security scans.
+- Preserve request/correlation IDs across Nginx and backend logs.
 
 ## Current Residual Risks
 
 - No automated backup job exists yet.
-- No TLS certificate automation is included yet.
-- PostgreSQL and Redis production networking still need private topology validation.
-- Production secret validation and CI security scans are incomplete.
-- Live PostgreSQL plus pgvector migration/startup validation is missing.
-- Structured request/correlation logging still needs production hardening.
+- Backup scripts and renewal commands exist, but the first VPS backup/restore drill has not been executed.
+- TLS certificate automation is documented, but the first live certificate issuance has not been executed.
+- Production PostgreSQL/Redis private topology exists in `docker-compose.prod.yml`, but VPS port/firewall validation remains a release check.
+- CI security scans exist, but PR-04 requires their first remote run to pass before relying on them as release evidence.
+- Live PostgreSQL plus pgvector migration/startup validation path exists, but has not been run against a VPS/staging database.
 - Worker queue framework is not selected yet; the current worker service is deployment wiring.

@@ -130,3 +130,47 @@ Append-only production phase run history.
   - Privacy lifecycle is beta-scope platform admin controlled; customer self-service export/delete UX remains outside PR-03.
 - Next phase permitted: PR-04.
 - Commit hash: pending until commit.
+
+## 2026-05-28 - PR-04: Production Infrastructure, TLS, Secrets, Backups and CI Security
+
+- Instruction received: `Implement production phase PR-04`.
+- Phase selected: PR-04.
+- Branch: `production/pr-04-production-infrastructure-security`.
+- Files changed:
+  - Production topology and containers: `.dockerignore`, `.env.example`, `.env.production.example`, `docker-compose.prod.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `frontend/package.json`, `frontend/public/.gitkeep`.
+  - Nginx/TLS and operations scripts: `infra/nginx/templates/prod.conf.template`, `infra/nginx/templates/bootstrap.conf.template`, `scripts/backup_postgres.sh`, `scripts/restore_postgres.sh`, `scripts/validate_pgvector_migrations.sh`.
+  - Backend runtime guardrails: `backend/app/core/config.py`, `backend/app/core/logging.py`, `backend/app/main.py`, `backend/tests/test_config.py`, `backend/tests/test_health.py`.
+  - CI/docs/status: `.github/workflows/ci.yml`, `docs/deployment.md`, `docs/security.md`, `docs/release-readiness.md`, and production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Added a separate production Compose topology where Nginx is the only public entrypoint and PostgreSQL/Redis are internal private services with no host ports.
+  - Added production Nginx TLS/HSTS config, ACME bootstrap config, certbot renewal path, coarse proxy rate limits, and request ID forwarding.
+  - Hardened backend/frontend containers with non-root users and production frontend standalone image support.
+  - Expanded production startup validation for secrets, HTTPS origins, secure cookies, DB/Redis, AI provider, SMTP, frontend API base path, JSON logs, and backup encryption passphrase.
+  - Added encrypted backup, restore, and PostgreSQL/pgvector migration smoke scripts.
+  - Added CI checks for production compose, Python dependency audit, npm audit, secret pattern scan, and backend SAST.
+  - Added request/correlation ID middleware and structured JSON production logging support.
+- Validations run/result:
+  - `python3 -m pytest backend/tests/test_config.py backend/tests/test_health.py` - pass, 8 tests.
+  - `python3 -m pytest backend/tests` - pass, 59 tests.
+  - `python3 -m compileall backend/app backend/tests backend/migrations` - pass.
+  - `python3 -m ruff check backend/app backend/tests` - pass.
+  - `docker compose config` - pass.
+  - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+  - Production compose port check for `postgres` and `redis` - pass, no published host ports.
+  - `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr04_alembic_20260528.db python3 -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
+  - Docker image build attempted but not run locally because Docker daemon was unavailable.
+- Known gaps:
+  - Gate B remains NO-GO until PR-05 is verified.
+  - First remote CI security scan run is pending on the pushed PR-04 branch.
+  - First VPS certificate issuance/renewal, backup/restore drill, production image build, firewall/port validation, and live PostgreSQL/pgvector smoke remain release-gate evidence and were not executed.
+  - Worker queue processing remains placeholder and belongs to PR-05.
+- Next phase permitted: PR-05.
+- Commit hash: pending until commit.

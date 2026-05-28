@@ -54,14 +54,14 @@ This PR-00 run inspected current code and config enough to classify the audit bl
 | Tenant DB integrity incomplete | High open | Resolved in PR-03: composite same-tenant constraints and attack tests cover high-risk parent/child links | PR-03 |
 | Privacy export/delete/offboarding missing | High open | Resolved in PR-03 for beta-scope admin workflows: export, offboarding, retention, and confirmed deletion APIs/UI were added | PR-03 |
 | Global admin audit handling incomplete | High open | Resolved in PR-03: `global_audit_logs` records platform admin actions and deletion-surviving evidence with redacted attributes | PR-03 |
-| PostgreSQL host port exposed in dev Compose | Critical production blocker | Still open for production: `docker-compose.yml` publishes `${POSTGRES_PORT:-5432}:5432` | PR-04 |
-| Redis host port exposed in dev Compose | Critical production blocker | Still open for production: `docker-compose.yml` publishes `${REDIS_PORT:-6379}:6379` | PR-04 |
-| HTTPS/TLS/HSTS missing | Critical open | Still open: `infra/nginx/default.conf` listens on `80` only | PR-04 |
-| Scheduled encrypted backups and restore test missing | Critical open | Still open: deployment docs contain manual dump guidance only | PR-04 |
-| Production secret validation incomplete | High open | Still open: `Settings.production_security_issues()` validates only session secrets, CORS wildcard, and docs | PR-04 |
-| Live PostgreSQL/pgvector validation missing | High open | Still open: audit and docs note SQLite migration validation only | PR-04 |
-| Dependency/security scans missing | High open | Still open: CI lacks pip-audit/Safety, npm audit gate, secret scan, SAST | PR-04 |
-| Structured logs/correlation IDs/PII-safe logging incomplete | High open | Still open: basic logging exists; no request correlation ID or PII policy enforcement | PR-04/PR-10 |
+| PostgreSQL host port exposed in dev Compose | Critical production blocker | Resolved for production in PR-04: `docker-compose.prod.yml` keeps PostgreSQL internal with no published host port; dev compose remains local-only | PR-04 |
+| Redis host port exposed in dev Compose | Critical production blocker | Resolved for production in PR-04: `docker-compose.prod.yml` keeps Redis internal with no published host port; dev compose remains local-only | PR-04 |
+| HTTPS/TLS/HSTS missing | Critical open | Mitigated in PR-04: production Nginx TLS/HSTS and ACME renewal path added; first live certificate issuance remains release evidence | PR-04 |
+| Scheduled encrypted backups and restore test missing | Critical open | Mitigated in PR-04: encrypted backup/restore scripts and restore drill runbook added; first VPS restore drill remains release evidence | PR-04 |
+| Production secret validation incomplete | High open | Resolved in PR-04: production validation covers sessions, secure cookies, DB, Redis, AI, SMTP, public URL, frontend API path, JSON logs, and backup passphrase | PR-04 |
+| Live PostgreSQL/pgvector validation missing | High open | Mitigated in PR-04: production-equivalent pgvector migration smoke script added; first staging/VPS run remains release evidence | PR-04 |
+| Dependency/security scans missing | High open | Mitigated in PR-04: CI security job added for pip-audit, npm audit, secret pattern scan, and Bandit; first remote run pending | PR-04 |
+| Structured logs/correlation IDs/PII-safe logging incomplete | High open | Mitigated in PR-04: request/correlation ID middleware and JSON production logs added; full monitoring/log review remains PR-10 | PR-04/PR-10 |
 | Worker queue is placeholder | High open | Still open: `backend/app/workers/runner.py` sleeps and does not consume jobs | PR-05 |
 | Website/sitemap ingestion missing | High open | Still open: no crawler/sitemap ingestion module or UI found | PR-06 |
 | Browser crawler missing | Conditional | Deferred/conditional: implement only if ordinary crawler cannot support required sites | PR-06 optional |

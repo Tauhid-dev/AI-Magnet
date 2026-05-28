@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "PR-04",
-    "last_completed_phase": "PR-03",
-    "next_permitted_phase": "PR-04",
+    "active_phase": "PR-05",
+    "last_completed_phase": "PR-04",
+    "next_permitted_phase": "PR-05",
     "production_go_no_go": "NO-GO beyond controlled internal demo with synthetic/sample data",
-    "overall_status": "pr03_tenant_privacy_integrity_verified_next_pr04"
+    "overall_status": "pr04_production_infrastructure_verified_next_pr05"
   },
   "launch_gates": [
     {
@@ -186,8 +186,8 @@
     {
       "phase_id": "PR-04",
       "title": "Production Infrastructure, TLS, Secrets, Backups and CI Security",
-      "status": "not_started",
-      "completion_percent": 0,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-01",
         "PR-02",
@@ -195,13 +195,22 @@
       ],
       "priority": "p0",
       "criticality": "critical_launch_blocker",
-      "validation_status": "not_run",
+      "validation_status": "pass",
       "last_updated": "2026-05-28",
       "evidence_links": [
-        "production-control/phases/PR-04_PRODUCTION_INFRASTRUCTURE_TLS_SECRETS_BACKUPS_AND_CI_SECURITY.md"
+        "production-control/phases/PR-04_PRODUCTION_INFRASTRUCTURE_TLS_SECRETS_BACKUPS_AND_CI_SECURITY.md",
+        "docker-compose.prod.yml",
+        "infra/nginx/templates/prod.conf.template",
+        "scripts/backup_postgres.sh",
+        "scripts/restore_postgres.sh",
+        "scripts/validate_pgvector_migrations.sh",
+        ".github/workflows/ci.yml",
+        "docs/deployment.md",
+        "backend/tests/test_config.py",
+        "backend/tests/test_health.py"
       ],
-      "branch": null,
-      "commit": null
+      "branch": "production/pr-04-production-infrastructure-security",
+      "commit": "pending"
     },
     {
       "phase_id": "PR-05",
@@ -372,31 +381,17 @@
     }
   ],
   "critical_blockers": [
-    "PostgreSQL must not publish host port 5432 in production",
-    "Redis must not publish host port 6379 in production",
-    "Production HTTPS/TLS/HSTS and renewal path",
-    "Scheduled encrypted backups and tested restore procedure"
+    "Gate B remains blocked until PR-05 real queue/worker reliability is verified",
+    "First VPS validation of TLS, firewall, backup/restore, and pgvector smoke remains pending"
   ],
   "high_production_requirements": [
     {
-      "item": "Complete production secret validation for session, database, Redis, AI provider, SMTP/email provider, and frontend/API configuration",
-      "phase": "PR-04"
+      "item": "Real queue/worker execution, retries, job failure visibility, and Redis-backed reliability",
+      "phase": "PR-05"
     },
     {
-      "item": "Live PostgreSQL plus pgvector migration/startup/smoke-test validation before launch",
-      "phase": "PR-04"
-    },
-    {
-      "item": "Dependency vulnerability scanning, secret scanning, and static security scanning in CI",
-      "phase": "PR-04"
-    },
-    {
-      "item": "Structured logs, request/correlation IDs, and PII-safe logging requirements",
-      "phase": "PR-04/PR-10"
-    },
-    {
-      "item": "Incident-response and restore runbook validation",
-      "phase": "PR-04/PR-10"
+      "item": "Full monitoring, metrics, alerts, quotas, cost controls, and log review",
+      "phase": "PR-10"
     }
   ]
 }

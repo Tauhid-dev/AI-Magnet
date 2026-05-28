@@ -15,3 +15,13 @@ def test_health_check_returns_runtime_context():
         "environment": "local",
         "version": "0.1.0",
     }
+
+
+def test_health_check_returns_request_correlation_header():
+    client = TestClient(create_app())
+
+    response = client.get("/health", headers={"X-Request-ID": "test-request-123"})
+
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"] == "test-request-123"
+    assert response.headers["X-Correlation-ID"] == "test-request-123"

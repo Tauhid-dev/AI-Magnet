@@ -1,0 +1,232 @@
+x-backend-environment: &backend-environment
+  APP_NAME: ${APP_NAME:-AI Tradie Receptionist API}
+  APP_VERSION: ${APP_VERSION:-0.1.0}
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
+  APP_LOG_FORMAT: json
+  REQUEST_ID_HEADER: ${REQUEST_ID_HEADER:-X-Request-ID}
+  ENABLE_API_DOCS: "false"
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?Set CORS_ALLOWED_ORIGINS to https://your-domain}
+  BUSINESS_PORTAL_SESSION_SECRET: ${BUSINESS_PORTAL_SESSION_SECRET:?Set a strong business session secret}
+  BUSINESS_PORTAL_SESSION_TTL_MINUTES: ${BUSINESS_PORTAL_SESSION_TTL_MINUTES:-480}
+  BUSINESS_PORTAL_COOKIE_NAME: ${BUSINESS_PORTAL_COOKIE_NAME:-ai_magnet_business_session}
+  ADMIN_PORTAL_SESSION_SECRET: ${ADMIN_PORTAL_SESSION_SECRET:?Set a strong admin session secret}
+  ADMIN_PORTAL_SESSION_TTL_MINUTES: ${ADMIN_PORTAL_SESSION_TTL_MINUTES:-240}
+  ADMIN_PORTAL_COOKIE_NAME: ${ADMIN_PORTAL_COOKIE_NAME:-ai_magnet_admin_session}
+  AUTH_COOKIE_SECURE: "true"
+  AUTH_COOKIE_SAMESITE: ${AUTH_COOKIE_SAMESITE:-lax}
+  AUTH_FAILED_LOGIN_LIMIT: ${AUTH_FAILED_LOGIN_LIMIT:-5}
+  AUTH_LOCKOUT_MINUTES: ${AUTH_LOCKOUT_MINUTES:-15}
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+  RATE_LIMIT_LOGIN_PER_MINUTE: ${RATE_LIMIT_LOGIN_PER_MINUTE:-20}
+  RATE_LIMIT_WIDGET_INIT_PER_MINUTE: ${RATE_LIMIT_WIDGET_INIT_PER_MINUTE:-120}
+  RATE_LIMIT_CHAT_START_PER_MINUTE: ${RATE_LIMIT_CHAT_START_PER_MINUTE:-60}
+  RATE_LIMIT_CHAT_MESSAGE_PER_MINUTE: ${RATE_LIMIT_CHAT_MESSAGE_PER_MINUTE:-120}
+  RATE_LIMIT_PORTAL_WRITE_PER_MINUTE: ${RATE_LIMIT_PORTAL_WRITE_PER_MINUTE:-60}
+  RATE_LIMIT_ADMIN_WRITE_PER_MINUTE: ${RATE_LIMIT_ADMIN_WRITE_PER_MINUTE:-30}
+  WIDGET_REQUIRE_ALLOWED_ORIGINS: "true"
+  PRIVACY_DEFAULT_RETENTION_DAYS: ${PRIVACY_DEFAULT_RETENTION_DAYS:-30}
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?Set POSTGRES_USER}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB}
+  REDIS_URL: redis://redis:6379/0
+  AI_PROVIDER: ${AI_PROVIDER:-openai-compatible}
+  AI_API_BASE_URL: ${AI_API_BASE_URL:-https://api.openai.com/v1}
+  AI_API_KEY: ${AI_API_KEY:?Set AI_API_KEY or choose a supported local provider later}
+  AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-3-small}
+  AI_CHAT_MODEL: ${AI_CHAT_MODEL:-gpt-4.1-mini}
+  AI_EMBEDDING_DIMENSIONS: ${AI_EMBEDDING_DIMENSIONS:-1536}
+  RAG_CHUNK_SIZE: ${RAG_CHUNK_SIZE:-700}
+  RAG_CHUNK_OVERLAP: ${RAG_CHUNK_OVERLAP:-100}
+  RAG_TOP_K: ${RAG_TOP_K:-5}
+  EMAIL_PROVIDER: smtp
+  SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USERNAME: ${SMTP_USERNAME:?Set SMTP_USERNAME}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:?Set SMTP_PASSWORD}
+  SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:?Set SMTP_FROM_EMAIL}
+  SMTP_USE_TLS: ${SMTP_USE_TLS:-false}
+  SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+  PUBLIC_BASE_URL: https://${PUBLIC_HOSTNAME:?Set PUBLIC_HOSTNAME}
+  NEXT_PUBLIC_API_BASE_URL: /api
+  BACKUP_ENCRYPTION_PASSPHRASE: ${BACKUP_ENCRYPTION_PASSPHRASE:?Set backup encryption passphrase}
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment: *backend-environment
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app
+      - data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "-m", "app.workers.runner"]
+    environment: *backend-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: /api
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: /api
+      NEXT_TELEMETRY_DISABLED: "1"
+    expose:
+      - "3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.27-alpine
+    environment:
+      PUBLIC_HOSTNAME: ${PUBLIC_HOSTNAME:?Set PUBLIC_HOSTNAME}
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx/conf.d
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/templates/${NGINX_TEMPLATE:-prod.conf.template}:/etc/nginx/templates/default.conf.template:ro
+      - certbot_www:/var/www/certbot:ro
+      - letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--protected-mode", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  certbot:
+    image: certbot/certbot:latest
+    profiles:
+      - certbot
+    volumes:
+      - certbot_www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
+    command:
+      [
+        "certonly",
+        "--webroot",
+        "--webroot-path=/var/www/certbot",
+        "--email=${LETSENCRYPT_EMAIL:?Set LETSENCRYPT_EMAIL}",
+        "--agree-tos",
+        "--no-eff-email",
+        "-d",
+        "${PUBLIC_HOSTNAME:?Set PUBLIC_HOSTNAME}",
+      ]
+
+networks:
+  app:
+  data:
+    internal: true
+
+volumes:
+  postgres_data:
+  redis_data:
+  certbot_www:
+  letsencrypt:
