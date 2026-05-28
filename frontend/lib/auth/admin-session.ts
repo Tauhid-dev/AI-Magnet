@@ -2,16 +2,15 @@
 
 import type { AdminSession } from "../api/types";
 
-const TOKEN_KEY = "ai_magnet_admin_token";
+const COOKIE_SESSION_TOKEN = "__cookie_session__";
 const SESSION_KEY = "ai_magnet_admin_session";
 
-export function storeAdminSession(token: string, session: AdminSession) {
-  window.localStorage.setItem(TOKEN_KEY, token);
+export function storeAdminSession(_token: string, session: AdminSession) {
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
 export function getAdminToken(): string | null {
-  return window.localStorage.getItem(TOKEN_KEY);
+  return window.localStorage.getItem(SESSION_KEY) ? COOKIE_SESSION_TOKEN : null;
 }
 
 export function getStoredAdminSession(): AdminSession | null {
@@ -28,6 +27,5 @@ export function getStoredAdminSession(): AdminSession | null {
 }
 
 export function clearAdminSession() {
-  window.localStorage.removeItem(TOKEN_KEY);
   window.localStorage.removeItem(SESSION_KEY);
 }

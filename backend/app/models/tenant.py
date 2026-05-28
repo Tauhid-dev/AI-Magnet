@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, IdMixin, TenantScopedMixin, TimestampMixin
@@ -38,7 +40,7 @@ class Business(TenantScopedMixin, IdMixin, TimestampMixin, Base):
 
 
 class BusinessUser(TenantScopedMixin, IdMixin, TimestampMixin, Base):
-    """Tenant-scoped user account placeholder for business portal access."""
+    """Tenant-scoped user account for business portal access."""
 
     __tablename__ = "business_users"
     __table_args__ = (UniqueConstraint("tenant_id", "email", name="uq_business_user_tenant_email"),)
@@ -47,6 +49,15 @@ class BusinessUser(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[str] = mapped_column(String(60), nullable=False, default="owner")
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="active")
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    password_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    session_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    failed_login_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     business_id: Mapped[str | None] = mapped_column(
         String(36),
         ForeignKey("businesses.id", ondelete="SET NULL"),

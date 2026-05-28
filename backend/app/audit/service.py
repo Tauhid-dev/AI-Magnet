@@ -37,3 +37,26 @@ class AuditService:
         self.session.add(audit_log)
         self.session.flush()
         return audit_log
+
+    def record_business_action(
+        self,
+        *,
+        tenant_id: str,
+        actor_id: str,
+        action: str,
+        target_type: str,
+        target_id: str,
+        attributes: dict[str, Any] | None = None,
+    ) -> AuditLog:
+        """Record a business portal action for a tenant-owned actor/target."""
+        audit_log = AuditLog(
+            tenant_id=tenant_id,
+            actor_id=actor_id,
+            action=action,
+            target_type=target_type,
+            target_id=target_id,
+            attributes=attributes or {},
+        )
+        self.session.add(audit_log)
+        self.session.flush()
+        return audit_log

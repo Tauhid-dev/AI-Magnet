@@ -6,8 +6,8 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 
 | Requirement | Phase | Unit | Integration/API | Migration/DB | Frontend/E2E | Security | CI/static | VPS/staging/manual | Current status | Evidence model |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Verified business/admin auth | PR-01 | required | required | required if schema changes | required | required | required | manual smoke | not_run | tests, screenshots/logs, migration hash |
-| Secure cookie/token/CSRF/CSP session strategy | PR-01/PR-02 | required | required | optional | required | required | required | manual browser | not_run | tests, header checks, browser verification |
+| Verified business/admin auth | PR-01 | required | required | required if schema changes | required | required | required | manual smoke | pass | backend tests, frontend build, migration upgrade/downgrade |
+| Secure cookie/token/CSRF/CSP session strategy | PR-01/PR-02 | required | required | optional | required | required | required | manual browser | partial | cookie/token storage tests pass; CSRF/CSP review remains PR-02 |
 | Rate limiting and abuse controls | PR-02 | required | required | optional | optional | required | required | manual curl/abuse checks | not_run | tests and config evidence |
 | Widget origin/key controls | PR-02 | required | required | optional | required | required | required | manual embed test | not_run | positive/negative origin tests |
 | Tenant DB integrity | PR-03 | required | required | required | optional | required | required | staging migration | not_run | migration and cross-tenant attack tests |
@@ -37,3 +37,16 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Markdown/SVG/HTML artifacts created | pass | `production-control/` file inventory includes memory, status, phase, and visual artifacts |
 | Whitespace diff clean | pass | `git diff --check` |
 | Product runtime unchanged | pass | PR-00 changes are limited to `AGENTS.md` and `production-control/**` |
+
+## PR-01 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Business/admin email-only login removed | pass | Login schemas require password; email-only tests return 422 |
+| Business password auth, logout, revocation, lockout | pass | `backend/tests/business/test_business_portal_api.py` |
+| Admin password auth, TOTP MFA path, logout, revocation, lockout | pass | `backend/tests/admin/test_admin_api.py` |
+| Cross-portal token boundaries preserved | pass | `backend/tests/security/test_security_boundaries.py` |
+| Migration upgrade/downgrade | pass | Alembic SQLite upgrade head and downgrade base |
+| Backend full test suite | pass | `python3 -m pytest backend/tests` - 48 passed |
+| Backend lint | pass | `python3 -m ruff check backend` |
+| Frontend typecheck/lint/test/build | pass | `npm run typecheck`, `npm test`, `npm run lint`, `npm run build` |

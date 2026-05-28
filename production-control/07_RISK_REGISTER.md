@@ -4,9 +4,9 @@ Last updated: 2026-05-28
 
 | Risk ID | Severity | Description | Evidence | Affected phase | Mitigation | Residual risk | Status |
 |---|---|---|---|---|---|---|---|
-| R-001 | CRITICAL | Business authentication is email-only and does not verify mailbox ownership | `backend/app/business/auth.py` | PR-01 | Implement verified password/magic-link/IdP flow, revocation, audit, tests | Account takeover until fixed | open |
-| R-002 | CRITICAL | Super admin authentication is email-only | `backend/app/admin/auth.py` | PR-01 | Implement strong admin auth and MFA/admin protection | Platform compromise until fixed | open |
-| R-003 | HIGH | Browser session/token strategy stores sensitive tokens client-side | `frontend/lib/auth/session.ts`, `frontend/lib/auth/admin-session.ts` | PR-01 | Decide and implement secure cookie/token strategy with CSRF/CSP review | XSS token theft risk | open |
+| R-001 | CRITICAL | Business authentication is email-only and does not verify mailbox ownership | `backend/app/business/auth.py` | PR-01 | Implemented password verification, lockout, HttpOnly cookie session, logout revocation, and tests | Password reset/self-service onboarding UX remains future work | resolved_pr01 |
+| R-002 | CRITICAL | Super admin authentication is email-only | `backend/app/admin/auth.py` | PR-01 | Implemented password verification, TOTP MFA enforcement support, lockout, logout revocation, and tests | MFA enrollment/rotation UI remains future work | resolved_pr01 |
+| R-003 | HIGH | Browser session/token strategy stores sensitive tokens client-side | `frontend/lib/auth/session.ts`, `frontend/lib/auth/admin-session.ts` | PR-01 | Frontend no longer stores bearer tokens; browser sessions use HttpOnly/SameSite cookies | CSRF/CSP/security-header review remains PR-02 | mitigated_pr01 |
 | R-004 | CRITICAL | Public endpoint rate limiting and abuse controls are missing | `docs/security.md`, no rate-limit middleware/config found | PR-02 | Add app/proxy rate limits, abuse logs, tests | Brute force, spam, AI cost abuse | open |
 | R-005 | HIGH | Widget keys can be unrestricted by origin | `backend/app/widget/service.py`, `backend/app/api/business_portal.py` | PR-02 | Require allowed origins in production, add rotate/revoke/domain controls | Widget abuse from unauthorized origins | open |
 | R-006 | HIGH | Tenant parent/child DB consistency is not enforced | migrations and models lack composite same-tenant constraints | PR-03 | Add constraints/checks/tests for documents/chunks/messages/leads/usage/notifications | Cross-tenant data linkage bug risk | open |

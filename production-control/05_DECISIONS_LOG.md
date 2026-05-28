@@ -34,3 +34,25 @@ Append-only ADR-lite log for production remediation.
   - Fix auth or infra during PR-00.
   - Mark later phases partially complete because MVP foundations exist.
 - Follow-up impact: PR-01 is the next permitted implementation phase.
+
+## DEC-PR-20260528-004: Password Auth With Cookie Sessions For PR-01
+
+- Date: 2026-05-28
+- Decision: Implement production authentication using PBKDF2-SHA256 password hashes, per-account failed-login lockout, session-version revocation, and HttpOnly/SameSite browser cookies. Retain bearer-token compatibility for API clients and tests, but the frontend no longer stores bearer tokens in `localStorage`.
+- Reason: The current stack can support password auth immediately without introducing an external identity provider. Cookie-backed browser sessions remove the highest-risk token storage issue while keeping existing API structure stable.
+- Affected files/phases: PR-01, `backend/app/business/auth.py`, `backend/app/admin/auth.py`, `backend/app/api/*`, `frontend/lib/auth/*`, `frontend/lib/api/client.ts`, migrations and tests.
+- Alternatives rejected:
+  - Keep email-only auth until an identity provider is selected: rejected because it keeps the critical blocker open.
+  - Build a full external IdP integration in PR-01: rejected as too large for the current stack and not necessary to remove the immediate blocker.
+- Follow-up impact: PR-02 must complete CSRF/CSP/security-header review for cookie sessions and public endpoint abuse controls.
+
+## DEC-PR-20260528-005: Admin MFA Uses TOTP Enrollment Fields
+
+- Date: 2026-05-28
+- Decision: Add admin `mfa_required` and `mfa_secret` fields and require valid TOTP codes when MFA is enabled.
+- Reason: This gives the platform a strong admin-authentication path without depending on SMS, email-only codes, or a future premium module.
+- Affected files/phases: PR-01, `backend/app/models/admin.py`, `backend/app/core/totp.py`, admin API/tests.
+- Alternatives rejected:
+  - SMS/WhatsApp MFA: rejected because those channels are explicitly deferred.
+  - Email OTP only: rejected because email-only administrator proof is not strong enough for the critical admin-auth blocker.
+- Follow-up impact: PR-09 or a later admin UX pass should add guided MFA enrollment/rotation UI; PR-04 should address secret-handling hardening.

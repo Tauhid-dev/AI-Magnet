@@ -1,4 +1,4 @@
-"""Signed session helpers for the super admin portal."""
+"""Password-authenticated session helpers for the super admin portal."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
+from app.core.passwords import verify_password
+from app.core.totp import verify_totp_code
 from app.models.admin import AdminUser
 
 
@@ -28,6 +30,7 @@ class AdminPortalSession:
     email: str
     full_name: str | None
     role: str
+    session_version: int
 
 
 class AdminPortalAuthService:
@@ -37,8 +40,13 @@ class AdminPortalAuthService:
         self.session = session
         self.settings = settings or get_settings()
 
-    def login(self, email: str) -> tuple[str, AdminPortalSession] | None:
-        """Issue a signed session for an active super admin."""
+    def login(
+        self,
+        email: str,
+        password: str,
+        mfa_code: str | None = None,
+    ) -> tuple[str, AdminPortalSession] | None:
+        """Issue a signed session for an active super admin with password and MFA."""
         statement = select(AdminUser).where(
             func.lower(AdminUser.email) == email.lower().strip(),
             AdminUser.status == "active",
@@ -47,11 +55,21 @@ class AdminPortalAuthService:
         admin = self.session.scalars(statement).first()
         if admin is None:
             return None
+        if self._is_locked(admin.locked_until):
+            return None
+        if not verify_password(password, admin.password_hash):
+            self._register_failed_login(admin)
+            return None
+        if admin.mfa_required and not verify_totp_code(admin.mfa_secret, mfa_code):
+            self._register_failed_login(admin)
+            return None
+        self._register_successful_login(admin)
         session_context = AdminPortalSession(
             admin_id=admin.id,
             email=admin.email,
             full_name=admin.full_name,
             role=admin.role,
+            session_version=admin.session_version,
         )
         return self.create_token(session_context), session_context
 
@@ -65,6 +83,7 @@ class AdminPortalAuthService:
             "email": session_context.email,
             "full_name": session_context.full_name,
             "role": session_context.role,
+            "session_version": session_context.session_version,
             "exp": int(expires_at.timestamp()),
         }
         encoded_payload = self._b64encode(json.dumps(payload, separators=(",", ":")).encode())
@@ -94,7 +113,17 @@ class AdminPortalAuthService:
             email=admin.email,
             full_name=admin.full_name,
             role=admin.role,
+            session_version=admin.session_version,
         )
+
+    def revoke_sessions(self, admin_id: str) -> bool:
+        """Revoke all sessions for an admin by bumping the token version."""
+        admin = self.session.get(AdminUser, admin_id)
+        if admin is None:
+            return False
+        admin.session_version += 1
+        self.session.flush()
+        return True
 
     def _active_admin(self, payload: dict[str, Any]) -> AdminUser | None:
         statement = select(AdminUser).where(
@@ -103,7 +132,37 @@ class AdminPortalAuthService:
             AdminUser.status == "active",
             AdminUser.role.in_(SUPER_ADMIN_ROLES),
         )
-        return self.session.scalars(statement).first()
+        admin = self.session.scalars(statement).first()
+        if admin is None:
+            return None
+        try:
+            token_session_version = int(payload["session_version"])
+        except (KeyError, TypeError, ValueError):
+            return None
+        if admin.session_version != token_session_version:
+            return None
+        return admin
+
+    def _register_failed_login(self, admin: AdminUser) -> None:
+        admin.failed_login_count += 1
+        if admin.failed_login_count >= self.settings.auth_failed_login_limit:
+            admin.locked_until = datetime.now(timezone.utc) + timedelta(
+                minutes=self.settings.auth_lockout_minutes
+            )
+        self.session.flush()
+
+    def _register_successful_login(self, admin: AdminUser) -> None:
+        admin.failed_login_count = 0
+        admin.locked_until = None
+        admin.last_login_at = datetime.now(timezone.utc)
+        self.session.flush()
+
+    def _is_locked(self, locked_until: datetime | None) -> bool:
+        if locked_until is None:
+            return False
+        if locked_until.tzinfo is None:
+            locked_until = locked_until.replace(tzinfo=timezone.utc)
+        return locked_until > datetime.now(timezone.utc)
 
     def _sign(self, encoded_payload: str) -> str:
         digest = hmac.new(

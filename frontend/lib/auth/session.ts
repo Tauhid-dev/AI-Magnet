@@ -2,16 +2,15 @@
 
 import type { BusinessSession } from "../api/types";
 
-const TOKEN_KEY = "ai-magnet-business-token";
+const COOKIE_SESSION_TOKEN = "__cookie_session__";
 const SESSION_KEY = "ai-magnet-business-session";
 
-export function saveSession(token: string, session: BusinessSession) {
-  window.localStorage.setItem(TOKEN_KEY, token);
+export function saveSession(_token: string, session: BusinessSession) {
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
 export function getToken() {
-  return window.localStorage.getItem(TOKEN_KEY);
+  return window.localStorage.getItem(SESSION_KEY) ? COOKIE_SESSION_TOKEN : null;
 }
 
 export function getStoredSession(): BusinessSession | null {
@@ -27,6 +26,5 @@ export function getStoredSession(): BusinessSession | null {
 }
 
 export function clearSession() {
-  window.localStorage.removeItem(TOKEN_KEY);
   window.localStorage.removeItem(SESSION_KEY);
 }

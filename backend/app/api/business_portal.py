@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.business.auth import BusinessPortalAuthService, BusinessPortalSession
 from app.business.service import BusinessPortalService
+from app.audit.service import AuditService
 from app.core.config import Settings, get_settings
 from app.db.session import get_db_session
+from app.api.session_cookies import clear_session_cookie, get_session_token, set_session_cookie
 from app.providers.ai.factory import get_embedding_provider
 from app.rag.ingestion import RagIngestionService
 from app.schemas.business_portal import (
@@ -35,17 +37,22 @@ router = APIRouter(prefix="/business-portal", tags=["business-portal"])
 
 
 def get_current_business_session(
+    request: Request,
     authorization: str | None = Header(default=None),
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> BusinessPortalSession:
-    """Resolve a bearer token to a tenant-scoped business session."""
-    if not authorization or not authorization.lower().startswith("bearer "):
+    """Resolve a cookie or bearer token to a tenant-scoped business session."""
+    token = get_session_token(
+        request,
+        authorization,
+        cookie_name=settings.business_portal_cookie_name,
+    )
+    if token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing business portal session",
         )
-    token = authorization.split(" ", 1)[1]
     portal_session = BusinessPortalAuthService(session, settings).verify_token(token)
     if portal_session is None:
         raise HTTPException(
@@ -70,6 +77,7 @@ def session_response(session: BusinessPortalSession) -> BusinessPortalSessionRes
 @router.post("/auth/login", response_model=BusinessPortalLoginResponse)
 def login(
     payload: BusinessPortalLoginRequest,
+    response: Response,
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> BusinessPortalLoginResponse:
@@ -77,17 +85,61 @@ def login(
     result = BusinessPortalAuthService(session, settings).login(
         tenant_slug=payload.tenant_slug,
         email=payload.email,
+        password=payload.password,
     )
     if result is None:
+        session.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid business portal login",
         )
     token, portal_session = result
+    AuditService(session).record_business_action(
+        tenant_id=portal_session.tenant_id,
+        actor_id=portal_session.user_id,
+        action="business_login_succeeded",
+        target_type="business_user",
+        target_id=portal_session.user_id,
+        attributes={"email": portal_session.email},
+    )
+    session.commit()
+    set_session_cookie(
+        response,
+        name=settings.business_portal_cookie_name,
+        token=token,
+        max_age_seconds=settings.business_portal_session_ttl_minutes * 60,
+        settings=settings,
+    )
     return BusinessPortalLoginResponse(
         access_token=token,
         session=session_response(portal_session),
     )
+
+
+@router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    response: Response,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> Response:
+    """Revoke the current user's sessions and clear the browser cookie."""
+    BusinessPortalAuthService(session, settings).revoke_sessions(
+        user_id=portal_session.user_id,
+        tenant_id=portal_session.tenant_id,
+    )
+    AuditService(session).record_business_action(
+        tenant_id=portal_session.tenant_id,
+        actor_id=portal_session.user_id,
+        action="business_logout",
+        target_type="business_user",
+        target_id=portal_session.user_id,
+        attributes={},
+    )
+    session.commit()
+    clear_session_cookie(response, name=settings.business_portal_cookie_name, settings=settings)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @router.get("/session", response_model=BusinessPortalSessionResponse)

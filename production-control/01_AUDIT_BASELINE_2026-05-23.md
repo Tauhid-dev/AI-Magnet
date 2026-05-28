@@ -46,9 +46,9 @@ This PR-00 run inspected current code and config enough to classify the audit bl
 
 | Finding | Audit status | Current verification | PR phase |
 |---|---|---|---|
-| Business auth is email-only | Critical open | Still open: `backend/app/business/auth.py` issues sessions from tenant slug and email only | PR-01 |
-| Admin auth is email-only | Critical open | Still open: `backend/app/admin/auth.py` issues sessions from email only | PR-01 |
-| Secure browser session strategy missing | High open | Still open: frontend session helpers use browser storage; cookie/CSRF strategy absent | PR-01 |
+| Business auth is email-only | Critical open | Resolved in PR-01: business login now requires password verification, failed-login lockout, session version, logout revocation, and tests | PR-01 |
+| Admin auth is email-only | Critical open | Resolved in PR-01: admin login now requires password verification and supports required TOTP MFA, lockout, session revocation, and tests | PR-01 |
+| Secure browser session strategy missing | High open | Mostly resolved in PR-01: frontend no longer stores bearer tokens and browser sessions use HttpOnly cookies; CSRF/CSP review remains in PR-02 | PR-01/PR-02 |
 | Rate limiting missing | Critical open | Still open: no app or Nginx rate-limit config found | PR-02 |
 | Widget origin controls incomplete | High open | Still open: `allowed_origins` can be unset and portal creates unrestricted keys | PR-02 |
 | Tenant DB integrity incomplete | High open | Still open: tenant_id exists, but composite same-tenant parent/child constraints are absent | PR-03 |

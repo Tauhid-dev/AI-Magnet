@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "PR-00",
-    "last_completed_phase": "PR-00",
-    "next_permitted_phase": "PR-01",
+    "active_phase": "PR-02",
+    "last_completed_phase": "PR-01",
+    "next_permitted_phase": "PR-02",
     "production_go_no_go": "NO-GO beyond controlled internal demo with synthetic/sample data",
-    "overall_status": "production_remediation_framework_ready"
+    "overall_status": "pr01_auth_verified_next_pr02"
   },
   "launch_gates": [
     {
@@ -115,26 +115,26 @@
         "production-control/visual/production-status-dashboard.html"
       ],
       "branch": "production/pr-00-roadmap-memory-system",
-      "commit": "pending"
+      "commit": "59bd9f3"
     },
     {
       "phase_id": "PR-01",
       "title": "Production Authentication, Session Security and Admin Access",
-      "status": "not_started",
-      "completion_percent": 0,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-00"
       ],
       "priority": "p0",
       "criticality": "critical_launch_blocker",
-      "validation_status": "not_run",
+      "validation_status": "pass",
       "last_updated": "2026-05-28",
       "evidence_links": [
         "production-control/phases/PR-01_PRODUCTION_AUTHENTICATION_SESSION_SECURITY_AND_ADMIN_ACCESS.md",
         "docs/audit/2026-05-23-end-to-end/security-findings.md"
       ],
-      "branch": null,
-      "commit": null
+      "branch": "production/pr-01-auth-session-security",
+      "commit": "pending"
     },
     {
       "phase_id": "PR-02",
@@ -362,8 +362,6 @@
     }
   ],
   "critical_blockers": [
-    "Production business authentication",
-    "Production administrator authentication",
     "Public endpoint rate limiting and abuse controls",
     "PostgreSQL must not publish host port 5432 in production",
     "Redis must not publish host port 6379 in production",

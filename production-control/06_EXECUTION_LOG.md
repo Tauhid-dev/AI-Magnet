@@ -27,3 +27,35 @@ Append-only production phase run history.
   - Production remains NO-GO beyond controlled internal demo with synthetic/sample data.
 - Next phase permitted: PR-01.
 - Commit hash: pending until commit.
+
+## 2026-05-28 - PR-01: Production Authentication, Session Security and Admin Access
+
+- Instruction received: `Implement production phase PR-01`.
+- Phase selected: PR-01.
+- Branch: `production/pr-01-auth-session-security`.
+- Files changed:
+  - Backend auth services, schemas, API routes, models, migration, seed helper, config, and tests.
+  - Frontend login forms, API client, auth session helpers, logout flows, and tenant-create password field.
+  - Production-control status, risk, validation, visual, and execution memory files.
+- Implementation summary:
+  - Replaced email-only business/admin login with password verification.
+  - Added PBKDF2-SHA256 password hashing helpers and admin TOTP MFA verifier.
+  - Added session-version revocation, failed-login lockout, last-login tracking, and logout endpoints.
+  - Set HttpOnly/SameSite session cookies for browser sessions; frontend no longer stores bearer tokens in `localStorage`.
+  - Added admin-provisioned owner password support during tenant creation.
+  - Added migration `20260528_0006_pr01_auth_security.py`.
+- Validations run/result:
+  - `python3 -m pytest backend/tests` - pass, 48 tests.
+  - `python3 -m ruff check backend` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr01_alembic.db python3 -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr01_alembic.db python3 -m alembic -c backend/alembic.ini downgrade base` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run lint` - pass.
+  - `npm run build` - pass.
+- Known gaps:
+  - PR-02 still must add public endpoint rate limiting, CSRF/CSP/security-header review, and widget origin enforcement.
+  - Admin MFA enrollment/rotation UI is not implemented in PR-01; the backend enforcement path exists.
+  - Production remains NO-GO beyond controlled internal demo until PR-01 through PR-05 are all verified for Gate B.
+- Next phase permitted: PR-02.
+- Commit hash: pending until commit.

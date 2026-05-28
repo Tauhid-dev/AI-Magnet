@@ -48,7 +48,10 @@ class Settings:
         default_factory=lambda: parse_bool(os.getenv("ENABLE_API_DOCS"), default=True)
     )
     cors_allowed_origins: list[str] = field(
-        default_factory=lambda: parse_csv(os.getenv("CORS_ALLOWED_ORIGINS"), ["*"])
+        default_factory=lambda: parse_csv(
+            os.getenv("CORS_ALLOWED_ORIGINS"),
+            ["http://127.0.0.1:3000", "http://localhost:3000"],
+        )
     )
     business_portal_session_secret: str = field(
         default_factory=lambda: os.getenv(
@@ -59,6 +62,12 @@ class Settings:
     business_portal_session_ttl_minutes: int = field(
         default_factory=lambda: int(os.getenv("BUSINESS_PORTAL_SESSION_TTL_MINUTES", "480"))
     )
+    business_portal_cookie_name: str = field(
+        default_factory=lambda: os.getenv(
+            "BUSINESS_PORTAL_COOKIE_NAME",
+            "ai_magnet_business_session",
+        )
+    )
     admin_portal_session_secret: str = field(
         default_factory=lambda: os.getenv(
             "ADMIN_PORTAL_SESSION_SECRET",
@@ -67,6 +76,21 @@ class Settings:
     )
     admin_portal_session_ttl_minutes: int = field(
         default_factory=lambda: int(os.getenv("ADMIN_PORTAL_SESSION_TTL_MINUTES", "240"))
+    )
+    admin_portal_cookie_name: str = field(
+        default_factory=lambda: os.getenv("ADMIN_PORTAL_COOKIE_NAME", "ai_magnet_admin_session")
+    )
+    auth_cookie_secure: bool = field(
+        default_factory=lambda: parse_bool(os.getenv("AUTH_COOKIE_SECURE"), default=False)
+    )
+    auth_cookie_samesite: str = field(
+        default_factory=lambda: os.getenv("AUTH_COOKIE_SAMESITE", "lax")
+    )
+    auth_failed_login_limit: int = field(
+        default_factory=lambda: int(os.getenv("AUTH_FAILED_LOGIN_LIMIT", "5"))
+    )
+    auth_lockout_minutes: int = field(
+        default_factory=lambda: int(os.getenv("AUTH_LOCKOUT_MINUTES", "15"))
     )
 
     database_url: str = field(

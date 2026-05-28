@@ -6,7 +6,8 @@ from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
 from app.core.config import get_settings
-from app.db.base import Base
+from app.core.passwords import hash_password
+from app.db.base import Base, utc_now
 from app.db.session import get_db_session
 from app.main import create_app
 from app.models import AdminUser, BusinessUser, UsageLog
@@ -44,6 +45,9 @@ def seed_admin(session, email: str = "admin@example.test") -> AdminUser:
         full_name="Platform Admin",
         role="super_admin",
         status="active",
+        password_hash=hash_password("correct-admin-password"),
+        password_updated_at=utc_now(),
+        mfa_required=False,
     )
     session.add(admin)
     session.flush()
@@ -65,6 +69,8 @@ def seed_business_user(session, name: str, slug: str, email: str):
         full_name=f"{name} Owner",
         role="owner",
         status="active",
+        password_hash=hash_password("correct-password"),
+        password_updated_at=utc_now(),
     )
     session.add(user)
     session.flush()
@@ -72,7 +78,10 @@ def seed_business_user(session, name: str, slug: str, email: str):
 
 
 def login_admin(client: TestClient, email: str = "admin@example.test") -> str:
-    response = client.post("/admin/auth/login", json={"email": email})
+    response = client.post(
+        "/admin/auth/login",
+        json={"email": email, "password": "correct-admin-password"},
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -80,7 +89,7 @@ def login_admin(client: TestClient, email: str = "admin@example.test") -> str:
 def login_business(client: TestClient, tenant_slug: str, email: str) -> str:
     response = client.post(
         "/business-portal/auth/login",
-        json={"tenant_slug": tenant_slug, "email": email},
+        json={"tenant_slug": tenant_slug, "email": email, "password": "correct-password"},
     )
     assert response.status_code == 200
     return response.json()["access_token"]

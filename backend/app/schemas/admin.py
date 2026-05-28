@@ -12,6 +12,8 @@ class AdminLoginRequest(BaseModel):
     """Super admin login request."""
 
     email: str = Field(min_length=3, max_length=255)
+    password: str = Field(min_length=8, max_length=256)
+    mfa_code: str | None = Field(default=None, min_length=6, max_length=20)
 
 
 class AdminSessionResponse(BaseModel):
@@ -93,6 +95,7 @@ class AdminTenantCreateRequest(BaseModel):
     business_name: str | None = Field(default=None, max_length=255)
     business_email: str | None = Field(default=None, max_length=255)
     owner_email: str | None = Field(default=None, max_length=255)
+    owner_password: str | None = Field(default=None, min_length=8, max_length=256)
 
 
 class AdminTenantStatusUpdateRequest(BaseModel):

@@ -9,6 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [tenantSlug, setTenantSlug] = useState("demo-plumbing");
   const [email, setEmail] = useState("owner@example.test");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,11 +18,11 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await portalApi.login(tenantSlug, email);
+      const response = await portalApi.login(tenantSlug, email, password);
       saveSession(response.access_token, response.session);
       router.replace("/portal");
     } catch {
-      setError("Sign in failed for that tenant and email.");
+      setError("Sign in failed for that tenant, email, and password.");
     } finally {
       setLoading(false);
     }
@@ -49,6 +50,18 @@ export default function LoginPage() {
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               type="email"
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-muted">Password</span>
+            <input
+              className="mt-1 w-full rounded-md border border-line px-3 py-2"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              type="password"
+              minLength={8}
+              required
             />
           </label>
         </div>

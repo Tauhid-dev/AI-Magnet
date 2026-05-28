@@ -22,6 +22,8 @@ Required:
 
 Current status: NO-GO.
 
+PR-01 is verified. PR-02, PR-03, PR-04, and PR-05 remain required before this gate can move.
+
 Requires verified:
 
 - PR-01: production authentication and session security.
