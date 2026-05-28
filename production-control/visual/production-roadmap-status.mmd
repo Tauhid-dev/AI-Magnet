@@ -3,8 +3,8 @@ flowchart TB
     PR01["PR-01<br/>Auth and Sessions<br/>verified"]
     PR02["PR-02<br/>Rate Limits and Widget Origins<br/>verified"]
     PR03["PR-03<br/>Tenant DB and Privacy<br/>verified"]
-    PR04["PR-04<br/>TLS, Private DB/Redis, Backups<br/>next: not started<br/>CRITICAL"]
-    PR05["PR-05<br/>Queue and Worker<br/>not started<br/>HIGH"]
+    PR04["PR-04<br/>TLS, Private DB/Redis, Backups<br/>verified"]
+    PR05["PR-05<br/>Queue and Worker<br/>next: not started<br/>HIGH"]
     PR06["PR-06<br/>Website/Sitemap Ingestion<br/>not started"]
     PR07["PR-07<br/>Document/PDF/DOCX Ingestion<br/>not started"]
     PR08["PR-08<br/>SQL pgvector, Citations, Safety<br/>not started"]
@@ -44,8 +44,7 @@ flowchart TB
     classDef gateOk fill:#e0f2fe,stroke:#0369a1,color:#082f49
     classDef gateNo fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03 verified
-    class PR04 critical
+    class PR00,PR01,PR02,PR03,PR04 verified
     class PR05 high
     class PR06,PR07,PR08,PR09,PR10,PR11,PR12 pending
     class GateA gateOk

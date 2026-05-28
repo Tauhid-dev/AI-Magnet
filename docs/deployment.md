@@ -2,7 +2,9 @@
 
 ## Scope
 
-This guide covers the MVP Docker Compose deployment path for an OCI VPS or similar single-host Linux server. It assumes one hosted platform with tenant-isolated data in PostgreSQL and pgvector.
+This guide covers the Docker Compose deployment path for an OCI VPS or similar single-host Linux server. It assumes one hosted platform with tenant-isolated data in PostgreSQL and pgvector.
+
+PR-04 adds a separate production topology in `docker-compose.prod.yml`. The original `docker-compose.yml` remains a local development topology and still publishes development ports.
 
 ## Services
 
@@ -20,7 +22,8 @@ This guide covers the MVP Docker Compose deployment path for an OCI VPS or simil
 3. Configure firewall rules for SSH, HTTP, and HTTPS.
 4. Create an unprivileged deployment user.
 5. Clone the repository into the deployment user's home directory.
-6. Copy `.env.example` to `.env` and replace placeholder values before starting services.
+6. Copy `.env.production.example` to `.env` and replace every placeholder before starting services.
+7. Confirm the VPS firewall exposes only SSH, HTTP, and HTTPS to the internet. PostgreSQL and Redis must not be reachable from the public internet.
 
 ## Production Environment Rules
 
@@ -29,22 +32,28 @@ Set these values in `.env` for production:
 ```bash
 APP_ENV=production
 APP_DEBUG=false
+APP_LOG_FORMAT=json
 ENABLE_API_DOCS=false
 CORS_ALLOWED_ORIGINS=https://your-domain.example
+PUBLIC_HOSTNAME=your-domain.example
+PUBLIC_BASE_URL=https://your-domain.example
+NEXT_PUBLIC_API_BASE_URL=/api
 BUSINESS_PORTAL_SESSION_SECRET=<strong-random-secret>
 ADMIN_PORTAL_SESSION_SECRET=<strong-random-secret>
+AUTH_COOKIE_SECURE=true
+WIDGET_REQUIRE_ALLOWED_ORIGINS=true
 POSTGRES_PASSWORD=<strong-random-password>
-DATABASE_URL=postgresql+psycopg://ai_tradie:<strong-random-password>@postgres:5432/ai_tradie
-NEXT_PUBLIC_API_BASE_URL=/api
+DATABASE_URL=postgresql+psycopg://ai_magnet:<strong-random-password>@postgres:5432/ai_magnet
 EMAIL_PROVIDER=smtp
 SMTP_HOST=<smtp-host>
 SMTP_USERNAME=<smtp-username>
 SMTP_PASSWORD=<smtp-password>
 SMTP_FROM_EMAIL=<verified-sender>
 AI_API_KEY=<provider-api-key>
+BACKUP_ENCRYPTION_PASSPHRASE=<strong-random-backup-passphrase>
 ```
 
-Do not use wildcard CORS, placeholder session secrets, or enabled API docs in production. The backend refuses to start in production when these unsafe settings are detected.
+Do not use wildcard CORS, placeholder session secrets, insecure cookie settings, local Redis URLs, console email delivery, missing AI provider keys, missing SMTP values, missing backup encryption passphrases, or enabled API docs in production. The backend refuses to start in production when these unsafe settings are detected.
 
 ## Local/Dev Start
 
@@ -61,6 +70,35 @@ Useful local URLs:
 - Nginx reverse proxy: `http://127.0.0.1:8080`
 - Nginx API proxy: `http://127.0.0.1:8080/api/health`
 
+## Production Compose Validation
+
+Before touching a VPS, validate the production configuration locally or in CI:
+
+```bash
+docker compose --env-file .env.production.example -f docker-compose.prod.yml config
+```
+
+The production compose file intentionally exposes only:
+
+- `80:80` for HTTP/ACME redirect.
+- `443:443` for HTTPS traffic.
+
+The production `postgres` and `redis` services do not publish host ports and are attached to an internal Docker network only.
+
+## Production Start
+
+After replacing all `.env` placeholders on the VPS:
+
+```bash
+docker compose --env-file .env -f docker-compose.prod.yml up --build -d
+```
+
+Run migrations and the pgvector smoke check:
+
+```bash
+scripts/validate_pgvector_migrations.sh
+```
+
 ## Database Migrations
 
 Run migrations after services are built and PostgreSQL is healthy:
@@ -71,7 +109,23 @@ docker compose run --rm backend python -m alembic -c backend/alembic.ini upgrade
 
 For the current backend image, Alembic is available when the repository is mounted or when running from a development checkout. If a future production image removes migration files, run migrations from a release artifact that includes `backend/migrations`.
 
-## Nginx Routing
+For production, prefer:
+
+```bash
+docker compose --env-file .env -f docker-compose.prod.yml run --rm backend \
+  python -m alembic -c backend/alembic.ini upgrade head
+```
+
+Then confirm the pgvector extension:
+
+```bash
+docker compose --env-file .env -f docker-compose.prod.yml exec -T postgres \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+  -c "SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';"
+```
+
+## Nginx Routing And TLS
 
 The bundled `infra/nginx/default.conf` routes:
 
@@ -85,33 +139,81 @@ When using Nginx as the browser entrypoint, set:
 NEXT_PUBLIC_API_BASE_URL=/api
 ```
 
-Terminate TLS at Nginx or an upstream load balancer before production traffic. Add certificate automation before public launch.
+Production uses `infra/nginx/templates/prod.conf.template`, which:
+
+- redirects HTTP to HTTPS except ACME challenges;
+- serves HTTPS with Let's Encrypt certificate paths;
+- sets HSTS and core browser security headers;
+- forwards `X-Request-ID` to the backend;
+- applies coarse Nginx rate limits to login, widget/chat, and general API surfaces.
+
+Initial certificate request:
+
+```bash
+NGINX_TEMPLATE=bootstrap.conf.template docker compose --env-file .env -f docker-compose.prod.yml up -d nginx
+docker compose --env-file .env -f docker-compose.prod.yml run --rm certbot
+NGINX_TEMPLATE=prod.conf.template docker compose --env-file .env -f docker-compose.prod.yml up -d nginx
+```
+
+Renewal should be scheduled with host cron or a systemd timer:
+
+```cron
+17 3 * * * cd /home/deploy/AI-Magnet && docker compose --env-file .env -f docker-compose.prod.yml run --rm certbot renew --webroot --webroot-path=/var/www/certbot && docker compose --env-file .env -f docker-compose.prod.yml exec nginx nginx -s reload
+```
 
 ## Backups
 
-Minimum MVP backup process:
+Minimum production backup process:
 
-1. Schedule daily PostgreSQL dumps.
-2. Store dumps outside the VPS.
-3. Encrypt backups at rest.
-4. Test restore into a clean PostgreSQL instance before launch.
+1. Schedule encrypted PostgreSQL dumps using `scripts/backup_postgres.sh`.
+2. Store encrypted dumps outside the VPS.
+3. Protect `BACKUP_ENCRYPTION_PASSPHRASE` in a password manager or secret store.
+4. Test restore into a clean PostgreSQL instance before launch using `scripts/restore_postgres.sh`.
 
-Example dump:
+Example encrypted backup:
 
 ```bash
-docker compose exec postgres pg_dump -U ai_tradie ai_tradie > backups/ai_tradie_$(date +%Y%m%d_%H%M%S).sql
+ENV_FILE=.env COMPOSE_FILE=docker-compose.prod.yml BACKUP_DIR=/var/backups/ai-magnet \
+  scripts/backup_postgres.sh
 ```
+
+Example cron entry:
+
+```cron
+42 2 * * * cd /home/deploy/AI-Magnet && ENV_FILE=.env COMPOSE_FILE=docker-compose.prod.yml BACKUP_DIR=/var/backups/ai-magnet scripts/backup_postgres.sh >> /var/log/ai-magnet-backup.log 2>&1
+```
+
+Example restore drill into a clean environment:
+
+```bash
+ENV_FILE=.env.restore COMPOSE_FILE=docker-compose.prod.yml scripts/restore_postgres.sh /secure/offsite/ai_magnet_YYYYMMDD_HHMMSS.dump.enc
+```
+
+Record the restore date, backup filename, target environment, and result in the release checklist before launch.
 
 ## Rollback
 
 1. Stop browser traffic at Nginx or maintenance mode.
 2. Record the current git commit and database migration revision.
 3. Check out the previous release commit.
-4. Rebuild services with `docker compose up --build -d`.
+4. Rebuild services with `docker compose --env-file .env -f docker-compose.prod.yml up --build -d`.
 5. Run smoke checks against `/health`, business portal login, and admin login.
 6. Restore the last known-good database backup only if a migration or data change requires it.
 
 Do not downgrade database migrations casually. Prefer forward fixes unless a restore is explicitly planned and tested.
+
+## Incident Response Baseline
+
+For a production incident before PR-10 monitoring is complete:
+
+1. Preserve evidence: record current git commit, compose service versions, recent `backend`, `worker`, and `nginx` logs, and affected tenant IDs.
+2. Contain: disable public traffic at Nginx or firewall if customer data, auth, or provider spend is at risk.
+3. Triage: check `/health`, container restarts, database health, Redis health, disk usage, failed jobs, and recent admin audit events.
+4. Recover: apply a forward fix, roll back the application image, or restore from encrypted backup only after deciding the data impact.
+5. Notify: document affected tenants, timeframe, data categories involved, and remediation notes.
+6. Review: update `production-control/07_RISK_REGISTER.md` and `production-control/06_EXECUTION_LOG.md` with the incident outcome.
+
+PR-10 should replace this baseline with metrics, alerts, and a fuller operational response process.
 
 ## Smoke Checks
 
@@ -120,8 +222,8 @@ After deployment:
 ```bash
 docker compose ps
 docker compose logs --tail=100 backend
-curl -f http://127.0.0.1:8080/health
-curl -f http://127.0.0.1:8080/api/health
+curl -f https://your-domain.example/health
+curl -f https://your-domain.example/api/health
 ```
 
 Then verify:

@@ -8,19 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-PR-04: Production Infrastructure, TLS, Secrets, Backups and CI Security.
+PR-05: Real Async Queue, Worker Reliability and Job Visibility.
 
-Status: not_started. PR-01, PR-02, and PR-03 are verified and PR-04 is the next permitted phase.
+Status: not_started. PR-01 through PR-04 are verified and PR-05 is the next permitted phase.
 
 ## Last Completed Phase
 
-PR-03.
+PR-04.
 
 ## Next Permitted Phase
 
-`Implement production phase PR-04`
+`Implement production phase PR-05`
 
-Do not start PR-05 or later until PR-04 is implemented or explicitly marked blocked with safe independent subtasks documented.
+Do not start PR-06 or later until PR-05 is implemented or explicitly marked blocked with safe independent subtasks documented.
 
 ## Production Go/No-Go
 
@@ -39,35 +39,35 @@ Do not start PR-05 or later until PR-04 is implemented or explicitly marked bloc
 - PR-01 implemented production password auth, admin MFA support, HttpOnly browser session cookies, session revocation, failed-login lockout, frontend login/logout updates, and validation tests.
 - PR-02 implemented app-level public/API rate limiting, CSRF confirmation for cookie-auth unsafe writes, CSP/security-header review, production widget-origin enforcement config, widget key lifecycle APIs, portal controls, and validation tests.
 - PR-03 implemented same-tenant database integrity constraints, tenant offboarding/export/delete lifecycle APIs, global admin audit logs that survive tenant deletion, PII-redacted audit attributes, frontend admin lifecycle controls, and validation tests.
+- PR-04 implemented a separate production Compose topology with private PostgreSQL/Redis networking, production Nginx TLS/HSTS templates, certificate renewal path, stronger production secret validation, encrypted backup/restore scripts, pgvector migration smoke script, CI security scans, and request/correlation ID logging.
 
 ## Unresolved Critical Risks
 
-- PostgreSQL must not publish host port 5432 in production.
-- Redis must not publish host port 6379 in production and must be protected on private networking.
-- Production HTTPS/TLS/HSTS and renewal path are missing.
-- Scheduled encrypted backups and tested restore procedure are missing.
+- No unresolved critical repository-controlled PR-04 blockers remain. Live VPS validation of TLS, firewall, backups, and restore is still required before launch gates can move.
 
 ## Unresolved High Risks
 
-- Production secret validation is incomplete.
-- Live PostgreSQL plus pgvector validation is missing.
-- CI lacks dependency vulnerability, secret, and static security scanning.
-- Structured logs, request/correlation IDs, and PII-safe logging controls are incomplete.
 - Worker queue processing is a placeholder.
 - Website/sitemap ingestion and secure document ingestion are missing.
 - RAG retrieval is not scalable and lacks citations/safety evaluation.
 - Monitoring, metering, quotas, and cost protection are incomplete.
 - Billing/entitlement controls for paid beta are missing.
+- First remote CI security scan run is pending on the pushed PR-04 branch.
+- First VPS certificate issuance/renewal, backup/restore drill, and live PostgreSQL/pgvector smoke run are pending release-gate validation.
 
 ## Last Validation Commands
 
-Latest PR-03 validation commands:
+Latest PR-04 validation commands:
 
-- `python3 -m pytest backend/tests/security/test_pr03_tenant_integrity.py backend/tests/admin/test_admin_api.py` - pass, 9 tests.
-- `python3 -m pytest backend/tests` - pass, 56 tests.
+- `python3 -m pytest backend/tests/test_config.py backend/tests/test_health.py` - pass, 8 tests.
+- `python3 -m pytest backend/tests` - pass, 59 tests.
+- `python3 -m compileall backend/app backend/tests backend/migrations` - pass.
 - `python3 -m ruff check backend/app backend/tests` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr03_alembic_20260528_2.db python3 -m alembic -c backend/alembic.ini upgrade head` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr03_alembic_20260528_2.db python3 -m alembic -c backend/alembic.ini downgrade 20260528_0006` - pass.
+- `docker compose config` - pass.
+- `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+- Production compose port check for `postgres` and `redis` - pass, no published host ports.
+- `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr04_alembic_20260528.db python3 -m alembic -c backend/alembic.ini upgrade head` - pass.
 - `npm run lint` - pass.
 - `npm run typecheck` - pass.
 - `npm test` - pass.
@@ -75,6 +75,7 @@ Latest PR-03 validation commands:
 - `python3 -m json.tool production-control/status/production-status.json` - pass.
 - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
 - `git diff --check` - pass.
+- Docker image build attempted but not run locally because Docker daemon was unavailable.
 
 ## Important Links
 

@@ -29,7 +29,7 @@
   <rect class="bg" width="1600" height="1150" />
   <text class="title" x="60" y="55">AI-Magnet Production Readiness Roadmap</text>
   <text class="subtitle" x="60" y="86">Baseline: 2026-05-23 production readiness 35/100. Internal MVP Demo: GO WITH CONDITIONS. Public/Paid/Production: NO-GO.</text>
-  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Current next permitted phase: PR-04.</text>
+  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Current next permitted phase: PR-05.</text>
 
   <rect class="legend" x="60" y="135" width="1480" height="64" rx="8" />
   <rect x="86" y="156" width="22" height="22" fill="#dcfce7" stroke="#15803d" />
@@ -71,10 +71,11 @@
   <rect x="888" y="312" width="70" height="22" rx="5" fill="#15803d" />
   <text class="badge" x="901" y="328">verified</text>
 
-  <rect class="critical" x="1140" y="240" width="260" height="105" rx="10" />
+  <rect class="verified" x="1140" y="240" width="260" height="105" rx="10" />
   <text class="card-title" x="1158" y="270">PR-04</text>
   <text class="card-text" x="1158" y="295">TLS, private DB/Redis</text>
-  <text class="card-text" x="1158" y="318">Next: backups, scans, secrets</text>
+  <rect x="1158" y="312" width="70" height="22" rx="5" fill="#15803d" />
+  <text class="badge" x="1171" y="328">verified</text>
 
   <path class="arrow" d="M270 292 H330" />
   <path class="arrow" d="M540 292 H600" />
@@ -85,7 +86,7 @@
   <rect class="high" x="60" y="430" width="210" height="105" rx="10" />
   <text class="card-title" x="78" y="460">PR-05</text>
   <text class="card-text" x="78" y="485">Real queue/worker</text>
-  <text class="card-text" x="78" y="508">Job visibility</text>
+  <text class="card-text" x="78" y="508">Next: job visibility</text>
 
   <rect class="pending" x="330" y="390" width="230" height="105" rx="10" />
   <text class="card-title" x="348" y="420">PR-06</text>
@@ -160,7 +161,7 @@
   <text class="card-text" x="1238" y="952">Public production launch: NO-GO</text>
   <text class="card-text" x="1238" y="973">Requires PR-12 + owner approval</text>
 
-  <text class="blocker" x="60" y="1045">Critical blockers: private Postgres/Redis, HTTPS/TLS/HSTS, backups/restore.</text>
-  <text class="small" x="60" y="1074">High blockers: secret validation, live pgvector migration validation, CI scans, logs/correlation IDs, queue, ingestion, RAG safety, monitoring and quotas.</text>
-  <text class="small" x="60" y="1103">Generated deterministically as a static SVG and updated through PR-03. Keep it consistent with production-control/status/production-status.json.</text>
+  <text class="blocker" x="60" y="1045">Current blockers: PR-05 real queue/worker reliability, first VPS TLS/firewall validation, backup/restore drill, live pgvector smoke.</text>
+  <text class="small" x="60" y="1074">High blockers ahead: ingestion, RAG safety, onboarding, monitoring, quotas, paid-beta controls.</text>
+  <text class="small" x="60" y="1103">Generated deterministically as a static SVG and updated through PR-04. Keep it consistent with production-control/status/production-status.json.</text>
 </svg>

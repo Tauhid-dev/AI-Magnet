@@ -22,7 +22,7 @@ Required:
 
 Current status: NO-GO.
 
-PR-01, PR-02, and PR-03 are verified. PR-04 and PR-05 remain required before this gate can move.
+PR-01 through PR-04 are verified. PR-05 remains required before this gate can move.
 
 Requires verified:
 

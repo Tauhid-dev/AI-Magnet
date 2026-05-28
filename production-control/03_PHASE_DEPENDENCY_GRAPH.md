@@ -8,8 +8,8 @@ flowchart TB
     PR01["PR-01<br/>Production Authentication<br/>verified"]
     PR02["PR-02<br/>Abuse Protection and Widget Origins<br/>verified"]
     PR03["PR-03<br/>Tenant Isolation and Privacy<br/>verified"]
-    PR04["PR-04<br/>Production Infra, TLS, Backups<br/>next critical blocker"]
-    PR05["PR-05<br/>Real Queue and Worker<br/>high blocker"]
+    PR04["PR-04<br/>Production Infra, TLS, Backups<br/>verified"]
+    PR05["PR-05<br/>Real Queue and Worker<br/>next high blocker"]
     PR06["PR-06<br/>Website and Sitemap Ingestion"]
     PR07["PR-07<br/>Document/PDF/DOCX Ingestion"]
     PR08["PR-08<br/>Scalable RAG, Citations, Safety"]
@@ -42,8 +42,8 @@ flowchart TB
     classDef notStarted fill:#f1f5f9,stroke:#64748b,color:#0f172a
     classDef gate fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03 verified
-    class PR04,PR05 blocker
+    class PR00,PR01,PR02,PR03,PR04 verified
+    class PR05 blocker
     class PR06,PR07,PR08,PR09,PR10,PR11,PR12 notStarted
     class GateA,GateB,GateC,GateD,GateE gate
 ```

@@ -100,3 +100,25 @@ Append-only ADR-lite log for production remediation.
   - Make existing `audit_logs.tenant_id` nullable: rejected because it weakens the clear tenant-scoped table contract and would require broader query/UI changes.
   - Retain all tenant audit logs forever: rejected because it conflicts with deletion/offboarding goals for beta privacy lifecycle.
 - Follow-up impact: PR-04/PR-10 must extend PII-safe structured logging and operational audit review without exposing raw customer content.
+
+## DEC-PR-20260528-010: Separate Development And Production Compose Topologies
+
+- Date: 2026-05-28
+- Decision: Keep `docker-compose.yml` as the local development topology and add `docker-compose.prod.yml` for production with only Nginx publishing host ports. PostgreSQL and Redis are private internal services in production.
+- Reason: The development compose file intentionally exposes developer conveniences. Reusing it for OCI production risks public PostgreSQL/Redis exposure and frontend dev-server deployment.
+- Affected files/phases: PR-04, `docker-compose.prod.yml`, `.env.production.example`, `docs/deployment.md`, CI compose checks.
+- Alternatives rejected:
+  - Mutate development compose into production compose: rejected because it would slow local iteration and mix incompatible requirements.
+  - Rely only on firewall rules while still publishing DB/Redis ports: rejected because the secure default should be private Docker networking.
+- Follow-up impact: Deployment docs and future VPS work must use `docker-compose.prod.yml`; release validation must confirm no host ports are published for data services.
+
+## DEC-PR-20260528-011: Repository-Controlled PR-04 Stops Before Live Deployment
+
+- Date: 2026-05-28
+- Decision: PR-04 provides production topology, TLS/HSTS templates, backup/restore scripts, pgvector migration smoke path, CI scans, and runbooks, but does not execute live DNS, certificate issuance, production database migration, firewall changes, or restore drills.
+- Reason: The production phase protocol forbids live VPS deployment or destructive operational actions unless separately instructed. The repository can be verified statically, while live evidence belongs to a later explicit deployment/release gate.
+- Affected files/phases: PR-04, `docs/deployment.md`, `production-control/08_VALIDATION_MATRIX.md`, `production-control/07_RISK_REGISTER.md`.
+- Alternatives rejected:
+  - Run certbot/VPS migration from Codex: rejected because it requires explicit owner permission and live infrastructure access.
+  - Mark TLS/backups fully launch-validated after writing scripts only: rejected because first live execution remains release evidence.
+- Follow-up impact: PR-05 can proceed after PR-04, but Gate B still needs PR-05 plus successful remote CI/VPS validation evidence.

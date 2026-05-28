@@ -10,9 +10,14 @@ from functools import lru_cache
 INSECURE_SECRET_VALUES = frozenset(
     {
         "",
+        "change-me",
         "change-me-before-production",
         "change-me-local-admin-portal-secret",
         "change-me-local-business-portal-secret",
+        "replace-with-strong-random-secret",
+        "replace-with-strong-random-password",
+        "replace-with-provider-api-key",
+        "replace-with-smtp-password",
     }
 )
 
@@ -31,6 +36,16 @@ def parse_csv(value: str | None, default: list[str] | None = None) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def is_placeholder(value: str | None) -> bool:
+    """Return true when a production value is blank or clearly a placeholder."""
+    if value is None:
+        return True
+    normalized = value.strip().lower()
+    if normalized in INSECURE_SECRET_VALUES:
+        return True
+    return any(marker in normalized for marker in ("change-me", "replace-with", "placeholder"))
+
+
 @dataclass(frozen=True)
 class Settings:
     """Runtime settings loaded from environment variables."""
@@ -44,6 +59,10 @@ class Settings:
         default_factory=lambda: parse_bool(os.getenv("APP_DEBUG"), default=False)
     )
     log_level: str = field(default_factory=lambda: os.getenv("APP_LOG_LEVEL", "INFO"))
+    log_format: str = field(default_factory=lambda: os.getenv("APP_LOG_FORMAT", "text"))
+    request_id_header: str = field(
+        default_factory=lambda: os.getenv("REQUEST_ID_HEADER", "X-Request-ID")
+    )
     enable_api_docs: bool = field(
         default_factory=lambda: parse_bool(os.getenv("ENABLE_API_DOCS"), default=True)
     )
@@ -181,20 +200,43 @@ class Settings:
     smtp_starttls: bool = field(
         default_factory=lambda: parse_bool(os.getenv("SMTP_STARTTLS"), default=True)
     )
+    public_base_url: str | None = field(
+        default_factory=lambda: os.getenv("PUBLIC_BASE_URL") or None
+    )
+    frontend_api_base_url: str | None = field(
+        default_factory=lambda: os.getenv("NEXT_PUBLIC_API_BASE_URL") or None
+    )
+    backup_encryption_passphrase: str | None = field(
+        default_factory=lambda: os.getenv("BACKUP_ENCRYPTION_PASSPHRASE") or None
+    )
 
     def production_security_issues(self) -> list[str]:
         """Return production-only configuration issues."""
         if self.environment.strip().lower() not in {"prod", "production"}:
             return []
         issues: list[str] = []
-        if self.business_portal_session_secret in INSECURE_SECRET_VALUES:
+        if is_placeholder(self.business_portal_session_secret) or len(
+            self.business_portal_session_secret
+        ) < 32:
             issues.append("BUSINESS_PORTAL_SESSION_SECRET must be set to a strong secret")
-        if self.admin_portal_session_secret in INSECURE_SECRET_VALUES:
+        if is_placeholder(self.admin_portal_session_secret) or len(
+            self.admin_portal_session_secret
+        ) < 32:
             issues.append("ADMIN_PORTAL_SESSION_SECRET must be set to a strong secret")
+        if not self.auth_cookie_secure:
+            issues.append("AUTH_COOKIE_SECURE must be true in production")
+        if self.auth_cookie_samesite.lower() not in {"lax", "strict", "none"}:
+            issues.append("AUTH_COOKIE_SAMESITE must be lax, strict, or none")
         if "*" in self.cors_allowed_origins:
             issues.append("CORS_ALLOWED_ORIGINS must not contain '*' in production")
+        if any(not origin.startswith("https://") for origin in self.cors_allowed_origins):
+            issues.append("CORS_ALLOWED_ORIGINS must use https origins in production")
         if self.enable_api_docs:
             issues.append("ENABLE_API_DOCS must be false in production")
+        if self.debug:
+            issues.append("APP_DEBUG must be false in production")
+        if self.log_format.strip().lower() != "json":
+            issues.append("APP_LOG_FORMAT must be json in production")
         if not self.rate_limit_enabled:
             issues.append("RATE_LIMIT_ENABLED must be true in production")
         if self.rate_limit_window_seconds <= 0:
@@ -211,6 +253,38 @@ class Settings:
             issues.append("WIDGET_REQUIRE_ALLOWED_ORIGINS must be true in production")
         if self.privacy_default_retention_days <= 0:
             issues.append("PRIVACY_DEFAULT_RETENTION_DAYS must be greater than 0 in production")
+        if is_placeholder(self.database_url) or self.database_url.startswith("sqlite"):
+            issues.append("DATABASE_URL must point to production PostgreSQL")
+        if "ai_tradie:ai_tradie" in self.database_url or "change-me" in self.database_url:
+            issues.append("DATABASE_URL must not use default or placeholder credentials")
+        if not self.redis_url.startswith(("redis://", "rediss://")):
+            issues.append("REDIS_URL must be a redis:// or rediss:// URL")
+        if "localhost" in self.redis_url or "127.0.0.1" in self.redis_url:
+            issues.append("REDIS_URL must use the private Docker/service hostname in production")
+        if self.ai_provider == "openai-compatible" and is_placeholder(self.ai_api_key):
+            issues.append("AI_API_KEY must be set for the OpenAI-compatible provider")
+        if self.email_provider != "smtp":
+            issues.append("EMAIL_PROVIDER must be smtp in production")
+        if is_placeholder(self.smtp_host):
+            issues.append("SMTP_HOST must be set in production")
+        if self.smtp_port <= 0:
+            issues.append("SMTP_PORT must be greater than 0 in production")
+        if is_placeholder(self.smtp_username):
+            issues.append("SMTP_USERNAME must be set in production")
+        if is_placeholder(self.smtp_password):
+            issues.append("SMTP_PASSWORD must be set in production")
+        if is_placeholder(self.smtp_from_email):
+            issues.append("SMTP_FROM_EMAIL must be set in production")
+        if not (self.smtp_use_tls or self.smtp_starttls):
+            issues.append("SMTP_USE_TLS or SMTP_STARTTLS must be true in production")
+        if is_placeholder(self.public_base_url) or not self.public_base_url.startswith("https://"):
+            issues.append("PUBLIC_BASE_URL must be an https URL in production")
+        if self.frontend_api_base_url not in {"/api", None}:
+            issues.append("NEXT_PUBLIC_API_BASE_URL must be /api when served through Nginx")
+        if is_placeholder(self.backup_encryption_passphrase) or len(
+            self.backup_encryption_passphrase or ""
+        ) < 32:
+            issues.append("BACKUP_ENCRYPTION_PASSPHRASE must be a strong secret")
         return issues
 
     def validate_runtime_security(self) -> None:

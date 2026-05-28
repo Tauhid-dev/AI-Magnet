@@ -80,7 +80,7 @@
       overflow: hidden;
       margin-top: 10px;
     }
-    .progress span { display: block; height: 100%; background: var(--green); width: 31%; }
+    .progress span { display: block; height: 100%; background: var(--green); width: 38%; }
     .blockers {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -118,19 +118,19 @@
     <section class="grid summary">
       <div class="card">
         <h2>Current State</h2>
-        <div class="metric">PR-03 verified</div>
-        <p>Auth, session hardening, API abuse controls, widget origins, tenant integrity, and privacy lifecycle controls are implemented.</p>
+        <div class="metric">PR-04 verified</div>
+        <p>Auth, abuse controls, tenant integrity, and production infrastructure guardrails are implemented in the repository.</p>
       </div>
       <div class="card">
         <h2>Next Permitted Phase</h2>
-        <div class="metric">PR-04</div>
-        <p>Production Infrastructure, TLS, Secrets, Backups and CI Security.</p>
+        <div class="metric">PR-05</div>
+        <p>Real Async Queue, Worker Reliability and Job Visibility.</p>
       </div>
       <div class="card">
         <h2>Progress</h2>
-        <div class="metric">4 / 13 phases</div>
+        <div class="metric">5 / 13 phases</div>
         <div class="progress"><span></span></div>
-        <p>PR-00 through PR-03 are verified.</p>
+        <p>PR-00 through PR-04 are verified.</p>
       </div>
       <div class="card">
         <h2>Launch Gate</h2>
@@ -142,10 +142,10 @@
     <section>
       <h2>Critical Blockers</h2>
       <div class="blockers">
-        <div class="blocker">PostgreSQL must not publish host port 5432 in production</div>
-        <div class="blocker">Redis must not publish host port 6379 in production</div>
-        <div class="blocker">Production HTTPS/TLS/HSTS and renewal path</div>
-        <div class="blocker">Scheduled encrypted backups plus tested restore procedure</div>
+        <div class="blocker">PR-05 real queue/worker reliability is not verified</div>
+        <div class="blocker">First VPS TLS/firewall validation remains pending</div>
+        <div class="blocker">First encrypted backup and restore drill remains pending</div>
+        <div class="blocker">First live PostgreSQL/pgvector smoke remains pending</div>
       </div>
     </section>
 
@@ -156,8 +156,8 @@
         <div class="card phase verified"><h3>PR-01: Auth and Sessions</h3><p>Status: verified. Password auth, admin MFA support, cookie sessions, lockout, and revocation are implemented.</p></div>
         <div class="card phase verified"><h3>PR-02: Abuse Protection</h3><p>Status: verified. Rate limits, widget origins, CSRF/CSP review, and key lifecycle controls are implemented.</p></div>
         <div class="card phase verified"><h3>PR-03: Tenant DB and Privacy</h3><p>Status: verified. Tenant integrity, export/delete/offboarding, global audit handling, and PII-redacted audit attributes are implemented.</p></div>
-        <div class="card phase critical"><h3>PR-04: Production Infrastructure</h3><p>Status: next, not started. Adds TLS/HSTS, private DB/Redis, secrets, backups, CI scans.</p></div>
-        <div class="card phase high"><h3>PR-05: Queue and Worker</h3><p>Status: not started. Replaces placeholder worker with real queued jobs and visibility.</p></div>
+        <div class="card phase verified"><h3>PR-04: Production Infrastructure</h3><p>Status: verified. Private DB/Redis production topology, TLS/HSTS templates, backups, CI scans, and correlation logs are implemented.</p></div>
+        <div class="card phase high"><h3>PR-05: Queue and Worker</h3><p>Status: next, not started. Replaces placeholder worker with real queued jobs and visibility.</p></div>
         <div class="card phase pending"><h3>PR-06: Website/Sitemap Ingestion</h3><p>Status: not started. Adds SSRF-safe crawling and source tracking.</p></div>
         <div class="card phase pending"><h3>PR-07: Document Ingestion</h3><p>Status: not started. Adds secure PDF/DOCX upload and gated OCR path.</p></div>
         <div class="card phase pending"><h3>PR-08: RAG Quality</h3><p>Status: not started. Adds SQL pgvector retrieval, citations, thresholds, safety evals.</p></div>
