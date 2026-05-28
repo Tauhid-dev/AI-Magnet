@@ -118,19 +118,19 @@
     <section class="grid summary">
       <div class="card">
         <h2>Current State</h2>
-        <div class="metric">PR-05 verified</div>
-        <p>Auth, abuse controls, tenant integrity, production infrastructure guardrails, and durable worker queue controls are implemented in the repository.</p>
+        <div class="metric">PR-06 verified</div>
+        <p>Auth, abuse controls, tenant integrity, production infrastructure guardrails, durable worker queue controls, and secure website/sitemap ingestion are implemented in the repository.</p>
       </div>
       <div class="card">
         <h2>Next Permitted Phase</h2>
-        <div class="metric">PR-06</div>
-        <p>Secure Website and Sitemap Ingestion.</p>
+        <div class="metric">PR-07</div>
+        <p>Secure Document Ingestion, Storage and OCR Path.</p>
       </div>
       <div class="card">
         <h2>Progress</h2>
-        <div class="metric">6 / 13 phases</div>
-        <div class="progress"><span style="width: 46%;"></span></div>
-        <p>PR-00 through PR-05 are verified.</p>
+        <div class="metric">7 / 13 phases</div>
+        <div class="progress"><span style="width: 54%;"></span></div>
+        <p>PR-00 through PR-06 are verified.</p>
       </div>
       <div class="card">
         <h2>Launch Gate</h2>
@@ -142,8 +142,8 @@
     <section>
       <h2>Critical Blockers</h2>
       <div class="blockers">
-        <div class="blocker">PR-06 website/sitemap ingestion is not implemented</div>
         <div class="blocker">PR-07 secure PDF/DOCX ingestion is not implemented</div>
+        <div class="blocker">First controlled real-site crawl smoke remains pending</div>
         <div class="blocker">First VPS TLS/firewall validation remains pending</div>
         <div class="blocker">First encrypted backup and restore drill remains pending</div>
         <div class="blocker">First live worker/Redis and PostgreSQL/pgvector smoke remains pending</div>
@@ -159,8 +159,8 @@
         <div class="card phase verified"><h3>PR-03: Tenant DB and Privacy</h3><p>Status: verified. Tenant integrity, export/delete/offboarding, global audit handling, and PII-redacted audit attributes are implemented.</p></div>
         <div class="card phase verified"><h3>PR-04: Production Infrastructure</h3><p>Status: verified. Private DB/Redis production topology, TLS/HSTS templates, backups, CI scans, and correlation logs are implemented.</p></div>
         <div class="card phase verified"><h3>PR-05: Queue and Worker</h3><p>Status: verified. Durable jobs, Redis wake signals, retries, failure visibility, worker health, and async ingestion/notification jobs are implemented.</p></div>
-        <div class="card phase high"><h3>PR-06: Website/Sitemap Ingestion</h3><p>Status: next, not started. Adds SSRF-safe crawling and source tracking.</p></div>
-        <div class="card phase pending"><h3>PR-07: Document Ingestion</h3><p>Status: not started. Adds secure PDF/DOCX upload and gated OCR path.</p></div>
+        <div class="card phase verified"><h3>PR-06: Website/Sitemap Ingestion</h3><p>Status: verified. Tenant source tracking, SSRF-safe crawling, crawl history, queued indexing jobs, and portal controls are implemented.</p></div>
+        <div class="card phase high"><h3>PR-07: Document Ingestion</h3><p>Status: next, not started. Adds secure PDF/DOCX upload and gated OCR path.</p></div>
         <div class="card phase pending"><h3>PR-08: RAG Quality</h3><p>Status: not started. Adds SQL pgvector retrieval, citations, thresholds, safety evals.</p></div>
         <div class="card phase pending"><h3>PR-09: Onboarding UX</h3><p>Status: not started. Adds customer setup, agent test, widget installation UX.</p></div>
         <div class="card phase pending"><h3>PR-10: Monitoring and Quotas</h3><p>Status: not started. Adds ops visibility, metering, quotas, and cost controls.</p></div>

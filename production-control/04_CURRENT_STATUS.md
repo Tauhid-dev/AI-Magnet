@@ -8,19 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-PR-06: Secure Website and Sitemap Ingestion.
+PR-07: Secure Document Ingestion, Storage and OCR Path.
 
-Status: not_started. PR-01 through PR-05 are verified and PR-06 is the next permitted phase.
+Status: not_started. PR-01 through PR-06 are verified and PR-07 is the next permitted phase.
 
 ## Last Completed Phase
 
-PR-05.
+PR-06.
 
 ## Next Permitted Phase
 
-`Implement production phase PR-06`
+`Implement production phase PR-07`
 
-Do not start PR-07 or later unless explicitly requested. PR-06 and PR-07 both depend on PR-05; the recommended next ordered phase is PR-06.
+Do not start PR-08 or later unless explicitly requested. PR-07 depends on PR-05 and is now the next ordered production remediation phase.
 
 ## Production Go/No-Go
 
@@ -41,28 +41,30 @@ Do not start PR-07 or later unless explicitly requested. PR-06 and PR-07 both de
 - PR-03 implemented same-tenant database integrity constraints, tenant offboarding/export/delete lifecycle APIs, global admin audit logs that survive tenant deletion, PII-redacted audit attributes, frontend admin lifecycle controls, and validation tests.
 - PR-04 implemented a separate production Compose topology with private PostgreSQL/Redis networking, production Nginx TLS/HSTS templates, certificate renewal path, stronger production secret validation, encrypted backup/restore scripts, pgvector migration smoke script, CI security scans, and request/correlation ID logging.
 - PR-05 implemented a durable database-backed job ledger, Redis wake signals, worker heartbeats, retry/backoff/idempotency, failed-job visibility, tenant/admin job APIs, async document-ingestion jobs, async notification-delivery jobs, worker health checks, and validation tests.
+- PR-06 implemented tenant-owned website/sitemap sources, SSRF-safe URL and redirect validation, bounded crawler settings, robots.txt handling, crawl page history, queued `rag.website_crawl` jobs, source metadata on generated knowledge documents, portal source controls, and validation tests.
 
 ## Unresolved Critical Risks
 
-- No unresolved critical repository-controlled PR-05 blockers remain. Live VPS validation of TLS, firewall, backups, restore, worker health, and Redis reachability is still required before Gate B operation.
+- No unresolved critical repository-controlled PR-06 blockers remain. Live VPS validation of TLS, firewall, backups, restore, worker health, Redis reachability, and controlled real-site crawl smoke is still required before broader operation.
 
 ## Unresolved High Risks
 
-- Website/sitemap ingestion and secure document ingestion are missing.
+- Secure document/PDF/DOCX ingestion is missing.
 - RAG retrieval is not scalable and lacks citations/safety evaluation.
 - Monitoring, metering, quotas, and cost protection are incomplete.
 - Billing/entitlement controls for paid beta are missing.
-- First remote CI run for the pushed PR-05 branch will be required.
-- First VPS certificate issuance/renewal, backup/restore drill, worker/Redis smoke, and live PostgreSQL/pgvector smoke run are pending release-gate validation.
+- First remote CI run for the pushed PR-06 branch will be required.
+- First VPS certificate issuance/renewal, backup/restore drill, worker/Redis smoke, controlled real-site crawl smoke, and live PostgreSQL/pgvector smoke run are pending release-gate validation.
 
 ## Last Validation Commands
 
-Latest PR-05 validation commands:
+Latest PR-06 validation commands:
 
 - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
-- `backend/.venv/bin/python -m pytest backend/tests` - pass, 63 tests.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr05_alembic_20260528.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr05_alembic_20260528.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260528_0007` - pass.
+- `backend/.venv/bin/python -m pytest backend/tests/rag/test_website_ingestion.py` - pass, 13 tests.
+- `backend/.venv/bin/python -m pytest backend/tests` - pass, 76 tests.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr06_alembic_probe.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr06_alembic_probe.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260528_0008` - pass.
 - `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
 - `docker compose config` - pass.
 - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
@@ -74,6 +76,7 @@ Latest PR-05 validation commands:
 - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass.
 - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
 - Secret pattern scan - pass, no matches.
+- `npm audit --audit-level=high` - pass for high severity; npm reported a moderate transitive PostCSS advisory through Next.js.
 - `python3 -m json.tool production-control/status/production-status.json` - pass.
 - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
 - `git diff --check` - pass.

@@ -21,7 +21,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Dependency/secret/SAST CI scans | PR-04 | optional | optional | optional | optional | required | required | optional | partial | CI jobs added; first remote run pending |
 | Structured logs/correlation IDs/PII-safe logging | PR-04/PR-10 | required | required | optional | optional | required | required | manual log review | partial | request/correlation baseline tests pass; PR-10 owns full monitoring/log review |
 | Real queue worker and job visibility | PR-05 | required | required | required if schema changes | required if UI | required | required | manual worker smoke | pass | job enqueue/process/retry/failure/idempotency tests, job APIs, worker health check config |
-| Website/sitemap ingestion SSRF safety | PR-06 | required | required | required | required | required | required | staging safe crawl | not_run | malicious URL tests and crawl status |
+| Website/sitemap ingestion SSRF safety | PR-06 | required | required | required | required | required | required | staging safe crawl | pass | malicious URL tests, redirect/private DNS tests, crawl status, source UI, and migration smoke pass; controlled real-site crawl remains release-gate evidence |
 | Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | not_run | file fixtures and deletion tests |
 | SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | not_run | eval fixtures and source checks |
 | Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | not_run | e2e tests and UX checklist |
@@ -106,3 +106,22 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Compose worker healthcheck config | pass | `docker compose config`; `docker compose --env-file .env.production.example -f docker-compose.prod.yml config`; production data-services port check |
 | Production-control status and visuals | pass | `python3 -m json.tool production-control/status/production-status.json`; SVG parse check; `git diff --check` |
 | Live VPS worker/Redis smoke | not_run | Repository phase does not deploy to VPS; run before Gate B operation |
+
+## PR-06 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| URL, DNS, local/private IP, metadata, and protocol rejection | pass | `backend/tests/rag/test_website_ingestion.py` |
+| Redirect-to-private-target rejection | pass | `backend/tests/rag/test_website_ingestion.py` |
+| Website source crawl creates tenant documents and crawl history | pass | `backend/tests/rag/test_website_ingestion.py` |
+| Sitemap source filters to approved domain | pass | `backend/tests/rag/test_website_ingestion.py` |
+| Business-domain source authorization | pass | `backend/tests/rag/test_website_ingestion.py` |
+| Portal source API queues tenant crawl job | pass | `backend/tests/rag/test_website_ingestion.py` |
+| Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 76 passed |
+| Backend compile/lint | pass | `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations`; `backend/.venv/bin/ruff check backend/app backend/tests` |
+| Migration upgrade/downgrade | pass | SQLite upgrade head and downgrade to `20260528_0008` |
+| Frontend typecheck/lint/test/build | pass | `npm run typecheck`; `npm run lint`; `npm test`; `npm run build` |
+| Compose static config | pass | `docker compose config`; `docker compose --env-file .env.production.example -f docker-compose.prod.yml config`; production data-service port check |
+| Dependency and static security scans | pass | `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt`; `backend/.venv/bin/python -m bandit -q -r backend/app`; secret pattern scan; `npm audit --audit-level=high` passed high threshold with a moderate transitive PostCSS advisory noted |
+| Production-control status and visuals | pass | `python3 -m json.tool production-control/status/production-status.json`; SVG parse check; `git diff --check` |
+| Controlled real-site crawl smoke | not_run | Repository phase does not crawl live customer sites; run before real pilot usage |

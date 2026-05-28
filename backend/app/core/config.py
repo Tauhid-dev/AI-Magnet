@@ -207,6 +207,30 @@ class Settings:
         default_factory=lambda: int(os.getenv("RAG_CHUNK_OVERLAP", "100"))
     )
     rag_top_k: int = field(default_factory=lambda: int(os.getenv("RAG_TOP_K", "5")))
+    website_crawl_user_agent: str = field(
+        default_factory=lambda: os.getenv(
+            "WEBSITE_CRAWL_USER_AGENT",
+            "AI-MagnetBot/0.1 (+https://example.com/ai-magnet-bot)",
+        )
+    )
+    website_crawl_timeout_seconds: float = field(
+        default_factory=lambda: float(os.getenv("WEBSITE_CRAWL_TIMEOUT_SECONDS", "10"))
+    )
+    website_crawl_max_pages: int = field(
+        default_factory=lambda: int(os.getenv("WEBSITE_CRAWL_MAX_PAGES", "10"))
+    )
+    website_crawl_max_depth: int = field(
+        default_factory=lambda: int(os.getenv("WEBSITE_CRAWL_MAX_DEPTH", "1"))
+    )
+    website_crawl_max_bytes: int = field(
+        default_factory=lambda: int(os.getenv("WEBSITE_CRAWL_MAX_BYTES", "1048576"))
+    )
+    website_crawl_max_redirects: int = field(
+        default_factory=lambda: int(os.getenv("WEBSITE_CRAWL_MAX_REDIRECTS", "5"))
+    )
+    website_crawl_respect_robots: bool = field(
+        default_factory=lambda: parse_bool(os.getenv("WEBSITE_CRAWL_RESPECT_ROBOTS"), default=True)
+    )
 
     email_provider: str = field(
         default_factory=lambda: os.getenv("EMAIL_PROVIDER", "console")
@@ -301,6 +325,18 @@ class Settings:
             issues.append("WORKER_RETRY_BASE_SECONDS must be zero or greater in production")
         if self.worker_retry_max_seconds < self.worker_retry_base_seconds:
             issues.append("WORKER_RETRY_MAX_SECONDS must be greater than or equal to base retry")
+        if self.website_crawl_timeout_seconds <= 0:
+            issues.append("WEBSITE_CRAWL_TIMEOUT_SECONDS must be greater than 0 in production")
+        if self.website_crawl_max_pages <= 0:
+            issues.append("WEBSITE_CRAWL_MAX_PAGES must be greater than 0 in production")
+        if self.website_crawl_max_depth < 0:
+            issues.append("WEBSITE_CRAWL_MAX_DEPTH must be zero or greater in production")
+        if self.website_crawl_max_bytes <= 0:
+            issues.append("WEBSITE_CRAWL_MAX_BYTES must be greater than 0 in production")
+        if self.website_crawl_max_redirects < 0:
+            issues.append("WEBSITE_CRAWL_MAX_REDIRECTS must be zero or greater in production")
+        if not self.website_crawl_user_agent.strip():
+            issues.append("WEBSITE_CRAWL_USER_AGENT must be set in production")
         if self.ai_provider == "openai-compatible" and is_placeholder(self.ai_api_key):
             issues.append("AI_API_KEY must be set for the OpenAI-compatible provider")
         if self.email_provider != "smtp":

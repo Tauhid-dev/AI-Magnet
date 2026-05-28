@@ -36,6 +36,7 @@ TERMINAL_JOB_STATUSES = {
 }
 
 JOB_TYPE_RAG_DOCUMENT_INGESTION = "rag.document_ingestion"
+JOB_TYPE_RAG_WEBSITE_CRAWL = "rag.website_crawl"
 JOB_TYPE_NOTIFICATION_DELIVERY = "notification.send_delivery"
 
 
@@ -135,6 +136,20 @@ class BackgroundJobService:
             {"delivery_id": delivery_id},
             tenant_id=tenant_id,
             idempotency_key=f"{JOB_TYPE_NOTIFICATION_DELIVERY}:{tenant_id}:{delivery_id}",
+        )
+
+    def enqueue_website_crawl(
+        self,
+        *,
+        tenant_id: str,
+        source_id: str,
+    ) -> EnqueueResult:
+        """Queue tenant website/sitemap crawl and indexing work."""
+        return self.enqueue(
+            JOB_TYPE_RAG_WEBSITE_CRAWL,
+            {"source_id": source_id},
+            tenant_id=tenant_id,
+            sensitive_payload=False,
         )
 
     def get_job(self, job_id: str) -> BackgroundJob | None:

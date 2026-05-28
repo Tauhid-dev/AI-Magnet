@@ -16,6 +16,8 @@ import type {
   PortalConversation,
   PortalConversationDetail,
   PortalDocument,
+  PortalWebsiteCrawlPage,
+  PortalWebsiteSource,
   PortalLead,
   PortalWidget,
   WorkerHeartbeat
@@ -26,7 +28,7 @@ const COOKIE_SESSION_TOKEN = "__cookie_session__";
 
 type RequestOptions = {
   token?: string | null;
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;
 };
 
@@ -87,6 +89,42 @@ export const portalApi = {
       method: "POST",
       body: { filename, content, content_type: "text/plain" }
     });
+  },
+  websiteSources(token?: string | null) {
+    return request<PortalWebsiteSource[]>("/business-portal/website-sources", { token });
+  },
+  createWebsiteSource(
+    token: string | null,
+    payload: {
+      source_type: "website" | "sitemap";
+      url: string;
+      max_pages?: number;
+      max_depth?: number;
+    }
+  ) {
+    return request<PortalWebsiteSource>("/business-portal/website-sources", {
+      token,
+      method: "POST",
+      body: payload
+    });
+  },
+  refreshWebsiteSource(token: string | null, sourceId: string) {
+    return request<PortalWebsiteSource>(`/business-portal/website-sources/${sourceId}/refresh`, {
+      token,
+      method: "POST"
+    });
+  },
+  deleteWebsiteSource(token: string | null, sourceId: string) {
+    return request<void>(`/business-portal/website-sources/${sourceId}`, {
+      token,
+      method: "DELETE"
+    });
+  },
+  websiteSourcePages(token: string | null, sourceId: string) {
+    return request<PortalWebsiteCrawlPage[]>(
+      `/business-portal/website-sources/${sourceId}/pages`,
+      { token }
+    );
   },
   leads(token?: string | null) {
     return request<PortalLead[]>("/business-portal/leads", { token });

@@ -208,6 +208,11 @@ Append-only production phase run history.
   - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass.
   - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
   - Secret pattern scan - pass, no matches.
+  - `npm audit --audit-level=high` - pass for high severity; npm reported a moderate transitive PostCSS advisory through Next.js.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
+  - Secret pattern scan - pass, no matches.
   - `python3 -m json.tool production-control/status/production-status.json` - pass.
   - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
   - `git diff --check` - pass.
@@ -216,4 +221,46 @@ Append-only production phase run history.
   - Live VPS worker/Redis smoke, backup/restore drill, TLS/firewall checks, and PostgreSQL/pgvector smoke remain release-gate evidence and were not executed.
   - PR-10 still owns full monitoring, metrics, alerts, queue-age alerting, quotas, and cost controls.
 - Next phase permitted: PR-06.
+- Commit hash: pending until commit.
+
+## 2026-05-28 - PR-06: Secure Website and Sitemap Ingestion
+
+- Instruction received: `Implement production phase PR-06`.
+- Phase selected: PR-06.
+- Branch: `production/pr-06-secure-website-sitemap-ingestion`.
+- Files changed:
+  - Website/crawl models and migration: `backend/app/models/knowledge.py`, `backend/migrations/versions/20260528_0009_pr06_website_sitemap_ingestion.py`.
+  - Secure crawler runtime: `backend/app/rag/web_security.py`, `backend/app/rag/web_fetcher.py`, `backend/app/rag/web_extraction.py`, `backend/app/rag/robots.py`, `backend/app/rag/website_ingestion.py`.
+  - Queue/API/frontend integration: `backend/app/jobs/service.py`, `backend/app/jobs/handlers.py`, `backend/app/api/business_portal.py`, `backend/app/schemas/business_portal.py`, `frontend/app/portal/documents/page.tsx`, `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`.
+  - Config/docs/status: `.env.example`, `.env.production.example`, `docker-compose.yml`, `docker-compose.prod.yml`, `docs/website-ingestion.md`, `docs/security.md`, and production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Added tenant-owned `website_sources` and `website_crawl_pages` tracking plus source metadata on generated knowledge documents.
+  - Added SSRF-safe URL validation for schemes, credentials, localhost, private/link-local/reserved IPs, metadata IPs, DNS results, and redirect targets.
+  - Added bounded HTTP website and sitemap fetching, sitemap parsing through `defusedxml`, HTML text/title/link extraction, simple `robots.txt` `User-agent: *` disallow handling, same-domain filtering, deduplication, refresh, delete, and crawl status visibility.
+  - Added queued `rag.website_crawl` jobs using the PR-05 worker ledger and deterministic test embeddings.
+  - Added business portal APIs and UI for website/sitemap source submission, refresh, delete, crawl history, and generated source document status.
+  - Documented beta source authorization: configured business `website_url` domains are enforced; otherwise authenticated tenant-owner source submission records the approved source domain.
+- Validations run/result:
+  - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+  - `backend/.venv/bin/python -m pytest backend/tests/rag/test_website_ingestion.py` - pass, 13 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 76 tests.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr06_final_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr06_final_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260528_0008` - pass.
+  - `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
+  - `docker compose config` - pass.
+  - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+  - Production compose port check for `postgres` and `redis` - pass, no published host ports.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass.
+  - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+- Known gaps:
+  - PR-07 secure PDF/DOCX document ingestion and gated OCR path are still missing.
+  - Browser/Playwright crawling remains conditional and deferred unless normal HTTP crawling fails target beta sites.
+  - npm audit reports a moderate transitive PostCSS advisory through Next.js, below the configured high-severity CI gate; monitor framework updates.
+  - Controlled real-site crawl smoke, live VPS worker/Redis smoke, backup/restore drill, TLS/firewall checks, and PostgreSQL/pgvector smoke remain release-gate evidence and were not executed.
+  - PR-08 still owns SQL pgvector retrieval, source citations, thresholds, prompt-injection handling, and RAG quality evaluation.
+- Next phase permitted: PR-07.
 - Commit hash: pending until commit.
