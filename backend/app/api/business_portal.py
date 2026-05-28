@@ -17,7 +17,8 @@ from app.api.session_cookies import (
 from app.core.config import Settings, get_settings
 from app.core.rate_limit import enforce_rate_limit
 from app.db.session import get_db_session
-from app.providers.ai.factory import get_embedding_provider
+from app.jobs.service import BackgroundJobService
+from app.models.job import BackgroundJob
 from app.rag.ingestion import RagIngestionService
 from app.schemas.business_portal import (
     BusinessPortalLoginRequest,
@@ -32,6 +33,7 @@ from app.schemas.business_portal import (
     PortalLeadResponse,
     PortalLeadStatusUpdateRequest,
     PortalMessageResponse,
+    PortalJobResponse,
     PortalWidgetKeyCreateRequest,
     PortalWidgetOriginsUpdateRequest,
     PortalUsageEventResponse,
@@ -183,6 +185,7 @@ def list_documents(
             content_type=document.content_type,
             status=document.status,
             error_message=document.error_message,
+            job_id=None,
             created_at=document.created_at,
             updated_at=document.updated_at,
         )
@@ -198,7 +201,7 @@ def create_document(
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> PortalDocumentResponse:
-    """Ingest a text document for the current tenant."""
+    """Queue text document ingestion for the current tenant."""
     enforce_rate_limit(
         request,
         settings,
@@ -206,22 +209,21 @@ def create_document(
         identifiers=[portal_session.tenant_id, portal_session.user_id],
         limit=settings.rate_limit_portal_write_per_minute,
     )
-    embedding_provider = get_embedding_provider(settings)
     document = RagIngestionService(
         session=session,
-        embedding_provider=embedding_provider,
+        embedding_provider=None,
         settings=settings,
-    ).ingest_bytes(
+    ).create_pending_document(
         tenant_id=portal_session.tenant_id,
         filename=payload.filename,
-        content=payload.content.encode("utf-8"),
         content_type=payload.content_type,
     )
-    UsageService(session).record_document_ingestion(
+    job_result = BackgroundJobService(session, settings).enqueue_document_ingestion(
         tenant_id=portal_session.tenant_id,
         document_id=document.id,
-        status=document.status,
-        chunk_count=len(document.chunks),
+        filename=payload.filename,
+        content=payload.content,
+        content_type=payload.content_type,
     )
     session.commit()
     return PortalDocumentResponse(
@@ -230,9 +232,33 @@ def create_document(
         content_type=document.content_type,
         status=document.status,
         error_message=document.error_message,
+        job_id=job_result.job.id,
         created_at=document.created_at,
         updated_at=document.updated_at,
     )
+
+
+@router.get("/jobs", response_model=list[PortalJobResponse])
+def list_jobs(
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+) -> list[PortalJobResponse]:
+    """List recent tenant-owned background jobs."""
+    jobs = BackgroundJobService(session).list_tenant_jobs(portal_session.tenant_id)
+    return [portal_job_response(job) for job in jobs]
+
+
+@router.get("/jobs/{job_id}", response_model=PortalJobResponse)
+def get_job(
+    job_id: str,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+) -> PortalJobResponse:
+    """Return a tenant-owned background job by id."""
+    job = BackgroundJobService(session).get_tenant_job(portal_session.tenant_id, job_id)
+    if job is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+    return portal_job_response(job)
 
 
 @router.get("/leads", response_model=list[PortalLeadResponse])
@@ -601,6 +627,24 @@ def lead_response(lead) -> PortalLeadResponse:
         last_notified_at=lead.last_notified_at,
         notes=lead.notes,
         created_at=lead.created_at,
+    )
+
+
+def portal_job_response(job: BackgroundJob) -> PortalJobResponse:
+    """Map a tenant-owned background job without exposing raw payload content."""
+    return PortalJobResponse(
+        id=job.id,
+        job_type=job.job_type,
+        status=job.status,
+        attempts=job.attempts,
+        max_attempts=job.max_attempts,
+        scheduled_at=job.scheduled_at,
+        started_at=job.started_at,
+        completed_at=job.completed_at,
+        failed_at=job.failed_at,
+        last_error=job.last_error,
+        created_at=job.created_at,
+        updated_at=job.updated_at,
     )
 
 

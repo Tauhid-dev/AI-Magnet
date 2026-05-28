@@ -20,9 +20,9 @@ Required:
 
 ## Gate B: Secure Private Internet Demo
 
-Current status: NO-GO.
+Current status: REPOSITORY READY WITH CONDITIONS.
 
-PR-01 through PR-04 are verified. PR-05 remains required before this gate can move.
+PR-01 through PR-05 are verified in repository-controlled code and tests. Before operating a private internet demo, the owner still needs remote CI evidence plus VPS smoke validation for TLS, firewall exposure, worker health, Redis reachability, backups, restore, and PostgreSQL/pgvector migration checks.
 
 Requires verified:
 

@@ -68,6 +68,7 @@ Rules:
 - Do not log request bodies containing conversation content or contact details.
 - Send only relevant tenant knowledge and recent chat context to the AI provider.
 - Redact likely PII fields before writing audit attributes.
+- Do not expose background job payloads through tenant or admin APIs; sensitive ingestion payloads are redacted after terminal job completion/failure.
 - Use the admin privacy export endpoint for tenant review requests instead of ad hoc database dumps.
 - Use tenant offboarding and confirmed deletion workflows to enforce beta-scope retention/deletion decisions.
 
@@ -120,6 +121,6 @@ Before production:
 - Backup scripts and renewal commands exist, but the first VPS backup/restore drill has not been executed.
 - TLS certificate automation is documented, but the first live certificate issuance has not been executed.
 - Production PostgreSQL/Redis private topology exists in `docker-compose.prod.yml`, but VPS port/firewall validation remains a release check.
-- CI security scans exist, but PR-04 requires their first remote run to pass before relying on them as release evidence.
+- CI security scans exist, but PR-05 requires its first remote run to pass before relying on them as release evidence.
 - Live PostgreSQL plus pgvector migration/startup validation path exists, but has not been run against a VPS/staging database.
-- Worker queue framework is not selected yet; the current worker service is deployment wiring.
+- Durable worker queue code exists, but first live worker/Redis smoke validation remains a release check.

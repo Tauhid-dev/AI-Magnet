@@ -9,8 +9,8 @@ flowchart TB
     PR02["PR-02<br/>Abuse Protection and Widget Origins<br/>verified"]
     PR03["PR-03<br/>Tenant Isolation and Privacy<br/>verified"]
     PR04["PR-04<br/>Production Infra, TLS, Backups<br/>verified"]
-    PR05["PR-05<br/>Real Queue and Worker<br/>next high blocker"]
-    PR06["PR-06<br/>Website and Sitemap Ingestion"]
+    PR05["PR-05<br/>Real Queue and Worker<br/>verified"]
+    PR06["PR-06<br/>Website and Sitemap Ingestion<br/>next"]
     PR07["PR-07<br/>Document/PDF/DOCX Ingestion"]
     PR08["PR-08<br/>Scalable RAG, Citations, Safety"]
     PR09["PR-09<br/>Onboarding and Widget UX"]
@@ -42,14 +42,14 @@ flowchart TB
     classDef notStarted fill:#f1f5f9,stroke:#64748b,color:#0f172a
     classDef gate fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03,PR04 verified
-    class PR05 blocker
-    class PR06,PR07,PR08,PR09,PR10,PR11,PR12 notStarted
+    class PR00,PR01,PR02,PR03,PR04,PR05 verified
+    class PR06 blocker
+    class PR07,PR08,PR09,PR10,PR11,PR12 notStarted
     class GateA,GateB,GateC,GateD,GateE gate
 ```
 
 ## Why Gates Block Public Onboarding
 
-PR-01 through PR-05 cover the minimum security and infrastructure requirements before any private internet demo with real risk exposure: production auth, abuse controls, tenant/privacy integrity, TLS/private networking/backups/secrets/scans, and a real worker. Public onboarding is blocked until these controls are verified because the current MVP can otherwise expose accounts, customer data, provider cost, and operational reliability to preventable failure modes.
+PR-01 through PR-05 cover the minimum repository-controlled security and infrastructure requirements before any private internet demo with real risk exposure: production auth, abuse controls, tenant/privacy integrity, TLS/private networking/backups/secrets/scans, and a real worker. Gate B still needs owner-approved VPS smoke and remote CI evidence before operation. Public onboarding is blocked until later controls are verified because the current MVP can otherwise expose accounts, customer data, provider cost, and operational reliability to preventable failure modes.
 
 Real customer pilots require PR-06 through PR-10 because the product workflow depends on safe ingestion, source-grounded RAG, customer setup UX, and operator visibility. Paid beta additionally requires PR-11. Public production launch requires PR-12 and explicit owner approval.

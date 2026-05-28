@@ -1,0 +1,23 @@
+"""Background job queue primitives."""
+
+from app.jobs.service import (
+    JOB_STATUS_COMPLETED,
+    JOB_STATUS_FAILED,
+    JOB_STATUS_QUEUED,
+    JOB_STATUS_RETRY_SCHEDULED,
+    JOB_STATUS_RUNNING,
+    JOB_TYPE_NOTIFICATION_DELIVERY,
+    JOB_TYPE_RAG_DOCUMENT_INGESTION,
+    BackgroundJobService,
+)
+
+__all__ = [
+    "BackgroundJobService",
+    "JOB_STATUS_COMPLETED",
+    "JOB_STATUS_FAILED",
+    "JOB_STATUS_QUEUED",
+    "JOB_STATUS_RETRY_SCHEDULED",
+    "JOB_STATUS_RUNNING",
+    "JOB_TYPE_NOTIFICATION_DELIVERY",
+    "JOB_TYPE_RAG_DOCUMENT_INGESTION",
+]

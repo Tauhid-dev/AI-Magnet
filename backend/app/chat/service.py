@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.chat.lead_capture import LeadCaptureResult, LeadCaptureService
 from app.core.config import Settings, get_settings
+from app.jobs.service import BackgroundJobService
 from app.leads.workflow import LEAD_STATUS_QUALIFIED, LeadWorkflowService
 from app.models.conversation import Conversation, Message
 from app.notifications.service import NotificationService
@@ -55,6 +56,7 @@ class ChatService:
         self.lead_capture = LeadCaptureService(session)
         self.lead_workflow = LeadWorkflowService(session)
         self.notifications = NotificationService(session, self.settings)
+        self.jobs = BackgroundJobService(session, self.settings)
         self.usage = UsageService(session)
 
     def start_conversation(
@@ -141,11 +143,15 @@ class ChatService:
                     conversation_id=conversation.id,
                     attributes={"lead_id": workflow_result.lead.id},
                 )
-                notification_result = self.notifications.queue_and_send_lead_notification(
+                notification_result = self.notifications.queue_lead_notification(
                     tenant_id=widget_resolution.tenant_id,
                     lead=workflow_result.lead,
                 )
                 if notification_result.delivery is not None:
+                    job_result = self.jobs.enqueue_notification_delivery(
+                        tenant_id=widget_resolution.tenant_id,
+                        delivery_id=notification_result.delivery.id,
+                    )
                     self._log_usage(
                         tenant_id=widget_resolution.tenant_id,
                         event_type=UsageEventType.LEAD_NOTIFICATION_QUEUED,
@@ -153,19 +159,10 @@ class ChatService:
                         attributes={
                             "lead_id": workflow_result.lead.id,
                             "delivery_id": notification_result.delivery.id,
+                            "job_id": job_result.job.id,
                             "delivery_status": notification_result.delivery.status,
                         },
                     )
-                    if notification_result.delivery.status == "sent":
-                        self._log_usage(
-                            tenant_id=widget_resolution.tenant_id,
-                            event_type=UsageEventType.LEAD_NOTIFICATION_SENT,
-                            conversation_id=conversation.id,
-                            attributes={
-                                "lead_id": workflow_result.lead.id,
-                                "delivery_id": notification_result.delivery.id,
-                            },
-                        )
         self._log_usage(
             tenant_id=widget_resolution.tenant_id,
             event_type=UsageEventType.MESSAGE_RECEIVED,

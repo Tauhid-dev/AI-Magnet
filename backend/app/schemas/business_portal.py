@@ -43,6 +43,7 @@ class PortalDocumentResponse(BaseModel):
     content_type: str | None
     status: str
     error_message: str | None
+    job_id: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -144,6 +145,23 @@ class PortalUsageEventResponse(BaseModel):
     event_source: str | None
     attributes: dict[str, Any]
     created_at: datetime
+
+
+class PortalJobResponse(BaseModel):
+    """Tenant-visible background job status without raw payload data."""
+
+    id: str
+    job_type: str
+    status: str
+    attempts: int
+    max_attempts: int
+    scheduled_at: datetime | None
+    started_at: datetime | None
+    completed_at: datetime | None
+    failed_at: datetime | None
+    last_error: str | None
+    created_at: datetime
+    updated_at: datetime
 
 
 class PortalAnalyticsResponse(BaseModel):

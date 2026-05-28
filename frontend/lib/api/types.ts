@@ -19,8 +19,38 @@ export type PortalDocument = {
   content_type: string | null;
   status: string;
   error_message: string | null;
+  job_id: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type BackgroundJob = {
+  id: string;
+  tenant_id?: string | null;
+  queue_name?: string;
+  job_type: string;
+  status: string;
+  attempts: number;
+  max_attempts: number;
+  scheduled_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  failed_at: string | null;
+  locked_by?: string | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkerHeartbeat = {
+  worker_id: string;
+  queue_name: string;
+  status: string;
+  hostname: string | null;
+  pid: number | null;
+  current_job_id: string | null;
+  last_seen_at: string;
+  stopping_at: string | null;
 };
 
 export type PortalLead = {
@@ -193,6 +223,10 @@ export type AdminUsageOverview = {
 export type AdminHealth = {
   status: string;
   database: string;
+  queued_jobs: number;
+  running_jobs: number;
+  failed_jobs: number;
+  active_workers: number;
   app_version: string;
   environment: string;
 };

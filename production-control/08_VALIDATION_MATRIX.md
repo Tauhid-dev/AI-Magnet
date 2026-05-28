@@ -20,7 +20,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Live PostgreSQL plus pgvector validation | PR-04 | optional | optional | required | optional | optional | required | required | partial | validation script exists; first staging/VPS run pending |
 | Dependency/secret/SAST CI scans | PR-04 | optional | optional | optional | optional | required | required | optional | partial | CI jobs added; first remote run pending |
 | Structured logs/correlation IDs/PII-safe logging | PR-04/PR-10 | required | required | optional | optional | required | required | manual log review | partial | request/correlation baseline tests pass; PR-10 owns full monitoring/log review |
-| Real queue worker and job visibility | PR-05 | required | required | required if schema changes | required if UI | required | required | manual worker smoke | not_run | job enqueue/process/retry tests |
+| Real queue worker and job visibility | PR-05 | required | required | required if schema changes | required if UI | required | required | manual worker smoke | pass | job enqueue/process/retry/failure/idempotency tests, job APIs, worker health check config |
 | Website/sitemap ingestion SSRF safety | PR-06 | required | required | required | required | required | required | staging safe crawl | not_run | malicious URL tests and crawl status |
 | Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | not_run | file fixtures and deletion tests |
 | SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | not_run | eval fixtures and source checks |
@@ -90,3 +90,19 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Frontend typecheck/lint/test/build | pass | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |
 | Docker image build | not_run | Attempted locally, but Docker daemon was unavailable |
 | Live VPS cert/backup/restore/pgvector smoke | not_run | Documented for release-gate execution; not executed in PR-04 |
+
+## PR-05 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Durable job model and migration | pass | `backend/app/models/job.py`; `backend/migrations/versions/20260528_0008_pr05_background_jobs.py` |
+| Document ingestion job success and payload redaction | pass | `backend/tests/workers/test_background_jobs.py` |
+| Retry/backoff/idempotency/failure visibility | pass | `backend/tests/workers/test_background_jobs.py` |
+| Notification delivery job processing and usage logging | pass | `backend/tests/workers/test_background_jobs.py` |
+| Tenant/admin job visibility APIs | pass | `backend/tests/business/test_business_portal_api.py`; `backend/tests/admin/test_admin_api.py` |
+| Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 63 passed |
+| Backend compile/lint | pass | `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations`; `backend/.venv/bin/ruff check backend/app backend/tests` |
+| Migration upgrade/downgrade | pass | SQLite upgrade head and downgrade to `20260528_0007` |
+| Compose worker healthcheck config | pass | `docker compose config`; `docker compose --env-file .env.production.example -f docker-compose.prod.yml config`; production data-services port check |
+| Production-control status and visuals | pass | `python3 -m json.tool production-control/status/production-status.json`; SVG parse check; `git diff --check` |
+| Live VPS worker/Redis smoke | not_run | Repository phase does not deploy to VPS; run before Gate B operation |

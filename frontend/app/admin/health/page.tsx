@@ -27,7 +27,7 @@ export default function AdminHealthPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">System health</h1>
-          <p className="text-sm text-muted">Current backend service and database status.</p>
+          <p className="text-sm text-muted">Current backend, worker, and queue status.</p>
         </div>
         {health && <StatusPill value={health.status} />}
       </div>
@@ -49,6 +49,22 @@ export default function AdminHealthPage() {
           <div>
             <div className="text-muted">Status</div>
             <div className="font-semibold">{health?.status ?? "-"}</div>
+          </div>
+          <div>
+            <div className="text-muted">Queued jobs</div>
+            <div className="font-semibold">{health?.queued_jobs ?? "-"}</div>
+          </div>
+          <div>
+            <div className="text-muted">Running jobs</div>
+            <div className="font-semibold">{health?.running_jobs ?? "-"}</div>
+          </div>
+          <div>
+            <div className="text-muted">Failed jobs</div>
+            <div className="font-semibold">{health?.failed_jobs ?? "-"}</div>
+          </div>
+          <div>
+            <div className="text-muted">Active workers</div>
+            <div className="font-semibold">{health?.active_workers ?? "-"}</div>
           </div>
         </div>
       </section>

@@ -29,7 +29,7 @@
   <rect class="bg" width="1600" height="1150" />
   <text class="title" x="60" y="55">AI-Magnet Production Readiness Roadmap</text>
   <text class="subtitle" x="60" y="86">Baseline: 2026-05-23 production readiness 35/100. Internal MVP Demo: GO WITH CONDITIONS. Public/Paid/Production: NO-GO.</text>
-  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Current next permitted phase: PR-05.</text>
+  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Current next permitted phase: PR-06.</text>
 
   <rect class="legend" x="60" y="135" width="1480" height="64" rx="8" />
   <rect x="86" y="156" width="22" height="22" fill="#dcfce7" stroke="#15803d" />
@@ -83,15 +83,17 @@
   <path class="arrow" d="M1080 292 H1140" />
 
   <!-- Row 2 -->
-  <rect class="high" x="60" y="430" width="210" height="105" rx="10" />
+  <rect class="verified" x="60" y="430" width="210" height="105" rx="10" />
   <text class="card-title" x="78" y="460">PR-05</text>
   <text class="card-text" x="78" y="485">Real queue/worker</text>
-  <text class="card-text" x="78" y="508">Next: job visibility</text>
+  <text class="card-text" x="78" y="508">Jobs and retries</text>
+  <rect x="78" y="515" width="70" height="22" rx="5" fill="#15803d" />
+  <text class="badge" x="91" y="531">verified</text>
 
-  <rect class="pending" x="330" y="390" width="230" height="105" rx="10" />
+  <rect class="high" x="330" y="390" width="230" height="105" rx="10" />
   <text class="card-title" x="348" y="420">PR-06</text>
   <text class="card-text" x="348" y="445">Website and sitemap</text>
-  <text class="card-text" x="348" y="468">SSRF-safe crawling</text>
+  <text class="card-text" x="348" y="468">Next: safe crawling</text>
 
   <rect class="pending" x="330" y="525" width="230" height="105" rx="10" />
   <text class="card-title" x="348" y="555">PR-07</text>
@@ -143,8 +145,8 @@
 
   <rect class="gate-no" x="350" y="900" width="260" height="82" rx="10" />
   <text class="card-title" x="368" y="928">Gate B</text>
-  <text class="card-text" x="368" y="952">Private internet demo: NO-GO</text>
-  <text class="card-text" x="368" y="973">Requires PR-01..PR-05</text>
+  <text class="card-text" x="368" y="952">Private demo: conditional</text>
+  <text class="card-text" x="368" y="973">VPS/CI/owner validation</text>
 
   <rect class="gate-no" x="640" y="900" width="260" height="82" rx="10" />
   <text class="card-title" x="658" y="928">Gate C</text>
@@ -161,7 +163,7 @@
   <text class="card-text" x="1238" y="952">Public production launch: NO-GO</text>
   <text class="card-text" x="1238" y="973">Requires PR-12 + owner approval</text>
 
-  <text class="blocker" x="60" y="1045">Current blockers: PR-05 real queue/worker reliability, first VPS TLS/firewall validation, backup/restore drill, live pgvector smoke.</text>
+  <text class="blocker" x="60" y="1045">Current blockers: PR-06/PR-07 ingestion, first VPS TLS/firewall validation, backup/restore drill, worker/Redis and pgvector smoke.</text>
   <text class="small" x="60" y="1074">High blockers ahead: ingestion, RAG safety, onboarding, monitoring, quotas, paid-beta controls.</text>
-  <text class="small" x="60" y="1103">Generated deterministically as a static SVG and updated through PR-04. Keep it consistent with production-control/status/production-status.json.</text>
+  <text class="small" x="60" y="1103">Generated deterministically as a static SVG and updated through PR-05. Keep it consistent with production-control/status/production-status.json.</text>
 </svg>

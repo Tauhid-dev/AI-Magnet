@@ -62,7 +62,7 @@ This PR-00 run inspected current code and config enough to classify the audit bl
 | Live PostgreSQL/pgvector validation missing | High open | Mitigated in PR-04: production-equivalent pgvector migration smoke script added; first staging/VPS run remains release evidence | PR-04 |
 | Dependency/security scans missing | High open | Mitigated in PR-04: CI security job added for pip-audit, npm audit, secret pattern scan, and Bandit; first remote run pending | PR-04 |
 | Structured logs/correlation IDs/PII-safe logging incomplete | High open | Mitigated in PR-04: request/correlation ID middleware and JSON production logs added; full monitoring/log review remains PR-10 | PR-04/PR-10 |
-| Worker queue is placeholder | High open | Still open: `backend/app/workers/runner.py` sleeps and does not consume jobs | PR-05 |
+| Worker queue is placeholder | High open | Resolved in PR-05: durable `background_jobs`, Redis wake signals, worker heartbeats, retry/failure visibility, and async document/notification jobs implemented | PR-05 |
 | Website/sitemap ingestion missing | High open | Still open: no crawler/sitemap ingestion module or UI found | PR-06 |
 | Browser crawler missing | Conditional | Deferred/conditional: implement only if ordinary crawler cannot support required sites | PR-06 optional |
 | PDF/DOCX/OCR ingestion missing | High open | Still open: `backend/app/rag/extraction.py` supports text/Markdown only | PR-07 |
