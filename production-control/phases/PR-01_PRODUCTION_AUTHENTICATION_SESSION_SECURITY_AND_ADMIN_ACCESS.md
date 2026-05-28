@@ -1,6 +1,6 @@
 # PR-01: Production Authentication, Session Security and Admin Access
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -51,17 +51,17 @@ Current business and admin login flows issue signed sessions from known emails w
 
 ## Detailed Tasks
 
-- [ ] Inspect current business/admin auth and frontend token storage.
-- [ ] Record auth/session decision in `05_DECISIONS_LOG.md`.
-- [ ] Add schema/model changes for chosen auth method.
-- [ ] Implement verified business login and logout.
-- [ ] Implement verified admin login, admin protection, and MFA requirement/design.
-- [ ] Replace or harden bearer/localStorage session handling.
-- [ ] Add session revocation and expiration tests.
-- [ ] Add failed login, inactive user, inactive tenant, cross-portal token, and admin role tests.
-- [ ] Update frontend login, logout, and error states.
-- [ ] Update `.env.example` with non-secret configuration.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Inspect current business/admin auth and frontend token storage.
+- [x] Record auth/session decision in `05_DECISIONS_LOG.md`.
+- [x] Add schema/model changes for chosen auth method.
+- [x] Implement verified business login and logout.
+- [x] Implement verified admin login, admin protection, and MFA requirement/design.
+- [x] Replace or harden bearer/localStorage session handling.
+- [x] Add session revocation and expiration tests.
+- [x] Add failed login, inactive user, inactive tenant, cross-portal token, and admin role tests.
+- [x] Update frontend login, logout, and error states.
+- [x] Update `.env.example` with non-secret configuration.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -83,11 +83,23 @@ Use reversible migrations. Document impact on existing demo users and seed data.
 
 ## Evidence
 
-To be filled during PR-01.
+- `backend/app/core/passwords.py`
+- `backend/app/core/totp.py`
+- `backend/migrations/versions/20260528_0006_pr01_auth_security.py`
+- `backend/tests/business/test_business_portal_api.py`
+- `backend/tests/admin/test_admin_api.py`
+- `backend/tests/security/test_security_boundaries.py`
+- `frontend/lib/auth/session.ts`
+- `frontend/lib/auth/admin-session.ts`
+- `frontend/app/login/page.tsx`
+- `frontend/app/admin/login/page.tsx`
+- Validation commands recorded in `production-control/06_EXECUTION_LOG.md`.
 
 ## Blockers
 
-Current blocker: email-only auth remains active.
+None for PR-01 exit gate.
+
+Residual PR-02 blocker: CSRF/CSP/security-header review and public endpoint abuse controls are still required for internet exposure.
 
 ## Completion Criteria
 

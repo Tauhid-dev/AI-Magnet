@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AdminSession } from "../lib/api/types";
+import { adminApi } from "../lib/api/client";
 import {
   clearAdminSession,
   getAdminToken,
@@ -73,7 +74,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold text-ink"
-              onClick={() => {
+              onClick={async () => {
+                await adminApi.logout(getAdminToken()).catch(() => undefined);
                 clearAdminSession();
                 router.replace("/admin/login");
               }}

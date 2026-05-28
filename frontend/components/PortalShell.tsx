@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { BusinessSession } from "../lib/api/types";
+import { portalApi } from "../lib/api/client";
 import { clearSession, getStoredSession, getToken } from "../lib/auth/session";
 
 const navItems = [
@@ -66,7 +67,8 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold text-ink"
-              onClick={() => {
+              onClick={async () => {
+                await portalApi.logout(getToken()).catch(() => undefined);
                 clearSession();
                 router.replace("/login");
               }}

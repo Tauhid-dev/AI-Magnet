@@ -1,10 +1,14 @@
+import time
+
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
 from app.core.config import get_settings
-from app.db.base import Base
+from app.core.passwords import hash_password
+from app.core.totp import generate_totp_code
+from app.db.base import Base, utc_now
 from app.db.session import get_db_session
 from app.main import create_app
 from app.models import AdminUser, AuditLog, BusinessUser, Conversation, Lead, Message, UsageLog
@@ -43,6 +47,9 @@ def seed_admin(session, email: str = "admin@example.test"):
         full_name="Platform Admin",
         role="super_admin",
         status="active",
+        password_hash=hash_password("correct-admin-password"),
+        password_updated_at=utc_now(),
+        mfa_required=False,
     )
     session.add(admin)
     session.flush()
@@ -64,6 +71,8 @@ def seed_business_user(session, name: str, slug: str, email: str):
         full_name=f"{name} Owner",
         role="owner",
         status="active",
+        password_hash=hash_password("correct-password"),
+        password_updated_at=utc_now(),
     )
     session.add(user)
     session.flush()
@@ -71,7 +80,10 @@ def seed_business_user(session, name: str, slug: str, email: str):
 
 
 def admin_login(client: TestClient, email: str = "admin@example.test") -> str:
-    response = client.post("/admin/auth/login", json={"email": email})
+    response = client.post(
+        "/admin/auth/login",
+        json={"email": email, "password": "correct-admin-password"},
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -79,7 +91,7 @@ def admin_login(client: TestClient, email: str = "admin@example.test") -> str:
 def business_login(client: TestClient, slug: str, email: str) -> str:
     response = client.post(
         "/business-portal/auth/login",
-        json={"tenant_slug": slug, "email": email},
+        json={"tenant_slug": slug, "email": email, "password": "correct-password"},
     )
     assert response.status_code == 200
     return response.json()["access_token"]
@@ -108,6 +120,72 @@ def test_admin_login_and_session_use_global_admin_role(monkeypatch):
         inactive_response = client.get("/admin/session", headers=auth_header(token))
 
         assert inactive_response.status_code == 401
+
+
+def test_admin_login_rejects_email_only_and_supports_totp_mfa(monkeypatch):
+    with create_test_session() as session:
+        mfa_secret = "JBSWY3DPEHPK3PXP"
+        admin = seed_admin(session)
+        admin.mfa_required = True
+        admin.mfa_secret = mfa_secret
+        session.commit()
+        client = create_client(session, monkeypatch)
+
+        email_only_response = client.post("/admin/auth/login", json={"email": admin.email})
+        missing_mfa_response = client.post(
+            "/admin/auth/login",
+            json={"email": admin.email, "password": "correct-admin-password"},
+        )
+        code = generate_totp_code(mfa_secret, int(time.time() // 30))
+        mfa_response = client.post(
+            "/admin/auth/login",
+            json={
+                "email": admin.email,
+                "password": "correct-admin-password",
+                "mfa_code": code,
+            },
+        )
+
+        assert email_only_response.status_code == 422
+        assert missing_mfa_response.status_code == 401
+        assert mfa_response.status_code == 200
+
+
+def test_admin_logout_revokes_existing_token(monkeypatch):
+    with create_test_session() as session:
+        seed_admin(session)
+        session.commit()
+        client = create_client(session, monkeypatch)
+        token = admin_login(client)
+
+        logout_response = client.post("/admin/auth/logout", headers=auth_header(token))
+        revoked_response = client.get("/admin/session", headers=auth_header(token))
+
+        assert logout_response.status_code == 204
+        assert revoked_response.status_code == 401
+
+
+def test_admin_locks_after_repeated_failed_passwords(monkeypatch):
+    with create_test_session() as session:
+        admin = seed_admin(session)
+        session.commit()
+        monkeypatch.setenv("AUTH_FAILED_LOGIN_LIMIT", "2")
+        client = create_client(session, monkeypatch)
+
+        for _ in range(2):
+            response = client.post(
+                "/admin/auth/login",
+                json={"email": admin.email, "password": "wrong-password"},
+            )
+            assert response.status_code == 401
+        locked_response = client.post(
+            "/admin/auth/login",
+            json={"email": admin.email, "password": "correct-admin-password"},
+        )
+
+        assert locked_response.status_code == 401
+        assert admin.failed_login_count == 2
+        assert admin.locked_until is not None
 
 
 def test_admin_routes_reject_business_portal_tokens(monkeypatch):
@@ -143,6 +221,7 @@ def test_admin_can_create_manage_tenant_and_audit_actions(monkeypatch):
                 "slug": "northside-electrical",
                 "business_email": "hello@northside.example",
                 "owner_email": "owner@northside.example",
+                "owner_password": "tenant-owner-password",
             },
         )
         tenant_id = create_response.json()["id"]
@@ -156,14 +235,25 @@ def test_admin_can_create_manage_tenant_and_audit_actions(monkeypatch):
             headers=auth_header(token),
             json={"status": "suspended"},
         )
+        missing_owner_password_response = client.post(
+            "/admin/tenants",
+            headers=auth_header(token),
+            json={
+                "name": "Missing Password Co",
+                "slug": "missing-password-co",
+                "owner_email": "owner@missing-password.example",
+            },
+        )
 
         assert create_response.status_code == 200
         assert create_response.json()["users"][0]["email"] == "owner@northside.example"
+        assert session.scalars(select(BusinessUser.password_hash)).first() is not None
         assert list_response.status_code == 200
         assert list_response.json()[0]["slug"] == "northside-electrical"
         assert detail_response.status_code == 200
         assert status_response.status_code == 200
         assert status_response.json()["status"] == "suspended"
+        assert missing_owner_password_response.status_code == 400
         actions = set(session.scalars(select(AuditLog.action)).all())
         assert {
             "tenant_created",

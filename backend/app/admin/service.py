@@ -8,6 +8,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.analytics.service import AnalyticsService
+from app.core.passwords import hash_password
+from app.db.base import utc_now
 from app.models.conversation import Conversation, Message
 from app.models.knowledge import KnowledgeDocument
 from app.models.lead import Lead
@@ -50,6 +52,7 @@ class AdminService:
         business_name: str | None = None,
         business_email: str | None = None,
         owner_email: str | None = None,
+        owner_password: str | None = None,
     ) -> Tenant:
         tenant = Tenant(name=name, slug=slug, status=status)
         self.session.add(tenant)
@@ -70,6 +73,10 @@ class AdminService:
                     full_name=f"{name} Owner",
                     role="owner",
                     status="active",
+                    password_hash=hash_password(owner_password)
+                    if owner_password
+                    else None,
+                    password_updated_at=utc_now() if owner_password else None,
                 )
             )
             self.session.flush()

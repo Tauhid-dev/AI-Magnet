@@ -80,7 +80,7 @@
       overflow: hidden;
       margin-top: 10px;
     }
-    .progress span { display: block; height: 100%; background: var(--green); width: 8%; }
+    .progress span { display: block; height: 100%; background: var(--green); width: 15%; }
     .blockers {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -118,19 +118,19 @@
     <section class="grid summary">
       <div class="card">
         <h2>Current State</h2>
-        <div class="metric">PR-00 verified</div>
-        <p>Production-control framework is ready. No runtime remediation has been implemented in PR-00.</p>
+        <div class="metric">PR-01 verified</div>
+        <p>Production auth is implemented. Public abuse protection and infrastructure gates remain blocked.</p>
       </div>
       <div class="card">
         <h2>Next Permitted Phase</h2>
-        <div class="metric">PR-01</div>
-        <p>Production Authentication, Session Security and Admin Access.</p>
+        <div class="metric">PR-02</div>
+        <p>Public API Abuse Protection, Widget Origin Controls and API Security.</p>
       </div>
       <div class="card">
         <h2>Progress</h2>
-        <div class="metric">1 / 13 phases</div>
+        <div class="metric">2 / 13 phases</div>
         <div class="progress"><span></span></div>
-        <p>Only the roadmap and memory phase is verified.</p>
+        <p>PR-00 and PR-01 are verified.</p>
       </div>
       <div class="card">
         <h2>Launch Gate</h2>
@@ -142,8 +142,6 @@
     <section>
       <h2>Critical Blockers</h2>
       <div class="blockers">
-        <div class="blocker">Production business authentication</div>
-        <div class="blocker">Production administrator authentication</div>
         <div class="blocker">Public endpoint rate limiting and abuse controls</div>
         <div class="blocker">PostgreSQL must not publish host port 5432 in production</div>
         <div class="blocker">Redis must not publish host port 6379 in production</div>
@@ -156,8 +154,8 @@
       <h2>Phase Cards</h2>
       <div class="grid phase-grid">
         <div class="card phase verified"><h3>PR-00: Roadmap and Memory</h3><p>Status: verified. Exit gate: future Codex can execute PR-01 from persisted context.</p></div>
-        <div class="card phase critical"><h3>PR-01: Auth and Sessions</h3><p>Status: not started. Removes email-only auth and sets secure session strategy.</p></div>
-        <div class="card phase critical"><h3>PR-02: Abuse Protection</h3><p>Status: not started. Adds rate limits, widget origins, CORS/CSRF/security review.</p></div>
+        <div class="card phase verified"><h3>PR-01: Auth and Sessions</h3><p>Status: verified. Password auth, admin MFA support, cookie sessions, lockout, and revocation are implemented.</p></div>
+        <div class="card phase critical"><h3>PR-02: Abuse Protection</h3><p>Status: next, not started. Adds rate limits, widget origins, CORS/CSRF/security review.</p></div>
         <div class="card phase high"><h3>PR-03: Tenant DB and Privacy</h3><p>Status: not started. Adds tenant integrity, export/delete/offboarding, global audit handling.</p></div>
         <div class="card phase critical"><h3>PR-04: Production Infrastructure</h3><p>Status: not started. Adds TLS/HSTS, private DB/Redis, secrets, backups, CI scans.</p></div>
         <div class="card phase high"><h3>PR-05: Queue and Worker</h3><p>Status: not started. Replaces placeholder worker with real queued jobs and visibility.</p></div>

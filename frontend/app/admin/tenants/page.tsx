@@ -13,6 +13,7 @@ export default function AdminTenantsPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerPassword, setOwnerPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -41,11 +42,13 @@ export default function AdminTenantsPage() {
         name,
         slug,
         owner_email: ownerEmail || undefined,
-        business_email: ownerEmail || undefined
+        business_email: ownerEmail || undefined,
+        owner_password: ownerPassword || undefined
       });
       setName("");
       setSlug("");
       setOwnerEmail("");
+      setOwnerPassword("");
       await loadTenants();
     } catch {
       setError("Could not create tenant.");
@@ -63,7 +66,7 @@ export default function AdminTenantsPage() {
       {error && <div className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
       <form
         onSubmit={handleCreate}
-        className="mt-6 grid gap-3 rounded-md border border-line bg-panel p-4 md:grid-cols-4"
+        className="mt-6 grid gap-3 rounded-md border border-line bg-panel p-4 md:grid-cols-5"
       >
         <input
           className="rounded-md border border-line px-3 py-2"
@@ -84,6 +87,14 @@ export default function AdminTenantsPage() {
           placeholder="owner@example.com"
           value={ownerEmail}
           onChange={(event) => setOwnerEmail(event.target.value)}
+        />
+        <input
+          className="rounded-md border border-line px-3 py-2"
+          placeholder="Owner password"
+          type="password"
+          value={ownerPassword}
+          onChange={(event) => setOwnerPassword(event.target.value)}
+          minLength={8}
         />
         <button
           type="submit"

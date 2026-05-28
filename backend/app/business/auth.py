@@ -1,4 +1,4 @@
-"""Signed session helpers for the MVP business portal."""
+"""Password-authenticated session helpers for the business portal."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
+from app.core.passwords import verify_password
 from app.models.tenant import BusinessUser, Tenant
 
 
@@ -27,6 +28,7 @@ class BusinessPortalSession:
     user_id: str
     email: str
     role: str
+    session_version: int
 
 
 class BusinessPortalAuthService:
@@ -36,8 +38,13 @@ class BusinessPortalAuthService:
         self.session = session
         self.settings = settings or get_settings()
 
-    def login(self, tenant_slug: str, email: str) -> tuple[str, BusinessPortalSession] | None:
-        """Issue a signed session for an active business user."""
+    def login(
+        self,
+        tenant_slug: str,
+        email: str,
+        password: str,
+    ) -> tuple[str, BusinessPortalSession] | None:
+        """Issue a signed session for an active business user with a valid password."""
         statement = (
             select(Tenant, BusinessUser)
             .join(BusinessUser, BusinessUser.tenant_id == Tenant.id)
@@ -52,6 +59,12 @@ class BusinessPortalAuthService:
         if row is None:
             return None
         tenant, user = row
+        if self._is_locked(user.locked_until):
+            return None
+        if not verify_password(password, user.password_hash):
+            self._register_failed_login(user)
+            return None
+        self._register_successful_login(user)
         session_context = BusinessPortalSession(
             tenant_id=tenant.id,
             tenant_name=tenant.name,
@@ -59,6 +72,7 @@ class BusinessPortalAuthService:
             user_id=user.id,
             email=user.email,
             role=user.role,
+            session_version=user.session_version,
         )
         return self.create_token(session_context), session_context
 
@@ -74,6 +88,7 @@ class BusinessPortalAuthService:
             "user_id": session_context.user_id,
             "email": session_context.email,
             "role": session_context.role,
+            "session_version": session_context.session_version,
             "exp": int(expires_at.timestamp()),
         }
         encoded_payload = self._b64encode(json.dumps(payload, separators=(",", ":")).encode())
@@ -95,7 +110,8 @@ class BusinessPortalAuthService:
             return None
         if int(payload.get("exp", 0)) < int(datetime.now(timezone.utc).timestamp()):
             return None
-        if not self._active_user_exists(payload):
+        user = self._active_user(payload)
+        if user is None:
             return None
         return BusinessPortalSession(
             tenant_id=payload["tenant_id"],
@@ -104,11 +120,25 @@ class BusinessPortalAuthService:
             user_id=payload["user_id"],
             email=payload["email"],
             role=payload["role"],
+            session_version=int(payload["session_version"]),
         )
 
-    def _active_user_exists(self, payload: dict[str, Any]) -> bool:
+    def revoke_sessions(self, user_id: str, tenant_id: str) -> bool:
+        """Revoke all sessions for a business user by bumping the token version."""
+        statement = select(BusinessUser).where(
+            BusinessUser.id == user_id,
+            BusinessUser.tenant_id == tenant_id,
+        )
+        user = self.session.scalars(statement).first()
+        if user is None:
+            return False
+        user.session_version += 1
+        self.session.flush()
+        return True
+
+    def _active_user(self, payload: dict[str, Any]) -> BusinessUser | None:
         statement = (
-            select(BusinessUser.id)
+            select(BusinessUser)
             .join(Tenant, Tenant.id == BusinessUser.tenant_id)
             .where(
                 BusinessUser.id == payload.get("user_id"),
@@ -118,7 +148,37 @@ class BusinessPortalAuthService:
                 Tenant.status == "active",
             )
         )
-        return self.session.scalars(statement).first() is not None
+        user = self.session.scalars(statement).first()
+        if user is None:
+            return None
+        try:
+            token_session_version = int(payload["session_version"])
+        except (KeyError, TypeError, ValueError):
+            return None
+        if user.session_version != token_session_version:
+            return None
+        return user
+
+    def _register_failed_login(self, user: BusinessUser) -> None:
+        user.failed_login_count += 1
+        if user.failed_login_count >= self.settings.auth_failed_login_limit:
+            user.locked_until = datetime.now(timezone.utc) + timedelta(
+                minutes=self.settings.auth_lockout_minutes
+            )
+        self.session.flush()
+
+    def _register_successful_login(self, user: BusinessUser) -> None:
+        user.failed_login_count = 0
+        user.locked_until = None
+        user.last_login_at = datetime.now(timezone.utc)
+        self.session.flush()
+
+    def _is_locked(self, locked_until: datetime | None) -> bool:
+        if locked_until is None:
+            return False
+        if locked_until.tzinfo is None:
+            locked_until = locked_until.replace(tzinfo=timezone.utc)
+        return locked_until > datetime.now(timezone.utc)
 
     def _sign(self, encoded_payload: str) -> str:
         digest = hmac.new(

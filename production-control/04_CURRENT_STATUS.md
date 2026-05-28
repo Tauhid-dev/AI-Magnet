@@ -8,19 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-PR-00: Visible Roadmap, Persistent Memory and Verified Baseline.
+PR-02: Public API Abuse Protection, Widget Origin Controls and API Security.
 
-Status: verified after creation of this production-control system.
+Status: not_started. PR-01 is verified and PR-02 is the next permitted phase.
 
 ## Last Completed Phase
 
-PR-00.
+PR-01.
 
 ## Next Permitted Phase
 
-`Implement production phase PR-01`
+`Implement production phase PR-02`
 
-Do not start PR-02 or later until PR-01 is implemented or explicitly marked blocked with safe independent subtasks documented.
+Do not start PR-03 or later until PR-02 is implemented or explicitly marked blocked with safe independent subtasks documented.
 
 ## Production Go/No-Go
 
@@ -36,12 +36,10 @@ Do not start PR-02 or later until PR-01 is implemented or explicitly marked bloc
 
 - Audit date: 2026-05-23.
 - Production readiness score: 35/100.
-- Current PR-00 did not implement production feature remediation.
+- PR-01 implemented production password auth, admin MFA support, HttpOnly browser session cookies, session revocation, failed-login lockout, frontend login/logout updates, and validation tests.
 
 ## Unresolved Critical Risks
 
-- Production business authentication is missing.
-- Production administrator authentication is missing.
 - Public endpoint rate limiting and abuse controls are missing.
 - PostgreSQL must not publish host port 5432 in production.
 - Redis must not publish host port 6379 in production and must be protected on private networking.
@@ -50,7 +48,7 @@ Do not start PR-02 or later until PR-01 is implemented or explicitly marked bloc
 
 ## Unresolved High Risks
 
-- Secure browser session/token strategy is not implemented.
+- CSRF/CSP review and broader public API security hardening remain PR-02 work.
 - Production secret validation is incomplete.
 - Live PostgreSQL plus pgvector validation is missing.
 - Tenant privacy lifecycle, export, delete, and offboarding are missing.
@@ -65,13 +63,17 @@ Do not start PR-02 or later until PR-01 is implemented or explicitly marked bloc
 
 ## Last Validation Commands
 
-PR-00 is documentation/status setup only. Validation commands run during PR-00:
+Latest PR-01 validation commands:
 
+- `python3 -m pytest backend/tests` - pass, 48 tests.
+- `python3 -m ruff check backend` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr01_alembic.db python3 -m alembic -c backend/alembic.ini upgrade head` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr01_alembic.db python3 -m alembic -c backend/alembic.ini downgrade base` - pass.
+- `npm run typecheck` - pass.
+- `npm test` - pass.
+- `npm run lint` - pass.
+- `npm run build` - pass.
 - `python3 -m json.tool production-control/status/production-status.json` - pass.
-- `git diff --check` - pass.
-- Static review of `production-control/visual/production-status-dashboard.html` - pass.
-- Static review of `production-control/visual/production-roadmap-status.svg` - pass.
-- Product runtime code unchanged - pass; PR-00 changes are `AGENTS.md` and `production-control/**`.
 
 ## Important Links
 

@@ -8,6 +8,8 @@ import { storeAdminSession } from "../../../lib/auth/admin-session";
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@example.test");
+  const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +18,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await adminApi.login(email);
+      const response = await adminApi.login(email, password, mfaCode || undefined);
       storeAdminSession(response.access_token, response.session);
       router.replace("/admin");
     } catch {
@@ -41,6 +43,31 @@ export default function AdminLoginPage() {
           className="mt-2 w-full rounded-md border border-line px-3 py-2"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+        />
+        <label className="mt-4 block text-sm font-medium text-muted" htmlFor="password">
+          Password
+        </label>
+        <input
+          id="password"
+          className="mt-2 w-full rounded-md border border-line px-3 py-2"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="current-password"
+          type="password"
+          minLength={8}
+          required
+        />
+        <label className="mt-4 block text-sm font-medium text-muted" htmlFor="mfa-code">
+          MFA code
+        </label>
+        <input
+          id="mfa-code"
+          className="mt-2 w-full rounded-md border border-line px-3 py-2"
+          value={mfaCode}
+          onChange={(event) => setMfaCode(event.target.value)}
+          autoComplete="one-time-code"
+          inputMode="numeric"
+          placeholder="Required when enabled"
         />
         {error && <div className="mt-4 text-sm font-medium text-red-700">{error}</div>}
         <button

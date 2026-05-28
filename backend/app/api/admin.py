@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.admin.auth import AdminPortalAuthService, AdminPortalSession
 from app.admin.service import AdminService, TenantMetrics
+from app.api.session_cookies import clear_session_cookie, get_session_token, set_session_cookie
 from app.audit.service import AuditService
 from app.core.config import Settings, get_settings
 from app.db.session import get_db_session
@@ -43,17 +44,22 @@ ALLOWED_TENANT_STATUSES = {"active", "suspended", "inactive"}
 
 
 def get_current_admin_session(
+    request: Request,
     authorization: str | None = Header(default=None),
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> AdminPortalSession:
-    """Resolve a bearer token to a super admin session."""
-    if not authorization or not authorization.lower().startswith("bearer "):
+    """Resolve a cookie or bearer token to a super admin session."""
+    token = get_session_token(
+        request,
+        authorization,
+        cookie_name=settings.admin_portal_cookie_name,
+    )
+    if token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing super admin session",
         )
-    token = authorization.split(" ", 1)[1]
     admin_session = AdminPortalAuthService(session, settings).verify_token(token)
     if admin_session is None:
         raise HTTPException(
@@ -76,21 +82,50 @@ def admin_session_response(admin_session: AdminPortalSession) -> AdminSessionRes
 @router.post("/auth/login", response_model=AdminLoginResponse)
 def login(
     payload: AdminLoginRequest,
+    response: Response,
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> AdminLoginResponse:
     """Create a signed session for an active super admin."""
-    result = AdminPortalAuthService(session, settings).login(email=payload.email)
+    result = AdminPortalAuthService(session, settings).login(
+        email=payload.email,
+        password=payload.password,
+        mfa_code=payload.mfa_code,
+    )
     if result is None:
+        session.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid super admin login",
         )
     token, admin_session = result
+    session.commit()
+    set_session_cookie(
+        response,
+        name=settings.admin_portal_cookie_name,
+        token=token,
+        max_age_seconds=settings.admin_portal_session_ttl_minutes * 60,
+        settings=settings,
+    )
     return AdminLoginResponse(
         access_token=token,
         session=admin_session_response(admin_session),
     )
+
+
+@router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    response: Response,
+    admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> Response:
+    """Revoke current admin sessions and clear the browser cookie."""
+    AdminPortalAuthService(session, settings).revoke_sessions(admin_session.admin_id)
+    session.commit()
+    clear_session_cookie(response, name=settings.admin_portal_cookie_name, settings=settings)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @router.get("/session", response_model=AdminSessionResponse)
@@ -123,6 +158,11 @@ def create_tenant(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unsupported tenant status",
         )
+    if payload.owner_email and not payload.owner_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Owner password is required when owner email is provided",
+        )
     service = AdminService(session)
     try:
         tenant = service.create_tenant(
@@ -132,6 +172,7 @@ def create_tenant(
             business_name=payload.business_name,
             business_email=payload.business_email,
             owner_email=payload.owner_email,
+            owner_password=payload.owner_password,
         )
         AuditService(session).record_admin_action(
             tenant_id=tenant.id,

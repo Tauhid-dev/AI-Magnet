@@ -4,7 +4,8 @@ from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
 from app.core.config import get_settings
-from app.db.base import Base
+from app.core.passwords import hash_password
+from app.db.base import Base, utc_now
 from app.db.session import get_db_session
 from app.main import create_app
 from app.models import BusinessUser, Conversation, KnowledgeDocument, Lead, Message
@@ -53,6 +54,8 @@ def seed_business_user(session, name: str, slug: str, email: str):
         full_name=f"{name} Owner",
         role="owner",
         status="active",
+        password_hash=hash_password("correct-password"),
+        password_updated_at=utc_now(),
     )
     session.add(user)
     session.flush()
@@ -62,7 +65,7 @@ def seed_business_user(session, name: str, slug: str, email: str):
 def login(client: TestClient, slug: str, email: str) -> str:
     response = client.post(
         "/business-portal/auth/login",
-        json={"tenant_slug": slug, "email": email},
+        json={"tenant_slug": slug, "email": email, "password": "correct-password"},
     )
     assert response.status_code == 200
     return response.json()["access_token"]
@@ -100,6 +103,89 @@ def test_business_portal_login_and_session_are_tenant_scoped(monkeypatch):
         )
 
         assert inactive_response.status_code == 401
+
+
+def test_business_portal_rejects_email_only_and_wrong_password(monkeypatch):
+    with create_test_session() as session:
+        seed_business_user(
+            session,
+            "Demo Plumbing",
+            "demo-plumbing",
+            "owner@example.test",
+        )
+        session.commit()
+        client = create_client(session, monkeypatch)
+
+        email_only_response = client.post(
+            "/business-portal/auth/login",
+            json={"tenant_slug": "demo-plumbing", "email": "owner@example.test"},
+        )
+        wrong_password_response = client.post(
+            "/business-portal/auth/login",
+            json={
+                "tenant_slug": "demo-plumbing",
+                "email": "owner@example.test",
+                "password": "wrong-password",
+            },
+        )
+
+        assert email_only_response.status_code == 422
+        assert wrong_password_response.status_code == 401
+
+
+def test_business_portal_logout_revokes_existing_token(monkeypatch):
+    with create_test_session() as session:
+        seed_business_user(
+            session,
+            "Demo Plumbing",
+            "demo-plumbing",
+            "owner@example.test",
+        )
+        session.commit()
+        client = create_client(session, monkeypatch)
+        token = login(client, "demo-plumbing", "owner@example.test")
+
+        logout_response = client.post("/business-portal/auth/logout", headers=auth_header(token))
+        revoked_response = client.get("/business-portal/session", headers=auth_header(token))
+
+        assert logout_response.status_code == 204
+        assert revoked_response.status_code == 401
+
+
+def test_business_portal_locks_after_repeated_failed_passwords(monkeypatch):
+    with create_test_session() as session:
+        _tenant, user = seed_business_user(
+            session,
+            "Demo Plumbing",
+            "demo-plumbing",
+            "owner@example.test",
+        )
+        session.commit()
+        monkeypatch.setenv("AUTH_FAILED_LOGIN_LIMIT", "2")
+        client = create_client(session, monkeypatch)
+
+        for _ in range(2):
+            response = client.post(
+                "/business-portal/auth/login",
+                json={
+                    "tenant_slug": "demo-plumbing",
+                    "email": "owner@example.test",
+                    "password": "wrong-password",
+                },
+            )
+            assert response.status_code == 401
+        locked_response = client.post(
+            "/business-portal/auth/login",
+            json={
+                "tenant_slug": "demo-plumbing",
+                "email": "owner@example.test",
+                "password": "correct-password",
+            },
+        )
+
+        assert locked_response.status_code == 401
+        assert user.failed_login_count == 2
+        assert user.locked_until is not None
 
 
 def test_business_portal_blocks_cross_tenant_lead_and_conversation(monkeypatch):

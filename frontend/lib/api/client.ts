@@ -18,9 +18,10 @@ import type {
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+const COOKIE_SESSION_TOKEN = "__cookie_session__";
 
 type RequestOptions = {
-  token?: string;
+  token?: string | null;
   method?: "GET" | "POST" | "PATCH";
   body?: unknown;
 };
@@ -29,94 +30,111 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const headers: Record<string, string> = {
     "Content-Type": "application/json"
   };
-  if (options.token) {
+  if (options.token && options.token !== COOKIE_SESSION_TOKEN) {
     headers.Authorization = `Bearer ${options.token}`;
   }
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method || "GET",
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
-    cache: "no-store"
+    cache: "no-store",
+    credentials: "include"
   });
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status}`);
+  }
+  if (response.status === 204) {
+    return undefined as T;
   }
   return response.json() as Promise<T>;
 }
 
 export const portalApi = {
-  login(tenantSlug: string, email: string) {
+  login(tenantSlug: string, email: string, password: string) {
     return request<LoginResponse>("/business-portal/auth/login", {
       method: "POST",
-      body: { tenant_slug: tenantSlug, email }
+      body: { tenant_slug: tenantSlug, email, password }
     });
   },
-  session(token: string) {
+  logout(token?: string | null) {
+    return request<void>("/business-portal/auth/logout", {
+      token,
+      method: "POST"
+    });
+  },
+  session(token?: string | null) {
     return request<BusinessSession>("/business-portal/session", { token });
   },
-  documents(token: string) {
+  documents(token?: string | null) {
     return request<PortalDocument[]>("/business-portal/documents", { token });
   },
-  uploadDocument(token: string, filename: string, content: string) {
+  uploadDocument(token: string | null, filename: string, content: string) {
     return request<PortalDocument>("/business-portal/documents", {
       token,
       method: "POST",
       body: { filename, content, content_type: "text/plain" }
     });
   },
-  leads(token: string) {
+  leads(token?: string | null) {
     return request<PortalLead[]>("/business-portal/leads", { token });
   },
-  updateLeadStatus(token: string, leadId: string, status: string) {
+  updateLeadStatus(token: string | null, leadId: string, status: string) {
     return request<PortalLead>(`/business-portal/leads/${leadId}/status`, {
       token,
       method: "PATCH",
       body: { status }
     });
   },
-  conversations(token: string) {
+  conversations(token?: string | null) {
     return request<PortalConversation[]>("/business-portal/conversations", { token });
   },
-  conversation(token: string, conversationId: string) {
+  conversation(token: string | null, conversationId: string) {
     return request<PortalConversationDetail>(
       `/business-portal/conversations/${conversationId}`,
       { token }
     );
   },
-  widget(token: string) {
+  widget(token?: string | null) {
     return request<PortalWidget>("/business-portal/widget", { token });
   },
-  createWidgetKey(token: string) {
+  createWidgetKey(token?: string | null) {
     return request<PortalWidget>("/business-portal/widget/keys", {
       token,
       method: "POST"
     });
   },
-  analytics(token: string) {
+  analytics(token?: string | null) {
     return request<PortalAnalytics>("/business-portal/analytics", { token });
   }
 };
 
 export const adminApi = {
-  login(email: string) {
+  login(email: string, password: string, mfaCode?: string) {
     return request<AdminLoginResponse>("/admin/auth/login", {
       method: "POST",
-      body: { email }
+      body: { email, password, mfa_code: mfaCode || undefined }
     });
   },
-  session(token: string) {
+  logout(token?: string | null) {
+    return request<void>("/admin/auth/logout", {
+      token,
+      method: "POST"
+    });
+  },
+  session(token?: string | null) {
     return request<AdminSession>("/admin/session", { token });
   },
-  tenants(token: string) {
+  tenants(token?: string | null) {
     return request<AdminTenantSummary[]>("/admin/tenants", { token });
   },
   createTenant(
-    token: string,
+    token: string | null,
     payload: {
       name: string;
       slug: string;
       business_email?: string;
       owner_email?: string;
+      owner_password?: string;
     }
   ) {
     return request<AdminTenantDetail>("/admin/tenants", {
@@ -125,28 +143,28 @@ export const adminApi = {
       body: payload
     });
   },
-  tenant(token: string, tenantId: string) {
+  tenant(token: string | null, tenantId: string) {
     return request<AdminTenantDetail>(`/admin/tenants/${tenantId}`, { token });
   },
-  updateTenantStatus(token: string, tenantId: string, status: string) {
+  updateTenantStatus(token: string | null, tenantId: string, status: string) {
     return request<AdminTenantDetail>(`/admin/tenants/${tenantId}/status`, {
       token,
       method: "PATCH",
       body: { status }
     });
   },
-  supportContext(token: string, tenantId: string) {
+  supportContext(token: string | null, tenantId: string) {
     return request<AdminSupportContext>(`/admin/tenants/${tenantId}/support-context`, {
       token
     });
   },
-  usage(token: string) {
+  usage(token?: string | null) {
     return request<AdminUsageOverview>("/admin/usage", { token });
   },
-  health(token: string) {
+  health(token?: string | null) {
     return request<AdminHealth>("/admin/health", { token });
   },
-  auditLogs(token: string) {
+  auditLogs(token?: string | null) {
     return request<AdminAuditLog[]>("/admin/audit-logs", { token });
   }
 };
