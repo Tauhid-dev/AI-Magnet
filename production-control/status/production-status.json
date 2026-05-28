@@ -1,0 +1,407 @@
+{
+  "schema_version": "1.0",
+  "last_updated": "2026-05-28",
+  "source_of_truth": "production-control/status/production-status.json",
+  "baseline": {
+    "audit_date": "2026-05-23",
+    "production_readiness_score": 35,
+    "internal_mvp_demo": "go_with_conditions",
+    "public_paid_production": "no_go"
+  },
+  "current": {
+    "active_phase": "PR-00",
+    "last_completed_phase": "PR-00",
+    "next_permitted_phase": "PR-01",
+    "production_go_no_go": "NO-GO beyond controlled internal demo with synthetic/sample data",
+    "overall_status": "production_remediation_framework_ready"
+  },
+  "launch_gates": [
+    {
+      "gate_id": "A",
+      "title": "Controlled Internal Demo",
+      "status": "go_with_conditions",
+      "requirements": [
+        "Synthetic/sample data only",
+        "No real customer data",
+        "No public production claim"
+      ],
+      "evidence_links": [
+        "production-control/09_RELEASE_GATES.md"
+      ]
+    },
+    {
+      "gate_id": "B",
+      "title": "Secure Private Internet Demo",
+      "status": "no_go",
+      "requires_verified_phases": [
+        "PR-01",
+        "PR-02",
+        "PR-03",
+        "PR-04",
+        "PR-05"
+      ],
+      "evidence_links": [
+        "production-control/09_RELEASE_GATES.md"
+      ]
+    },
+    {
+      "gate_id": "C",
+      "title": "Real Customer Pilot",
+      "status": "no_go",
+      "requires_verified_phases": [
+        "PR-01",
+        "PR-02",
+        "PR-03",
+        "PR-04",
+        "PR-05",
+        "PR-06",
+        "PR-07",
+        "PR-08",
+        "PR-09",
+        "PR-10"
+      ],
+      "evidence_links": [
+        "production-control/09_RELEASE_GATES.md"
+      ]
+    },
+    {
+      "gate_id": "D",
+      "title": "Paid Beta",
+      "status": "no_go",
+      "requires_verified_phases": [
+        "PR-01",
+        "PR-02",
+        "PR-03",
+        "PR-04",
+        "PR-05",
+        "PR-06",
+        "PR-07",
+        "PR-08",
+        "PR-09",
+        "PR-10",
+        "PR-11"
+      ],
+      "evidence_links": [
+        "production-control/09_RELEASE_GATES.md"
+      ]
+    },
+    {
+      "gate_id": "E",
+      "title": "Public Production Launch",
+      "status": "no_go",
+      "requires_verified_phases": [
+        "PR-12"
+      ],
+      "requires_owner_approval": true,
+      "evidence_links": [
+        "production-control/09_RELEASE_GATES.md"
+      ]
+    }
+  ],
+  "phases": [
+    {
+      "phase_id": "PR-00",
+      "title": "Visible Roadmap, Persistent Memory and Verified Baseline",
+      "status": "verified",
+      "completion_percent": 100,
+      "dependencies": [],
+      "priority": "critical",
+      "criticality": "framework",
+      "validation_status": "pass",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/00_PRODUCTION_READINESS_CHARTER.md",
+        "production-control/02_MASTER_PRODUCTION_ROADMAP.md",
+        "production-control/visual/production-status-dashboard.html"
+      ],
+      "branch": "production/pr-00-roadmap-memory-system",
+      "commit": "pending"
+    },
+    {
+      "phase_id": "PR-01",
+      "title": "Production Authentication, Session Security and Admin Access",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-00"
+      ],
+      "priority": "p0",
+      "criticality": "critical_launch_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-01_PRODUCTION_AUTHENTICATION_SESSION_SECURITY_AND_ADMIN_ACCESS.md",
+        "docs/audit/2026-05-23-end-to-end/security-findings.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-02",
+      "title": "Public API Abuse Protection, Widget Origin Controls and API Security",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-01"
+      ],
+      "priority": "p0",
+      "criticality": "critical_launch_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-02_PUBLIC_API_ABUSE_PROTECTION_WIDGET_ORIGIN_CONTROLS_AND_API_SECURITY.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-03",
+      "title": "Tenant Isolation, Data Lifecycle, Privacy and Database Integrity",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-01",
+        "PR-02"
+      ],
+      "priority": "p0",
+      "criticality": "high_launch_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-03_TENANT_ISOLATION_DATA_LIFECYCLE_PRIVACY_AND_DATABASE_INTEGRITY.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-04",
+      "title": "Production Infrastructure, TLS, Secrets, Backups and CI Security",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-01",
+        "PR-02",
+        "PR-03"
+      ],
+      "priority": "p0",
+      "criticality": "critical_launch_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-04_PRODUCTION_INFRASTRUCTURE_TLS_SECRETS_BACKUPS_AND_CI_SECURITY.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-05",
+      "title": "Real Async Queue, Worker Reliability and Job Visibility",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-04"
+      ],
+      "priority": "p0",
+      "criticality": "high_launch_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-05_REAL_ASYNC_QUEUE_WORKER_RELIABILITY_AND_JOB_VISIBILITY.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-06",
+      "title": "Secure Website and Sitemap Ingestion",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-05"
+      ],
+      "priority": "p1",
+      "criticality": "product_workflow_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-06_SECURE_WEBSITE_AND_SITEMAP_INGESTION.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-07",
+      "title": "Secure Document Ingestion, Storage and OCR Path",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-05"
+      ],
+      "priority": "p1",
+      "criticality": "product_workflow_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-07_SECURE_DOCUMENT_INGESTION_STORAGE_AND_OCR_PATH.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-08",
+      "title": "Scalable RAG Retrieval, Citations, Safety and Quality Evaluation",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-06",
+        "PR-07"
+      ],
+      "priority": "p1",
+      "criticality": "rag_quality_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-08_SCALABLE_RAG_RETRIEVAL_CITATIONS_SAFETY_AND_QUALITY_EVALUATION.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-09",
+      "title": "Customer Onboarding, Agent Testing and Widget Installation Experience",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-08"
+      ],
+      "priority": "p1",
+      "criticality": "beta_workflow_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-09_CUSTOMER_ONBOARDING_AGENT_TESTING_AND_WIDGET_INSTALLATION_EXPERIENCE.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-10",
+      "title": "Monitoring, Analytics, Metering, Quotas and Cost Protection",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-09"
+      ],
+      "priority": "p1",
+      "criticality": "pilot_operations_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-10_MONITORING_ANALYTICS_METERING_QUOTAS_AND_COST_PROTECTION.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-11",
+      "title": "Billing, Compliance Controls and Paid Beta Readiness",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-10"
+      ],
+      "priority": "p1",
+      "criticality": "paid_beta_blocker",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-11_BILLING_COMPLIANCE_CONTROLS_AND_PAID_BETA_READINESS.md"
+      ],
+      "branch": null,
+      "commit": null
+    },
+    {
+      "phase_id": "PR-12",
+      "title": "Final Production Validation, VPS Deployment Runbook and Launch Gate",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-11"
+      ],
+      "priority": "p0",
+      "criticality": "final_launch_gate",
+      "validation_status": "not_run",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-12_FINAL_PRODUCTION_VALIDATION_AND_LAUNCH_GATE.md"
+      ],
+      "branch": null,
+      "commit": null
+    }
+  ],
+  "conditional_or_deferred": [
+    {
+      "item": "Browser/Playwright crawling",
+      "classification": "conditional",
+      "rule": "Implement only if ordinary crawler cannot support required customer sites"
+    },
+    {
+      "item": "Streaming chat",
+      "classification": "conditional",
+      "rule": "Optional UX enhancement unless explicitly chosen for beta"
+    },
+    {
+      "item": "Public SEO/marketing pages",
+      "classification": "deferred_growth_track",
+      "rule": "Not a production-security blocker"
+    },
+    {
+      "item": "Voice AI, SMS/WhatsApp, marketplace, mobile app, advanced CRM, multi-region, n8n runtime, local Ollama provider",
+      "classification": "deferred",
+      "rule": "Do not implement unless separately requested"
+    }
+  ],
+  "critical_blockers": [
+    "Production business authentication",
+    "Production administrator authentication",
+    "Public endpoint rate limiting and abuse controls",
+    "PostgreSQL must not publish host port 5432 in production",
+    "Redis must not publish host port 6379 in production",
+    "Production HTTPS/TLS/HSTS and renewal path",
+    "Scheduled encrypted backups and tested restore procedure"
+  ],
+  "high_production_requirements": [
+    {
+      "item": "Secure browser session/token strategy with CSRF/CSP review",
+      "phase": "PR-01"
+    },
+    {
+      "item": "Complete production secret validation for session, database, Redis, AI provider, SMTP/email provider, and frontend/API configuration",
+      "phase": "PR-04"
+    },
+    {
+      "item": "Live PostgreSQL plus pgvector migration/startup/smoke-test validation before launch",
+      "phase": "PR-04"
+    },
+    {
+      "item": "Privacy retention, tenant data export, deletion, and offboarding workflow",
+      "phase": "PR-03"
+    },
+    {
+      "item": "Global administrator audit-event handling",
+      "phase": "PR-03"
+    },
+    {
+      "item": "Dependency vulnerability scanning, secret scanning, and static security scanning in CI",
+      "phase": "PR-04"
+    },
+    {
+      "item": "Structured logs, request/correlation IDs, and PII-safe logging requirements",
+      "phase": "PR-04/PR-10"
+    },
+    {
+      "item": "Incident-response and restore runbook validation",
+      "phase": "PR-04/PR-10"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI-Magnet Production Status Dashboard</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #cbd5e1;
+      --green: #15803d;
+      --green-bg: #dcfce7;
+      --red: #b91c1c;
+      --red-bg: #fee2e2;
+      --orange: #c2410c;
+      --orange-bg: #ffedd5;
+      --blue: #0369a1;
+      --blue-bg: #e0f2fe;
+      --gray-bg: #f1f5f9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    header {
+      padding: 32px clamp(20px, 5vw, 64px);
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 42px); }
+    h2 { margin: 0 0 12px; font-size: 22px; }
+    p { margin: 6px 0; color: var(--muted); }
+    main { padding: 28px clamp(20px, 5vw, 64px) 56px; }
+    .grid { display: grid; gap: 16px; }
+    .summary { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      min-height: 120px;
+    }
+    .metric {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+    .ok { background: var(--green); }
+    .no { background: var(--red); }
+    .warn { background: var(--orange); }
+    .info { background: var(--blue); }
+    .phase-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 16px; }
+    .phase { border-left: 6px solid #64748b; }
+    .phase.verified { border-left-color: var(--green); background: linear-gradient(90deg, var(--green-bg), #fff 45%); }
+    .phase.critical { border-left-color: var(--red); background: linear-gradient(90deg, var(--red-bg), #fff 45%); }
+    .phase.high { border-left-color: var(--orange); background: linear-gradient(90deg, var(--orange-bg), #fff 45%); }
+    .phase.pending { background: var(--panel); }
+    .phase h3 { margin: 0 0 8px; font-size: 17px; }
+    .progress {
+      height: 14px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress span { display: block; height: 100%; background: var(--green); width: 8%; }
+    .blockers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .blocker {
+      background: var(--red-bg);
+      border: 1px solid #fecaca;
+      color: #7f1d1d;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    .links a {
+      display: inline-block;
+      margin: 4px 10px 4px 0;
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .links a:hover { text-decoration: underline; }
+    section { margin-top: 28px; }
+    table { width: 100%; border-collapse: collapse; background: var(--panel); }
+    th, td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AI-Magnet Production Status Dashboard</h1>
+    <p>Baseline audit: 2026-05-23. Production readiness: 35/100.</p>
+    <p><span class="badge ok">Internal MVP Demo: GO WITH CONDITIONS</span> <span class="badge no">Public/Paid/Production: NO-GO</span></p>
+  </header>
+  <main>
+    <section class="grid summary">
+      <div class="card">
+        <h2>Current State</h2>
+        <div class="metric">PR-00 verified</div>
+        <p>Production-control framework is ready. No runtime remediation has been implemented in PR-00.</p>
+      </div>
+      <div class="card">
+        <h2>Next Permitted Phase</h2>
+        <div class="metric">PR-01</div>
+        <p>Production Authentication, Session Security and Admin Access.</p>
+      </div>
+      <div class="card">
+        <h2>Progress</h2>
+        <div class="metric">1 / 13 phases</div>
+        <div class="progress"><span></span></div>
+        <p>Only the roadmap and memory phase is verified.</p>
+      </div>
+      <div class="card">
+        <h2>Launch Gate</h2>
+        <div class="metric">NO-GO</div>
+        <p>Private internet demo, real pilot, paid beta, and production launch are blocked.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Critical Blockers</h2>
+      <div class="blockers">
+        <div class="blocker">Production business authentication</div>
+        <div class="blocker">Production administrator authentication</div>
+        <div class="blocker">Public endpoint rate limiting and abuse controls</div>
+        <div class="blocker">PostgreSQL must not publish host port 5432 in production</div>
+        <div class="blocker">Redis must not publish host port 6379 in production</div>
+        <div class="blocker">Production HTTPS/TLS/HSTS and renewal path</div>
+        <div class="blocker">Scheduled encrypted backups plus tested restore procedure</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Phase Cards</h2>
+      <div class="grid phase-grid">
+        <div class="card phase verified"><h3>PR-00: Roadmap and Memory</h3><p>Status: verified. Exit gate: future Codex can execute PR-01 from persisted context.</p></div>
+        <div class="card phase critical"><h3>PR-01: Auth and Sessions</h3><p>Status: not started. Removes email-only auth and sets secure session strategy.</p></div>
+        <div class="card phase critical"><h3>PR-02: Abuse Protection</h3><p>Status: not started. Adds rate limits, widget origins, CORS/CSRF/security review.</p></div>
+        <div class="card phase high"><h3>PR-03: Tenant DB and Privacy</h3><p>Status: not started. Adds tenant integrity, export/delete/offboarding, global audit handling.</p></div>
+        <div class="card phase critical"><h3>PR-04: Production Infrastructure</h3><p>Status: not started. Adds TLS/HSTS, private DB/Redis, secrets, backups, CI scans.</p></div>
+        <div class="card phase high"><h3>PR-05: Queue and Worker</h3><p>Status: not started. Replaces placeholder worker with real queued jobs and visibility.</p></div>
+        <div class="card phase pending"><h3>PR-06: Website/Sitemap Ingestion</h3><p>Status: not started. Adds SSRF-safe crawling and source tracking.</p></div>
+        <div class="card phase pending"><h3>PR-07: Document Ingestion</h3><p>Status: not started. Adds secure PDF/DOCX upload and gated OCR path.</p></div>
+        <div class="card phase pending"><h3>PR-08: RAG Quality</h3><p>Status: not started. Adds SQL pgvector retrieval, citations, thresholds, safety evals.</p></div>
+        <div class="card phase pending"><h3>PR-09: Onboarding UX</h3><p>Status: not started. Adds customer setup, agent test, widget installation UX.</p></div>
+        <div class="card phase pending"><h3>PR-10: Monitoring and Quotas</h3><p>Status: not started. Adds ops visibility, metering, quotas, and cost controls.</p></div>
+        <div class="card phase pending"><h3>PR-11: Paid Beta Controls</h3><p>Status: not started. Adds entitlements/billing or manual paid-beta controls.</p></div>
+        <div class="card phase pending"><h3>PR-12: Final Launch Gate</h3><p>Status: not started. Final audit and explicit owner approval before production.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Release Gates</h2>
+      <table>
+        <thead><tr><th>Gate</th><th>Status</th><th>Requirement</th></tr></thead>
+        <tbody>
+          <tr><td>A: Controlled Internal Demo</td><td>GO WITH CONDITIONS</td><td>Synthetic/sample data only.</td></tr>
+          <tr><td>B: Secure Private Internet Demo</td><td>NO-GO</td><td>Requires PR-01 through PR-05 verified.</td></tr>
+          <tr><td>C: Real Customer Pilot</td><td>NO-GO</td><td>Requires PR-01 through PR-10 verified.</td></tr>
+          <tr><td>D: Paid Beta</td><td>NO-GO</td><td>Requires PR-01 through PR-11 verified.</td></tr>
+          <tr><td>E: Public Production Launch</td><td>NO-GO</td><td>Requires PR-12 final audit and explicit owner approval.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="links">
+      <h2>Open Production-Control Files</h2>
+      <a href="../04_CURRENT_STATUS.md">Current Status</a>
+      <a href="../02_MASTER_PRODUCTION_ROADMAP.md">Roadmap</a>
+      <a href="../07_RISK_REGISTER.md">Risk Register</a>
+      <a href="../08_VALIDATION_MATRIX.md">Validation Matrix</a>
+      <a href="../09_RELEASE_GATES.md">Release Gates</a>
+      <a href="production-roadmap-status.svg">Roadmap SVG</a>
+      <a href="production-roadmap-status.mmd">Mermaid Source</a>
+    </section>
+  </main>
+</body>
+</html>
