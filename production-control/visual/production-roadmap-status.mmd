@@ -1,0 +1,56 @@
+flowchart TB
+    PR00["PR-00<br/>Roadmap and Memory<br/>verified"]
+    PR01["PR-01<br/>Auth and Sessions<br/>not started<br/>CRITICAL"]
+    PR02["PR-02<br/>Rate Limits and Widget Origins<br/>not started<br/>CRITICAL"]
+    PR03["PR-03<br/>Tenant DB and Privacy<br/>not started<br/>HIGH"]
+    PR04["PR-04<br/>TLS, Private DB/Redis, Backups<br/>not started<br/>CRITICAL"]
+    PR05["PR-05<br/>Queue and Worker<br/>not started<br/>HIGH"]
+    PR06["PR-06<br/>Website/Sitemap Ingestion<br/>not started"]
+    PR07["PR-07<br/>Document/PDF/DOCX Ingestion<br/>not started"]
+    PR08["PR-08<br/>SQL pgvector, Citations, Safety<br/>not started"]
+    PR09["PR-09<br/>Onboarding and Widget UX<br/>not started"]
+    PR10["PR-10<br/>Monitoring, Metering, Quotas<br/>not started"]
+    PR11["PR-11<br/>Billing and Paid Beta<br/>not started"]
+    PR12["PR-12<br/>Final Audit and Launch Gate<br/>not started"]
+
+    GateA["Gate A: Controlled Internal Demo<br/>GO WITH CONDITIONS<br/>synthetic/sample data only"]
+    GateB["Gate B: Secure Private Internet Demo<br/>NO-GO until PR-01..PR-05 verified"]
+    GateC["Gate C: Real Customer Pilot<br/>NO-GO until PR-01..PR-10 verified"]
+    GateD["Gate D: Paid Beta<br/>NO-GO until PR-01..PR-11 verified"]
+    GateE["Gate E: Public Production Launch<br/>NO-GO until PR-12 plus owner approval"]
+    LegendVerified["Status: verified/complete"]
+    LegendProgress["Status: in progress"]
+    LegendBlocked["Status: blocked"]
+    LegendPending["Status: not started"]
+
+    PR00 --> PR01 --> PR02 --> PR03 --> PR04 --> PR05
+    PR05 --> PR06
+    PR05 --> PR07
+    PR06 --> PR08
+    PR07 --> PR08
+    PR08 --> PR09 --> PR10 --> PR11 --> PR12
+    PR00 --> GateA
+    PR05 --> GateB
+    PR10 --> GateC
+    PR11 --> GateD
+    PR12 --> GateE
+
+    classDef verified fill:#dcfce7,stroke:#15803d,color:#052e16
+    classDef inProgress fill:#dbeafe,stroke:#1d4ed8,color:#172554
+    classDef blocked fill:#fee2e2,stroke:#b91c1c,color:#450a0a
+    classDef critical fill:#fee2e2,stroke:#b91c1c,color:#450a0a
+    classDef high fill:#ffedd5,stroke:#c2410c,color:#431407
+    classDef pending fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    classDef gateOk fill:#e0f2fe,stroke:#0369a1,color:#082f49
+    classDef gateNo fill:#fef3c7,stroke:#b45309,color:#451a03
+
+    class PR00 verified
+    class PR01,PR02,PR04 critical
+    class PR03,PR05 high
+    class PR06,PR07,PR08,PR09,PR10,PR11,PR12 pending
+    class GateA gateOk
+    class GateB,GateC,GateD,GateE gateNo
+    class LegendVerified verified
+    class LegendProgress inProgress
+    class LegendBlocked blocked
+    class LegendPending pending

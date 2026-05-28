@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1150" viewBox="0 0 1600 1150" role="img" aria-labelledby="title desc">
+  <title id="title">AI-Magnet Production Readiness Roadmap</title>
+  <desc id="desc">Production readiness phase status from PR-00 to PR-12 with launch gates and critical blockers.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 34px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 18px Arial, sans-serif; fill: #475569; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; }
+      .card-title { font: 700 17px Arial, sans-serif; fill: #0f172a; }
+      .card-text { font: 14px Arial, sans-serif; fill: #334155; }
+      .badge { font: 700 12px Arial, sans-serif; fill: #ffffff; }
+      .verified { fill: #dcfce7; stroke: #15803d; stroke-width: 2; }
+      .progressing { fill: #dbeafe; stroke: #1d4ed8; stroke-width: 2; }
+      .blocked { fill: #fee2e2; stroke: #b91c1c; stroke-width: 2; }
+      .critical { fill: #fee2e2; stroke: #b91c1c; stroke-width: 2; }
+      .high { fill: #ffedd5; stroke: #c2410c; stroke-width: 2; }
+      .pending { fill: #f1f5f9; stroke: #64748b; stroke-width: 2; }
+      .gate-ok { fill: #e0f2fe; stroke: #0369a1; stroke-width: 2; }
+      .gate-no { fill: #fef3c7; stroke: #b45309; stroke-width: 2; }
+      .legend { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1; }
+      .arrow { stroke: #64748b; stroke-width: 2; marker-end: url(#arrowhead); fill: none; }
+      .blocker { font: 700 15px Arial, sans-serif; fill: #7f1d1d; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
+    </marker>
+  </defs>
+  <rect class="bg" width="1600" height="1150" />
+  <text class="title" x="60" y="55">AI-Magnet Production Readiness Roadmap</text>
+  <text class="subtitle" x="60" y="86">Baseline: 2026-05-23 production readiness 35/100. Internal MVP Demo: GO WITH CONDITIONS. Public/Paid/Production: NO-GO.</text>
+  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Current next permitted phase: PR-01.</text>
+
+  <rect class="legend" x="60" y="135" width="1480" height="64" rx="8" />
+  <rect x="86" y="156" width="22" height="22" fill="#dcfce7" stroke="#15803d" />
+  <text class="small" x="116" y="173">verified/complete</text>
+  <rect x="250" y="156" width="22" height="22" fill="#dbeafe" stroke="#1d4ed8" />
+  <text class="small" x="280" y="173">in progress</text>
+  <rect x="390" y="156" width="22" height="22" fill="#fee2e2" stroke="#b91c1c" />
+  <text class="small" x="420" y="173">blocked / critical</text>
+  <rect x="580" y="156" width="22" height="22" fill="#ffedd5" stroke="#c2410c" />
+  <text class="small" x="610" y="173">high blocker</text>
+  <rect x="735" y="156" width="22" height="22" fill="#f1f5f9" stroke="#64748b" />
+  <text class="small" x="765" y="173">not started</text>
+  <rect x="895" y="156" width="22" height="22" fill="#fef3c7" stroke="#b45309" />
+  <text class="small" x="925" y="173">launch gate blocked</text>
+  <text class="small" x="1160" y="173">Conditional/deferred items are not security blockers.</text>
+
+  <!-- Row 1 -->
+  <rect class="verified" x="60" y="240" width="210" height="105" rx="10" />
+  <text class="card-title" x="78" y="270">PR-00</text>
+  <text class="card-text" x="78" y="295">Roadmap and memory</text>
+  <rect x="78" y="312" width="70" height="22" rx="5" fill="#15803d" />
+  <text class="badge" x="91" y="328">verified</text>
+
+  <rect class="critical" x="330" y="240" width="210" height="105" rx="10" />
+  <text class="card-title" x="348" y="270">PR-01</text>
+  <text class="card-text" x="348" y="295">Auth, sessions, admin</text>
+  <text class="card-text" x="348" y="318">Critical gate</text>
+
+  <rect class="critical" x="600" y="240" width="210" height="105" rx="10" />
+  <text class="card-title" x="618" y="270">PR-02</text>
+  <text class="card-text" x="618" y="295">Rate limits, widget origins</text>
+  <text class="card-text" x="618" y="318">Critical gate</text>
+
+  <rect class="high" x="870" y="240" width="210" height="105" rx="10" />
+  <text class="card-title" x="888" y="270">PR-03</text>
+  <text class="card-text" x="888" y="295">Tenant DB, privacy</text>
+  <text class="card-text" x="888" y="318">High gate</text>
+
+  <rect class="critical" x="1140" y="240" width="260" height="105" rx="10" />
+  <text class="card-title" x="1158" y="270">PR-04</text>
+  <text class="card-text" x="1158" y="295">TLS, private DB/Redis</text>
+  <text class="card-text" x="1158" y="318">Backups, scans, secrets</text>
+
+  <path class="arrow" d="M270 292 H330" />
+  <path class="arrow" d="M540 292 H600" />
+  <path class="arrow" d="M810 292 H870" />
+  <path class="arrow" d="M1080 292 H1140" />
+
+  <!-- Row 2 -->
+  <rect class="high" x="60" y="430" width="210" height="105" rx="10" />
+  <text class="card-title" x="78" y="460">PR-05</text>
+  <text class="card-text" x="78" y="485">Real queue/worker</text>
+  <text class="card-text" x="78" y="508">Job visibility</text>
+
+  <rect class="pending" x="330" y="390" width="230" height="105" rx="10" />
+  <text class="card-title" x="348" y="420">PR-06</text>
+  <text class="card-text" x="348" y="445">Website and sitemap</text>
+  <text class="card-text" x="348" y="468">SSRF-safe crawling</text>
+
+  <rect class="pending" x="330" y="525" width="230" height="105" rx="10" />
+  <text class="card-title" x="348" y="555">PR-07</text>
+  <text class="card-text" x="348" y="580">Document/PDF/DOCX</text>
+  <text class="card-text" x="348" y="603">Gated OCR path</text>
+
+  <rect class="pending" x="650" y="455" width="240" height="105" rx="10" />
+  <text class="card-title" x="668" y="485">PR-08</text>
+  <text class="card-text" x="668" y="510">SQL pgvector retrieval</text>
+  <text class="card-text" x="668" y="533">Citations and safety evals</text>
+
+  <rect class="pending" x="970" y="455" width="220" height="105" rx="10" />
+  <text class="card-title" x="988" y="485">PR-09</text>
+  <text class="card-text" x="988" y="510">Onboarding</text>
+  <text class="card-text" x="988" y="533">Agent test and widget UX</text>
+
+  <rect class="pending" x="1270" y="455" width="230" height="105" rx="10" />
+  <text class="card-title" x="1288" y="485">PR-10</text>
+  <text class="card-text" x="1288" y="510">Monitoring, metering</text>
+  <text class="card-text" x="1288" y="533">Quotas and cost controls</text>
+
+  <path class="arrow" d="M1270 345 V482 H270" />
+  <path class="arrow" d="M270 482 H330" />
+  <path class="arrow" d="M270 482 V578 H330" />
+  <path class="arrow" d="M560 442 H650 V507" />
+  <path class="arrow" d="M560 578 H650 V507" />
+  <path class="arrow" d="M890 507 H970" />
+  <path class="arrow" d="M1190 507 H1270" />
+
+  <!-- Row 3 -->
+  <rect class="pending" x="600" y="710" width="240" height="105" rx="10" />
+  <text class="card-title" x="618" y="740">PR-11</text>
+  <text class="card-text" x="618" y="765">Billing, entitlements</text>
+  <text class="card-text" x="618" y="788">Paid beta controls</text>
+
+  <rect class="pending" x="950" y="710" width="260" height="105" rx="10" />
+  <text class="card-title" x="968" y="740">PR-12</text>
+  <text class="card-text" x="968" y="765">Final audit and launch gate</text>
+  <text class="card-text" x="968" y="788">Owner approval required</text>
+
+  <path class="arrow" d="M1385 560 V762 H840" />
+  <path class="arrow" d="M840 762 H950" />
+
+  <!-- Gates -->
+  <rect class="gate-ok" x="60" y="900" width="260" height="82" rx="10" />
+  <text class="card-title" x="78" y="928">Gate A</text>
+  <text class="card-text" x="78" y="952">Internal demo: GO WITH CONDITIONS</text>
+  <text class="card-text" x="78" y="973">Synthetic/sample data only</text>
+
+  <rect class="gate-no" x="350" y="900" width="260" height="82" rx="10" />
+  <text class="card-title" x="368" y="928">Gate B</text>
+  <text class="card-text" x="368" y="952">Private internet demo: NO-GO</text>
+  <text class="card-text" x="368" y="973">Requires PR-01..PR-05</text>
+
+  <rect class="gate-no" x="640" y="900" width="260" height="82" rx="10" />
+  <text class="card-title" x="658" y="928">Gate C</text>
+  <text class="card-text" x="658" y="952">Real customer pilot: NO-GO</text>
+  <text class="card-text" x="658" y="973">Requires PR-01..PR-10</text>
+
+  <rect class="gate-no" x="930" y="900" width="260" height="82" rx="10" />
+  <text class="card-title" x="948" y="928">Gate D</text>
+  <text class="card-text" x="948" y="952">Paid beta: NO-GO</text>
+  <text class="card-text" x="948" y="973">Requires PR-01..PR-11</text>
+
+  <rect class="gate-no" x="1220" y="900" width="300" height="82" rx="10" />
+  <text class="card-title" x="1238" y="928">Gate E</text>
+  <text class="card-text" x="1238" y="952">Public production launch: NO-GO</text>
+  <text class="card-text" x="1238" y="973">Requires PR-12 + owner approval</text>
+
+  <text class="blocker" x="60" y="1045">Critical blockers: production auth, rate limiting, private Postgres/Redis, HTTPS/TLS/HSTS, backups/restore.</text>
+  <text class="small" x="60" y="1074">High blockers: secure sessions, secret validation, live pgvector migration validation, privacy lifecycle, global audit, CI scans, logs/correlation IDs, queue, ingestion, RAG safety.</text>
+  <text class="small" x="60" y="1103">Generated deterministically as a static SVG during PR-00. Keep it consistent with production-control/status/production-status.json.</text>
+</svg>
