@@ -1,6 +1,6 @@
 import time
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -11,7 +11,17 @@ from app.core.totp import generate_totp_code
 from app.db.base import Base, utc_now
 from app.db.session import get_db_session
 from app.main import create_app
-from app.models import AdminUser, AuditLog, BusinessUser, Conversation, Lead, Message, UsageLog
+from app.models import (
+    AdminUser,
+    AuditLog,
+    BusinessUser,
+    Conversation,
+    GlobalAuditLog,
+    Lead,
+    Message,
+    Tenant,
+    UsageLog,
+)
 from app.tenants.service import TenantService
 from fastapi.testclient import TestClient
 
@@ -333,3 +343,105 @@ def test_admin_usage_health_and_support_context_are_limited(monkeypatch):
         assert "tenant_support_context_viewed" in set(
             session.scalars(select(AuditLog.action)).all()
         )
+
+
+def test_admin_privacy_lifecycle_export_offboard_delete_and_global_audit(monkeypatch):
+    with create_test_session() as session:
+        seed_admin(session)
+        tenant, _user = seed_business_user(
+            session,
+            "Privacy Plumbing",
+            "privacy-plumbing",
+            "owner@privacy.example",
+        )
+        conversation = Conversation(
+            tenant_id=tenant.id,
+            visitor_label="Visitor",
+            status="open",
+            source="website_widget",
+        )
+        session.add(conversation)
+        session.flush()
+        session.add_all(
+            [
+                Message(
+                    tenant_id=tenant.id,
+                    conversation_id=conversation.id,
+                    sender_type="visitor",
+                    content="My email is customer@example.test",
+                ),
+                Lead(
+                    tenant_id=tenant.id,
+                    conversation_id=conversation.id,
+                    customer_name="Private Customer",
+                    customer_email="customer@example.test",
+                    customer_phone="0400000000",
+                    status="qualified",
+                ),
+                UsageLog(
+                    tenant_id=tenant.id,
+                    event_type="privacy_test_event",
+                    event_source="test",
+                    attributes={"safe": True},
+                ),
+            ]
+        )
+        session.commit()
+        client = create_client(session, monkeypatch)
+        token = admin_login(client)
+
+        export_response = client.get(
+            f"/admin/tenants/{tenant.id}/privacy-export",
+            headers=auth_header(token),
+        )
+        audit_response = client.get("/admin/audit-logs", headers=auth_header(token))
+        offboard_response = client.post(
+            f"/admin/tenants/{tenant.id}/offboard",
+            headers=auth_header(token),
+            json={"retention_days": 14},
+        )
+        wrong_delete_response = client.post(
+            f"/admin/tenants/{tenant.id}/delete-data",
+            headers=auth_header(token),
+            json={"confirm_slug": "wrong-slug", "confirm_delete": True},
+        )
+        delete_response = client.post(
+            f"/admin/tenants/{tenant.id}/delete-data",
+            headers=auth_header(token),
+            json={"confirm_slug": "privacy-plumbing", "confirm_delete": True},
+        )
+
+        assert export_response.status_code == 200
+        export_payload = export_response.json()["data"]
+        assert export_payload["tenant"]["slug"] == "privacy-plumbing"
+        assert export_payload["business_users"][0]["email"] == "owner@privacy.example"
+        assert "password_hash" not in export_payload["business_users"][0]
+        assert export_payload["leads"][0]["customer_name"] == "Private Customer"
+        assert audit_response.status_code == 200
+        assert any(
+            event["scope"] == "global"
+            and event["action"] == "tenant_privacy_export_generated"
+            for event in audit_response.json()
+        )
+        assert offboard_response.status_code == 200
+        assert offboard_response.json()["status"] == "offboarding"
+        assert offboard_response.json()["data_retention_until"] is not None
+        assert wrong_delete_response.status_code == 400
+        assert delete_response.status_code == 200
+        assert delete_response.json()["status"] == "deleted"
+        assert (
+            session.scalar(select(func.count()).select_from(Tenant).where(Tenant.id == tenant.id))
+            == 0
+        )
+
+        global_actions = set(session.scalars(select(GlobalAuditLog.action)).all())
+        assert {
+            "admin_login_succeeded",
+            "tenant_privacy_export_generated",
+            "tenant_offboarded",
+            "tenant_data_deleted",
+        }.issubset(global_actions)
+        login_event = session.scalars(
+            select(GlobalAuditLog).where(GlobalAuditLog.action == "admin_login_succeeded")
+        ).first()
+        assert login_event.attributes["email"]["redacted"] is True

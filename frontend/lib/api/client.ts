@@ -4,7 +4,9 @@ import type {
   AdminLoginResponse,
   AdminSession,
   AdminSupportContext,
+  AdminTenantDeleteResponse,
   AdminTenantDetail,
+  AdminTenantPrivacyExport,
   AdminTenantSummary,
   AdminUsageOverview,
   BusinessSession,
@@ -181,6 +183,26 @@ export const adminApi = {
       token,
       method: "PATCH",
       body: { status }
+    });
+  },
+  offboardTenant(token: string | null, tenantId: string, retentionDays?: number) {
+    return request<AdminTenantDetail>(`/admin/tenants/${tenantId}/offboard`, {
+      token,
+      method: "POST",
+      body: { retention_days: retentionDays }
+    });
+  },
+  privacyExport(token: string | null, tenantId: string) {
+    return request<AdminTenantPrivacyExport>(
+      `/admin/tenants/${tenantId}/privacy-export`,
+      { token }
+    );
+  },
+  deleteTenantData(token: string | null, tenantId: string, confirmSlug: string) {
+    return request<AdminTenantDeleteResponse>(`/admin/tenants/${tenantId}/delete-data`, {
+      token,
+      method: "POST",
+      body: { confirm_slug: confirmSlug, confirm_delete: true }
     });
   },
   supportContext(token: string | null, tenantId: string) {

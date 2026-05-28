@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -20,7 +22,7 @@ from app.core.config import Settings, get_settings
 from app.core.rate_limit import enforce_rate_limit
 from app.db.session import get_db_session
 from app.models.tenant import Business, BusinessUser, Tenant
-from app.models.usage import AuditLog, UsageLog
+from app.models.usage import AuditLog, GlobalAuditLog, UsageLog
 from app.schemas.admin import (
     AdminAuditLogResponse,
     AdminAnalyticsBreakdownResponse,
@@ -34,8 +36,12 @@ from app.schemas.admin import (
     AdminSupportConversationResponse,
     AdminSupportLeadResponse,
     AdminTenantCreateRequest,
+    AdminTenantDeleteRequest,
+    AdminTenantDeleteResponse,
     AdminTenantDetailResponse,
     AdminTenantMetricsResponse,
+    AdminTenantOffboardRequest,
+    AdminTenantPrivacyExportResponse,
     AdminTenantStatusUpdateRequest,
     AdminTenantSummaryResponse,
     AdminTenantUsageSummaryResponse,
@@ -46,7 +52,7 @@ from app.schemas.admin import (
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-ALLOWED_TENANT_STATUSES = {"active", "suspended", "inactive"}
+ALLOWED_TENANT_STATUSES = {"active", "suspended", "inactive", "offboarding"}
 
 
 def get_current_admin_session(
@@ -116,6 +122,13 @@ def login(
             detail="Invalid super admin login",
         )
     token, admin_session = result
+    AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action="admin_login_succeeded",
+        target_type="admin_user",
+        target_id=admin_session.admin_id,
+        attributes={"email": admin_session.email},
+    )
     session.commit()
     set_session_cookie(
         response,
@@ -139,6 +152,13 @@ def logout(
 ) -> Response:
     """Revoke current admin sessions and clear the browser cookie."""
     AdminPortalAuthService(session, settings).revoke_sessions(admin_session.admin_id)
+    AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action="admin_logout",
+        target_type="admin_user",
+        target_id=admin_session.admin_id,
+        attributes={},
+    )
     session.commit()
     clear_session_cookie(response, name=settings.admin_portal_cookie_name, settings=settings)
     response.status_code = status.HTTP_204_NO_CONTENT
@@ -208,6 +228,14 @@ def create_tenant(
             target_id=tenant.id,
             attributes={"status": tenant.status, "slug": tenant.slug},
         )
+        AuditService(session).record_global_admin_action(
+            actor_id=admin_session.admin_id,
+            action="tenant_created",
+            target_type="tenant",
+            target_id=tenant.id,
+            tenant_id=tenant.id,
+            attributes={"status": tenant.status, "slug": tenant.slug},
+        )
         session.commit()
     except IntegrityError as exc:
         session.rollback()
@@ -235,6 +263,14 @@ def get_tenant(
         action="tenant_detail_viewed",
         target_type="tenant",
         target_id=tenant.id,
+        attributes={"slug": tenant.slug},
+    )
+    AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action="tenant_detail_viewed",
+        target_type="tenant",
+        target_id=tenant.id,
+        tenant_id=tenant.id,
         attributes={"slug": tenant.slug},
     )
     session.commit()
@@ -275,8 +311,168 @@ def update_tenant_status(
         target_id=tenant.id,
         attributes={"status": tenant.status},
     )
+    AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action="tenant_status_updated",
+        target_type="tenant",
+        target_id=tenant.id,
+        tenant_id=tenant.id,
+        attributes={"status": tenant.status},
+    )
     session.commit()
     return tenant_detail_response(service, tenant)
+
+
+@router.post("/tenants/{tenant_id}/offboard", response_model=AdminTenantDetailResponse)
+def offboard_tenant(
+    request: Request,
+    tenant_id: str,
+    payload: AdminTenantOffboardRequest,
+    admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> AdminTenantDetailResponse:
+    """Mark a tenant as offboarding and set the beta retention deadline."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="admin_tenant_offboard",
+        identifiers=[admin_session.admin_id, tenant_id],
+        limit=settings.rate_limit_admin_write_per_minute,
+    )
+    service = AdminService(session, settings)
+    tenant = service.offboard_tenant(tenant_id, payload.retention_days)
+    if tenant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    AuditService(session).record_admin_action(
+        tenant_id=tenant.id,
+        actor_id=admin_session.admin_id,
+        action="tenant_offboarded",
+        target_type="tenant",
+        target_id=tenant.id,
+        attributes={
+            "slug": tenant.slug,
+            "retention_days": payload.retention_days
+            or settings.privacy_default_retention_days,
+        },
+    )
+    AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action="tenant_offboarded",
+        target_type="tenant",
+        target_id=tenant.id,
+        tenant_id=tenant.id,
+        attributes={
+            "slug": tenant.slug,
+            "retention_days": payload.retention_days
+            or settings.privacy_default_retention_days,
+        },
+    )
+    session.commit()
+    return tenant_detail_response(service, tenant)
+
+
+@router.get(
+    "/tenants/{tenant_id}/privacy-export",
+    response_model=AdminTenantPrivacyExportResponse,
+)
+def export_tenant_privacy_data(
+    request: Request,
+    tenant_id: str,
+    admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> AdminTenantPrivacyExportResponse:
+    """Return a beta-scope tenant data export for privacy operations."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="admin_tenant_privacy_export",
+        identifiers=[admin_session.admin_id, tenant_id],
+        limit=settings.rate_limit_admin_write_per_minute,
+    )
+    service = AdminService(session, settings)
+    export_data = service.export_tenant_data(tenant_id)
+    if export_data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    generated_at = datetime.fromisoformat(export_data["generated_at"])
+    tenant_payload = export_data["tenant"]
+    AuditService(session).record_admin_action(
+        tenant_id=tenant_id,
+        actor_id=admin_session.admin_id,
+        action="tenant_privacy_export_generated",
+        target_type="tenant",
+        target_id=tenant_id,
+        attributes={"slug": tenant_payload["slug"]},
+    )
+    AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action="tenant_privacy_export_generated",
+        target_type="tenant",
+        target_id=tenant_id,
+        tenant_id=tenant_id,
+        attributes={"slug": tenant_payload["slug"]},
+    )
+    session.commit()
+    return AdminTenantPrivacyExportResponse(
+        tenant_id=tenant_id,
+        generated_at=generated_at,
+        data=export_data,
+    )
+
+
+@router.post("/tenants/{tenant_id}/delete-data", response_model=AdminTenantDeleteResponse)
+def delete_tenant_data(
+    request: Request,
+    tenant_id: str,
+    payload: AdminTenantDeleteRequest,
+    admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> AdminTenantDeleteResponse:
+    """Delete a tenant and tenant-owned beta data after explicit confirmation."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="admin_tenant_delete_data",
+        identifiers=[admin_session.admin_id, tenant_id],
+        limit=settings.rate_limit_admin_write_per_minute,
+    )
+    if not payload.confirm_delete:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="confirm_delete must be true",
+        )
+    service = AdminService(session, settings)
+    tenant = service.get_tenant(tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    if tenant.slug != payload.confirm_slug:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tenant slug confirmation does not match",
+        )
+    global_audit = AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action="tenant_data_deleted",
+        target_type="tenant",
+        target_id=tenant.id,
+        tenant_id=tenant.id,
+        attributes={"slug": tenant.slug},
+    )
+    try:
+        deleted_tenant = service.delete_tenant_data(tenant_id, payload.confirm_slug)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if deleted_tenant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    session.commit()
+    return AdminTenantDeleteResponse(
+        tenant_id=tenant_id,
+        tenant_slug=payload.confirm_slug,
+        status="deleted",
+        global_audit_id=global_audit.id,
+    )
 
 
 @router.get(
@@ -299,6 +495,14 @@ def get_support_context(
         action="tenant_support_context_viewed",
         target_type="tenant",
         target_id=tenant.id,
+        attributes={"slug": tenant.slug},
+    )
+    AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action="tenant_support_context_viewed",
+        target_type="tenant",
+        target_id=tenant.id,
+        tenant_id=tenant.id,
         attributes={"slug": tenant.slug},
     )
     session.commit()
@@ -413,6 +617,9 @@ def tenant_summary_response(
         name=tenant.name,
         slug=tenant.slug,
         status=tenant.status,
+        offboarded_at=tenant.offboarded_at,
+        deletion_requested_at=tenant.deletion_requested_at,
+        data_retention_until=tenant.data_retention_until,
         created_at=tenant.created_at,
         updated_at=tenant.updated_at,
         metrics=metrics_response(service.tenant_metrics(tenant.id)),
@@ -485,10 +692,12 @@ def admin_breakdown_response(item) -> AdminAnalyticsBreakdownResponse:
     return AdminAnalyticsBreakdownResponse(label=item.label, count=item.count)
 
 
-def audit_log_response(event: AuditLog) -> AdminAuditLogResponse:
+def audit_log_response(event: AuditLog | GlobalAuditLog) -> AdminAuditLogResponse:
     """Map audit log to admin response."""
+    scope = "global" if isinstance(event, GlobalAuditLog) else "tenant"
     return AdminAuditLogResponse(
         id=event.id,
+        scope=scope,
         tenant_id=event.tenant_id,
         actor_id=event.actor_id,
         action=event.action,

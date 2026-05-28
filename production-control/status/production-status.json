@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "PR-03",
-    "last_completed_phase": "PR-02",
-    "next_permitted_phase": "PR-03",
+    "active_phase": "PR-04",
+    "last_completed_phase": "PR-03",
+    "next_permitted_phase": "PR-04",
     "production_go_no_go": "NO-GO beyond controlled internal demo with synthetic/sample data",
-    "overall_status": "pr02_api_abuse_controls_verified_next_pr03"
+    "overall_status": "pr03_tenant_privacy_integrity_verified_next_pr04"
   },
   "launch_gates": [
     {
@@ -163,21 +163,25 @@
     {
       "phase_id": "PR-03",
       "title": "Tenant Isolation, Data Lifecycle, Privacy and Database Integrity",
-      "status": "not_started",
-      "completion_percent": 0,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-01",
         "PR-02"
       ],
       "priority": "p0",
       "criticality": "high_launch_blocker",
-      "validation_status": "not_run",
+      "validation_status": "pass",
       "last_updated": "2026-05-28",
       "evidence_links": [
-        "production-control/phases/PR-03_TENANT_ISOLATION_DATA_LIFECYCLE_PRIVACY_AND_DATABASE_INTEGRITY.md"
+        "production-control/phases/PR-03_TENANT_ISOLATION_DATA_LIFECYCLE_PRIVACY_AND_DATABASE_INTEGRITY.md",
+        "backend/migrations/versions/20260528_0007_pr03_tenant_privacy_integrity.py",
+        "backend/tests/security/test_pr03_tenant_integrity.py",
+        "backend/tests/admin/test_admin_api.py",
+        "docs/security.md"
       ],
-      "branch": null,
-      "commit": null
+      "branch": "production/pr-03-tenant-privacy-db-integrity",
+      "commit": "pending"
     },
     {
       "phase_id": "PR-04",
@@ -375,24 +379,12 @@
   ],
   "high_production_requirements": [
     {
-      "item": "Secure browser session/token strategy with CSRF/CSP review",
-      "phase": "PR-01/PR-02"
-    },
-    {
       "item": "Complete production secret validation for session, database, Redis, AI provider, SMTP/email provider, and frontend/API configuration",
       "phase": "PR-04"
     },
     {
       "item": "Live PostgreSQL plus pgvector migration/startup/smoke-test validation before launch",
       "phase": "PR-04"
-    },
-    {
-      "item": "Privacy retention, tenant data export, deletion, and offboarding workflow",
-      "phase": "PR-03"
-    },
-    {
-      "item": "Global administrator audit-event handling",
-      "phase": "PR-03"
     },
     {
       "item": "Dependency vulnerability scanning, secret scanning, and static security scanning in CI",

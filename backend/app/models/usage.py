@@ -28,3 +28,16 @@ class AuditLog(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     target_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     target_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     attributes: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class GlobalAuditLog(IdMixin, TimestampMixin, Base):
+    """Platform-level audit event that survives tenant deletion/offboarding."""
+
+    __tablename__ = "global_audit_logs"
+
+    tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    action: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
+    target_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    target_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    attributes: Mapped[dict | None] = mapped_column(JSON, nullable=True)

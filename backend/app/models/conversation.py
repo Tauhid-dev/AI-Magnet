@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKeyConstraint, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, IdMixin, TenantScopedMixin, TimestampMixin
@@ -12,6 +12,9 @@ class Conversation(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     """Website widget conversation scoped to one tenant."""
 
     __tablename__ = "conversations"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_conversations_tenant_id_id"),
+    )
 
     visitor_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="open", index=True)
@@ -27,10 +30,17 @@ class Message(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     """Single message inside a tenant-scoped conversation."""
 
     __tablename__ = "messages"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "conversation_id"],
+            ["conversations.tenant_id", "conversations.id"],
+            name="fk_messages_conversation_same_tenant",
+            ondelete="CASCADE",
+        ),
+    )
 
     conversation_id: Mapped[str] = mapped_column(
         String(36),
-        ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )

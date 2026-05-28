@@ -7,6 +7,7 @@ import { MetricCard } from "../../../../components/MetricCard";
 import { StatusPill } from "../../../../components/StatusPill";
 import { adminApi } from "../../../../lib/api/client";
 import type {
+  AdminTenantPrivacyExport,
   AdminSupportContext,
   AdminTenantDetail
 } from "../../../../lib/api/types";
@@ -17,6 +18,9 @@ export default function AdminTenantDetailPage() {
   const tenantId = params.tenantId;
   const [tenant, setTenant] = useState<AdminTenantDetail | null>(null);
   const [support, setSupport] = useState<AdminSupportContext | null>(null);
+  const [privacyExport, setPrivacyExport] = useState<AdminTenantPrivacyExport | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [lifecycleMessage, setLifecycleMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadTenant = useCallback(async () => {
@@ -49,11 +53,64 @@ export default function AdminTenantDetailPage() {
     }
   }
 
+  async function exportTenantData() {
+    const token = getAdminToken();
+    if (!token) {
+      return;
+    }
+    try {
+      setError(null);
+      setPrivacyExport(await adminApi.privacyExport(token, tenantId));
+      setLifecycleMessage("Privacy export generated for review.");
+    } catch {
+      setError("Could not generate tenant privacy export.");
+    }
+  }
+
+  async function offboardTenant() {
+    const token = getAdminToken();
+    if (!token) {
+      return;
+    }
+    try {
+      setError(null);
+      setTenant(await adminApi.offboardTenant(token, tenantId));
+      await loadTenant();
+      setLifecycleMessage("Tenant marked for offboarding and retention review.");
+    } catch {
+      setError("Could not mark tenant for offboarding.");
+    }
+  }
+
+  async function deleteTenantData() {
+    const token = getAdminToken();
+    if (!token || !tenant || deleteConfirm !== tenant.slug) {
+      return;
+    }
+    try {
+      setError(null);
+      await adminApi.deleteTenantData(token, tenantId, tenant.slug);
+      setTenant(null);
+      setSupport(null);
+      setPrivacyExport(null);
+      setLifecycleMessage("Tenant data deleted. Global audit evidence was retained.");
+    } catch {
+      setError("Could not delete tenant data.");
+    }
+  }
+
   return (
     <AdminShell>
       {error && <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      {lifecycleMessage && (
+        <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-800">
+          {lifecycleMessage}
+        </div>
+      )}
       {!tenant ? (
-        <div className="text-sm text-muted">Loading tenant...</div>
+        <div className="text-sm text-muted">
+          {lifecycleMessage ? "Tenant record is no longer available." : "Loading tenant..."}
+        </div>
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -84,6 +141,66 @@ export default function AdminTenantDetailPage() {
             <MetricCard label="Documents" value={tenant.metrics.documents_total} />
             <MetricCard label="Leads" value={tenant.metrics.leads_total} />
             <MetricCard label="Messages" value={tenant.metrics.messages_total} />
+          </section>
+          <section className="mt-6 rounded-md border border-line bg-panel">
+            <div className="border-b border-line px-4 py-3 font-semibold">
+              Privacy lifecycle
+            </div>
+            <div className="grid gap-4 p-4 lg:grid-cols-3">
+              <div className="text-sm">
+                <div className="font-semibold">Retention state</div>
+                <div className="mt-2 text-muted">
+                  <div>Offboarded: {tenant.offboarded_at || "No"}</div>
+                  <div>Delete requested: {tenant.deletion_requested_at || "No"}</div>
+                  <div>Retain until: {tenant.data_retention_until || "Not set"}</div>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-start gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold"
+                  onClick={exportTenantData}
+                >
+                  Generate export
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold"
+                  onClick={offboardTenant}
+                >
+                  Offboard tenant
+                </button>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold" htmlFor="delete-confirm">
+                  Confirm deletion with slug
+                </label>
+                <input
+                  id="delete-confirm"
+                  className="w-full rounded-md border border-line px-3 py-2 text-sm"
+                  value={deleteConfirm}
+                  onChange={(event) => setDeleteConfirm(event.target.value)}
+                  placeholder={tenant.slug}
+                />
+                <button
+                  type="button"
+                  className="rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                  disabled={deleteConfirm !== tenant.slug}
+                  onClick={deleteTenantData}
+                >
+                  Delete tenant data
+                </button>
+              </div>
+            </div>
+            {privacyExport && (
+              <div className="border-t border-line px-4 py-3 text-sm">
+                <div className="font-semibold">Latest export</div>
+                <div className="mt-1 text-muted">
+                  Generated {privacyExport.generated_at}. Sections:{" "}
+                  {Object.keys(privacyExport.data).join(", ")}
+                </div>
+              </div>
+            )}
           </section>
           <section className="mt-6 grid gap-4 lg:grid-cols-2">
             <div className="rounded-md border border-line bg-panel">

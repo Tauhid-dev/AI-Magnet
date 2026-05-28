@@ -4,7 +4,16 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, IdMixin, TenantScopedMixin, TimestampMixin
@@ -16,6 +25,11 @@ class BusinessNotificationSetting(TenantScopedMixin, IdMixin, TimestampMixin, Ba
     __tablename__ = "business_notification_settings"
     __table_args__ = (
         UniqueConstraint("tenant_id", name="uq_business_notification_settings_tenant"),
+        ForeignKeyConstraint(
+            ["tenant_id", "business_id"],
+            ["businesses.tenant_id", "businesses.id"],
+            name="fk_notification_settings_business_same_tenant",
+        ),
     )
 
     business_id: Mapped[str | None] = mapped_column(
@@ -36,6 +50,13 @@ class NotificationDelivery(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     """Delivery attempt state for tenant-owned notifications."""
 
     __tablename__ = "notification_deliveries"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "lead_id"],
+            ["leads.tenant_id", "leads.id"],
+            name="fk_notification_deliveries_lead_same_tenant",
+        ),
+    )
 
     lead_id: Mapped[str | None] = mapped_column(
         String(36),

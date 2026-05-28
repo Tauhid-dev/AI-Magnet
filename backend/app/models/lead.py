@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, ForeignKeyConstraint, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, IdMixin, TenantScopedMixin, TimestampMixin
@@ -14,6 +14,14 @@ class Lead(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     """Structured lead captured from chat or future channels."""
 
     __tablename__ = "leads"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_leads_tenant_id_id"),
+        ForeignKeyConstraint(
+            ["tenant_id", "conversation_id"],
+            ["conversations.tenant_id", "conversations.id"],
+            name="fk_leads_conversation_same_tenant",
+        ),
+    )
 
     conversation_id: Mapped[str | None] = mapped_column(
         String(36),
