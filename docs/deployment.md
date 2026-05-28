@@ -48,6 +48,11 @@ REDIS_URL=redis://redis:6379/0
 WORKER_QUEUE_NAME=default
 WORKER_REDIS_QUEUE_KEY=ai-magnet:jobs:default
 WORKER_DEFAULT_MAX_ATTEMPTS=3
+DOCUMENT_STORAGE_ROOT=/app/storage/documents
+DOCUMENT_UPLOAD_MAX_BYTES=10485760
+DOCUMENT_UPLOAD_MAX_PAGES=50
+DOCUMENT_OCR_ENABLED=false
+DOCUMENT_MALWARE_SCAN_MODE=basic
 EMAIL_PROVIDER=smtp
 SMTP_HOST=<smtp-host>
 SMTP_USERNAME=<smtp-username>
@@ -57,7 +62,7 @@ AI_API_KEY=<provider-api-key>
 BACKUP_ENCRYPTION_PASSPHRASE=<strong-random-backup-passphrase>
 ```
 
-Do not use wildcard CORS, placeholder session secrets, insecure cookie settings, local Redis URLs, console email delivery, missing AI provider keys, missing SMTP values, missing backup encryption passphrases, or enabled API docs in production. The backend refuses to start in production when these unsafe settings are detected.
+Do not use wildcard CORS, placeholder session secrets, insecure cookie settings, local Redis URLs, console email delivery, missing AI provider keys, missing SMTP values, missing backup encryption passphrases, disabled document malware scanning, or enabled API docs in production. The backend refuses to start in production when these unsafe settings are detected.
 
 ## Local/Dev Start
 
@@ -104,6 +109,10 @@ python -m app.workers.healthcheck
 ```
 
 Operational status is available through `GET /admin/health`, `GET /admin/jobs`, and `GET /admin/worker-heartbeats`. See `docs/worker-queue.md` for job types, retry behavior, and visibility rules.
+
+## Document Storage
+
+PR-07 stores uploaded customer documents in the private `document_storage` Docker volume mounted at `/app/storage/documents` for both backend and worker containers. This path must not be exposed through Nginx, the frontend, or static file serving. Back up the database and document storage lifecycle together when customer document uploads are enabled.
 
 ## Production Start
 

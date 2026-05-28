@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, Response, UploadFile, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.business.auth import BusinessPortalAuthService, BusinessPortalSession
@@ -19,6 +20,9 @@ from app.core.rate_limit import enforce_rate_limit
 from app.db.session import get_db_session
 from app.jobs.service import BackgroundJobService
 from app.models.job import BackgroundJob
+from app.models.knowledge import KnowledgeDocument
+from app.rag.document_storage import LocalDocumentStorage
+from app.rag.document_validation import DocumentValidationError, validate_document_upload
 from app.rag.ingestion import RagIngestionService
 from app.schemas.business_portal import (
     BusinessPortalLoginRequest,
@@ -88,6 +92,33 @@ def session_response(session: BusinessPortalSession) -> BusinessPortalSessionRes
         user_id=session.user_id,
         email=session.email,
         role=session.role,
+    )
+
+
+def portal_document_response(
+    document: KnowledgeDocument,
+    *,
+    job_id: str | None = None,
+) -> PortalDocumentResponse:
+    """Map tenant document metadata to the business portal response."""
+    return PortalDocumentResponse(
+        id=document.id,
+        filename=document.filename,
+        content_type=document.content_type,
+        status=document.status,
+        error_message=document.error_message,
+        source_type=document.source_type,
+        source_url=document.source_url,
+        source_title=document.source_title,
+        website_source_id=document.website_source_id,
+        file_size_bytes=document.file_size_bytes,
+        file_sha256=document.file_sha256,
+        malware_scan_status=document.malware_scan_status,
+        extraction_status=document.extraction_status,
+        ocr_status=document.ocr_status,
+        job_id=job_id,
+        created_at=document.created_at,
+        updated_at=document.updated_at,
     )
 
 
@@ -182,23 +213,7 @@ def list_documents(
 ) -> list[PortalDocumentResponse]:
     """List current tenant knowledge documents."""
     documents = BusinessPortalService(session, portal_session.tenant_id).list_documents()
-    return [
-        PortalDocumentResponse(
-            id=document.id,
-            filename=document.filename,
-            content_type=document.content_type,
-            status=document.status,
-            error_message=document.error_message,
-            source_type=document.source_type,
-            source_url=document.source_url,
-            source_title=document.source_title,
-            website_source_id=document.website_source_id,
-            job_id=None,
-            created_at=document.created_at,
-            updated_at=document.updated_at,
-        )
-        for document in documents
-    ]
+    return [portal_document_response(document) for document in documents]
 
 
 @router.post("/documents", response_model=PortalDocumentResponse)
@@ -234,20 +249,144 @@ def create_document(
         content_type=payload.content_type,
     )
     session.commit()
-    return PortalDocumentResponse(
-        id=document.id,
-        filename=document.filename,
-        content_type=document.content_type,
-        status=document.status,
-        error_message=document.error_message,
-        source_type=document.source_type,
-        source_url=document.source_url,
-        source_title=document.source_title,
-        website_source_id=document.website_source_id,
-        job_id=job_result.job.id,
-        created_at=document.created_at,
-        updated_at=document.updated_at,
+    return portal_document_response(document, job_id=job_result.job.id)
+
+
+@router.post("/documents/upload", response_model=PortalDocumentResponse)
+async def upload_document_file(
+    request: Request,
+    file: UploadFile = File(...),
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalDocumentResponse:
+    """Validate, store, and queue a tenant-owned uploaded knowledge document."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_documents_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
     )
+    content = await file.read(settings.document_upload_max_bytes + 1)
+    try:
+        validated = validate_document_upload(
+            filename=file.filename or "upload",
+            content=content,
+            content_type=file.content_type,
+            settings=settings,
+        )
+    except DocumentValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    storage = LocalDocumentStorage(settings)
+    document: KnowledgeDocument | None = None
+    try:
+        service = RagIngestionService(session=session, embedding_provider=None, settings=settings)
+        document = service.create_pending_document(
+            tenant_id=portal_session.tenant_id,
+            filename=validated.filename,
+            content_type=validated.content_type,
+            source_type="uploaded_file",
+            source_title=validated.filename,
+            source_hash=validated.sha256,
+            file_size_bytes=validated.size_bytes,
+            file_sha256=validated.sha256,
+            malware_scan_status=validated.malware_scan_status,
+            status="queued",
+        )
+        document.storage_path = storage.save(
+            tenant_id=portal_session.tenant_id,
+            document_id=document.id,
+            filename=validated.filename,
+            content=content,
+        )
+        job_result = BackgroundJobService(session, settings).enqueue_document_file_ingestion(
+            tenant_id=portal_session.tenant_id,
+            document_id=document.id,
+        )
+        session.commit()
+    except Exception:
+        session.rollback()
+        if document is not None:
+            storage.delete_document_dir(
+                tenant_id=portal_session.tenant_id,
+                document_id=document.id,
+            )
+        raise
+    return portal_document_response(document, job_id=job_result.job.id)
+
+
+@router.post("/documents/{document_id}/refresh", response_model=PortalDocumentResponse)
+def refresh_document_file(
+    request: Request,
+    document_id: str,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalDocumentResponse:
+    """Queue re-indexing for a tenant-owned uploaded document file."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_documents_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    document = session.scalars(
+        select(KnowledgeDocument).where(
+            KnowledgeDocument.tenant_id == portal_session.tenant_id,
+            KnowledgeDocument.id == document_id,
+        )
+    ).first()
+    if document is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+    if not document.storage_path:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only stored uploaded documents can be refreshed",
+        )
+    document.status = "queued"
+    document.extraction_status = "pending"
+    document.error_message = None
+    job_result = BackgroundJobService(session, settings).enqueue_document_file_ingestion(
+        tenant_id=portal_session.tenant_id,
+        document_id=document.id,
+    )
+    session.commit()
+    return portal_document_response(document, job_id=job_result.job.id)
+
+
+@router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_document(
+    request: Request,
+    document_id: str,
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> Response:
+    """Delete a tenant-owned knowledge document and any private stored file."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="business_portal_documents_write",
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+    )
+    document = session.scalars(
+        select(KnowledgeDocument).where(
+            KnowledgeDocument.tenant_id == portal_session.tenant_id,
+            KnowledgeDocument.id == document_id,
+        )
+    ).first()
+    if document is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+    storage = LocalDocumentStorage(settings)
+    storage.delete(document.storage_path)
+    storage.delete_document_dir(tenant_id=portal_session.tenant_id, document_id=document.id)
+    session.delete(document)
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/website-sources", response_model=list[PortalWebsiteSourceResponse])

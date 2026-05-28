@@ -231,6 +231,21 @@ class Settings:
     website_crawl_respect_robots: bool = field(
         default_factory=lambda: parse_bool(os.getenv("WEBSITE_CRAWL_RESPECT_ROBOTS"), default=True)
     )
+    document_storage_root: str = field(
+        default_factory=lambda: os.getenv("DOCUMENT_STORAGE_ROOT", "storage/documents")
+    )
+    document_upload_max_bytes: int = field(
+        default_factory=lambda: int(os.getenv("DOCUMENT_UPLOAD_MAX_BYTES", "10485760"))
+    )
+    document_upload_max_pages: int = field(
+        default_factory=lambda: int(os.getenv("DOCUMENT_UPLOAD_MAX_PAGES", "50"))
+    )
+    document_ocr_enabled: bool = field(
+        default_factory=lambda: parse_bool(os.getenv("DOCUMENT_OCR_ENABLED"), default=False)
+    )
+    document_malware_scan_mode: str = field(
+        default_factory=lambda: os.getenv("DOCUMENT_MALWARE_SCAN_MODE", "basic")
+    )
 
     email_provider: str = field(
         default_factory=lambda: os.getenv("EMAIL_PROVIDER", "console")
@@ -337,6 +352,16 @@ class Settings:
             issues.append("WEBSITE_CRAWL_MAX_REDIRECTS must be zero or greater in production")
         if not self.website_crawl_user_agent.strip():
             issues.append("WEBSITE_CRAWL_USER_AGENT must be set in production")
+        if not self.document_storage_root.strip():
+            issues.append("DOCUMENT_STORAGE_ROOT must be set in production")
+        if self.document_upload_max_bytes <= 0:
+            issues.append("DOCUMENT_UPLOAD_MAX_BYTES must be greater than 0 in production")
+        if self.document_upload_max_pages <= 0:
+            issues.append("DOCUMENT_UPLOAD_MAX_PAGES must be greater than 0 in production")
+        if self.document_malware_scan_mode not in {"basic", "external", "disabled"}:
+            issues.append("DOCUMENT_MALWARE_SCAN_MODE must be basic, external, or disabled")
+        if self.document_malware_scan_mode == "disabled":
+            issues.append("DOCUMENT_MALWARE_SCAN_MODE must not be disabled in production")
         if self.ai_provider == "openai-compatible" and is_placeholder(self.ai_api_key):
             issues.append("AI_API_KEY must be set for the OpenAI-compatible provider")
         if self.email_provider != "smtp":

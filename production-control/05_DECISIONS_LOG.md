@@ -155,3 +155,15 @@ Append-only ADR-lite log for production remediation.
   - Add Playwright crawling now: rejected for PR-06 scope because it increases runtime complexity and SSRF/browser isolation requirements.
   - Defer all website ingestion until PR-09: rejected because website/sitemap ingestion is a product workflow blocker and must exist before RAG quality and onboarding phases.
 - Follow-up impact: Add browser crawling only if controlled beta websites cannot be ingested through ordinary HTTP/sitemap paths.
+
+## DEC-PR-20260529-015: Private Local Document Storage With Gated OCR
+
+- Date: 2026-05-29
+- Decision: Implement PR-07 document ingestion with authenticated multipart uploads, private local storage rooted at `DOCUMENT_STORAGE_ROOT`, a `rag.document_file_ingestion` job carrying only `document_id`, `pypdf` for selectable PDF text, `python-docx` for DOCX text, deterministic basic malware screening, and fail-closed OCR-required status for scanned PDFs.
+- Reason: The current Docker/VPS topology can support private mounted storage immediately without adding object-storage complexity. Keeping raw file bytes out of job payloads reduces accidental exposure, while explicit OCR gating avoids falsely claiming scanned-document support before an OCR runtime is selected and secured.
+- Affected files/phases: PR-07, `backend/app/rag/document_validation.py`, `backend/app/rag/document_storage.py`, `backend/app/rag/extraction.py`, `backend/app/jobs/*`, `backend/app/api/business_portal.py`, `frontend/app/portal/documents/page.tsx`, `docker-compose*.yml`, `docs/document-ingestion.md`.
+- Alternatives rejected:
+  - Store raw file bytes in background job payloads: rejected because customer documents are sensitive and job payload visibility is broader than private storage.
+  - Add full OCR runtime immediately: deferred because OCR engine selection, resource limits, malware/quarantine flow, and operational costs need a dedicated hardening pass.
+  - Add cloud object storage immediately: deferred because the PR-04 OCI VPS topology does not yet require external storage, and a local abstraction keeps the path replaceable later.
+- Follow-up impact: PR-08 can now assume tenant document content exists but must still add scalable SQL pgvector retrieval, citations, thresholds, and RAG safety evaluation. A later OCR/storage hardening pass may replace the local storage backend or add an external scanner without changing the API contract.

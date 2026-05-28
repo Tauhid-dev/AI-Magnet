@@ -71,9 +71,9 @@ def test_ingestion_marks_document_failed_for_unsupported_content():
 
         document = ingestion_service.ingest_bytes(
             tenant_id=tenant.id,
-            filename="brochure.pdf",
-            content=b"%PDF-1.4",
-            content_type="application/pdf",
+            filename="brochure.bin",
+            content=b"binary",
+            content_type="application/octet-stream",
         )
         session.commit()
 

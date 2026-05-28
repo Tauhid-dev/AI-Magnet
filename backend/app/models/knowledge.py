@@ -33,6 +33,15 @@ class KnowledgeDocument(TenantScopedMixin, IdMixin, TimestampMixin, Base):
     source_title: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     website_source_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    file_size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    file_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    malware_scan_status: Mapped[str] = mapped_column(
+        String(40),
+        nullable=False,
+        default="not_scanned",
+    )
+    extraction_status: Mapped[str] = mapped_column(String(40), nullable=False, default="pending")
+    ocr_status: Mapped[str] = mapped_column(String(40), nullable=False, default="not_required")
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="pending")
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 

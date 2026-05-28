@@ -36,6 +36,7 @@ TERMINAL_JOB_STATUSES = {
 }
 
 JOB_TYPE_RAG_DOCUMENT_INGESTION = "rag.document_ingestion"
+JOB_TYPE_RAG_DOCUMENT_FILE_INGESTION = "rag.document_file_ingestion"
 JOB_TYPE_RAG_WEBSITE_CRAWL = "rag.website_crawl"
 JOB_TYPE_NOTIFICATION_DELIVERY = "notification.send_delivery"
 
@@ -122,6 +123,20 @@ class BackgroundJobService:
             tenant_id=tenant_id,
             idempotency_key=f"{JOB_TYPE_RAG_DOCUMENT_INGESTION}:{tenant_id}:{document_id}",
             sensitive_payload=True,
+        )
+
+    def enqueue_document_file_ingestion(
+        self,
+        *,
+        tenant_id: str,
+        document_id: str,
+    ) -> EnqueueResult:
+        """Queue private stored-file ingestion without storing raw bytes in job payload."""
+        return self.enqueue(
+            JOB_TYPE_RAG_DOCUMENT_FILE_INGESTION,
+            {"document_id": document_id},
+            tenant_id=tenant_id,
+            sensitive_payload=False,
         )
 
     def enqueue_notification_delivery(

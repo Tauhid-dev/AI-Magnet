@@ -54,6 +54,11 @@ x-backend-environment: &backend-environment
   WEBSITE_CRAWL_MAX_BYTES: ${WEBSITE_CRAWL_MAX_BYTES:-1048576}
   WEBSITE_CRAWL_MAX_REDIRECTS: ${WEBSITE_CRAWL_MAX_REDIRECTS:-5}
   WEBSITE_CRAWL_RESPECT_ROBOTS: ${WEBSITE_CRAWL_RESPECT_ROBOTS:-true}
+  DOCUMENT_STORAGE_ROOT: /app/storage/documents
+  DOCUMENT_UPLOAD_MAX_BYTES: ${DOCUMENT_UPLOAD_MAX_BYTES:-10485760}
+  DOCUMENT_UPLOAD_MAX_PAGES: ${DOCUMENT_UPLOAD_MAX_PAGES:-50}
+  DOCUMENT_OCR_ENABLED: ${DOCUMENT_OCR_ENABLED:-false}
+  DOCUMENT_MALWARE_SCAN_MODE: ${DOCUMENT_MALWARE_SCAN_MODE:-basic}
   EMAIL_PROVIDER: smtp
   SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST}
   SMTP_PORT: ${SMTP_PORT:-587}
@@ -83,6 +88,8 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    volumes:
+      - document_storage:/app/storage/documents
     security_opt:
       - no-new-privileges:true
     networks:
@@ -116,6 +123,8 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    volumes:
+      - document_storage:/app/storage/documents
     security_opt:
       - no-new-privileges:true
     networks:
@@ -249,5 +258,6 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  document_storage:
   certbot_www:
   letsencrypt:

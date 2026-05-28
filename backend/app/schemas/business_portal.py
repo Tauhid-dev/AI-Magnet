@@ -47,6 +47,11 @@ class PortalDocumentResponse(BaseModel):
     source_url: str | None = None
     source_title: str | None = None
     website_source_id: str | None = None
+    file_size_bytes: int | None = None
+    file_sha256: str | None = None
+    malware_scan_status: str = "not_scanned"
+    extraction_status: str = "pending"
+    ocr_status: str = "not_required"
     job_id: str | None = None
     created_at: datetime
     updated_at: datetime
