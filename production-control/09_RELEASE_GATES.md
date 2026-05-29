@@ -22,7 +22,7 @@ Required:
 
 Current status: CONDITIONAL.
 
-PR-01 through PR-06 are implemented in repository-controlled code and tests, and PR-13A closed the PR-13 repository High findings. Before operating a private internet demo, the owner still needs remote CI evidence plus VPS smoke validation for TLS, firewall exposure, worker health, Redis reachability, backups, restore, PostgreSQL/pgvector migration checks, and any owner-approved controlled real-site crawl smoke.
+PR-01 through PR-06 are implemented in repository-controlled code and tests, PR-13A closed the PR-13 repository High findings, and PR #31 remote CI passed at `51687cec8695e397c41bb0daa377370be4da214f`. Before operating a private internet demo, the owner still needs post-merge launch-candidate CI plus VPS smoke validation for TLS, firewall exposure, worker health, Redis reachability, backups, restore, PostgreSQL/pgvector migration checks, and any owner-approved controlled real-site crawl smoke.
 
 Requires verified:
 

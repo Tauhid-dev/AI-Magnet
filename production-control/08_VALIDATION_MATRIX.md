@@ -219,7 +219,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Migration upgrade/downgrade | pass | SQLite upgrade head and downgrade to `20260529_0011` |
 | Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
 | Dependency and static security scans | pass | `pip-audit` found no known Python vulnerabilities; Bandit passed; `npm audit --audit-level=high` passed high threshold with moderate transitive PostCSS advisory noted |
-| Paid-beta live operations review | partial | Repository controls are verified; owner approval, pricing/tax/refund confirmation, remote CI, VPS/staging smoke, and support readiness remain Gate D conditions |
+| Paid-beta live operations review | partial | Repository controls are verified; owner approval, pricing/tax/refund confirmation, post-merge launch-candidate CI, VPS/staging smoke, and support readiness remain Gate D conditions |
 
 ## PR-12 Validation
 
@@ -291,7 +291,8 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Browser E2E framework | pass | Playwright committed in `frontend/playwright.config.ts` and `frontend/e2e/*` |
 | Browser E2E execution | pass | `npm run test:e2e` - 5 mocked Chromium tests passed |
 | Live backend-integrated browser proof | external_pending | Mocked API browser coverage is repository evidence only; PR-14 must run target-environment smoke |
-| CI browser wiring | pass_pending_remote | `.github/workflows/ci.yml` installs Playwright Chromium and runs `npm run test:e2e`; remote CI result pending after push |
+| CI browser wiring | pass_remote | `.github/workflows/ci.yml` installs Playwright Chromium and runs `npm run test:e2e`; PR #31 GitHub Actions run `26661669094` passed Frontend checks at `51687cec8695e397c41bb0daa377370be4da214f` |
+| GitHub Actions Node 24 runtime compatibility cleanup | pending_final_remote_run | This evidence-sync cleanup upgrades `actions/checkout`, `actions/setup-node`, and `actions/setup-python` to official v6 releases and enables `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`; post-push CI must confirm the warning is cleared |
 | Full backend regression | pass | `backend/.venv/bin/python -m pytest backend/tests -q` - 116 passed |
 | Backend lint/compile | pass | Ruff passed; compileall passed |
 | Alembic smoke | pass | SQLite upgrade/downgrade/upgrade using `/private/tmp/ai_magnet_pr13a_alembic.sqlite` passed |

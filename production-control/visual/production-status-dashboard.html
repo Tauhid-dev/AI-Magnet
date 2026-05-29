@@ -183,10 +183,10 @@
         <thead><tr><th>Gate</th><th>Status</th><th>Requirement</th></tr></thead>
         <tbody>
           <tr><td>A: Controlled Internal Demo</td><td>GO WITH CONDITIONS</td><td>Synthetic/sample data only.</td></tr>
-          <tr><td>B: Secure Private Internet Demo</td><td>CONDITIONAL</td><td>Requires VPS smoke, target MFA/rate-limit smoke, remote CI evidence, and owner approval.</td></tr>
+          <tr><td>B: Secure Private Internet Demo</td><td>CONDITIONAL</td><td>PR #31 remote CI passed at <code>51687ce</code>; still requires owner-approved VPS smoke, target MFA/rate-limit smoke, post-merge launch-candidate CI, and owner approval.</td></tr>
           <tr><td>C: Real Customer Pilot</td><td>NO-GO</td><td>Requires PR-14 VPS readiness, alerting, quota-limit, backup/restore, worker/Redis, crawl/document, RAG smoke, and owner approval.</td></tr>
-          <tr><td>D: Paid Beta</td><td>NO-GO</td><td>Requires PR-14 evidence, owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval.</td></tr>
-          <tr><td>E: Public Production Launch</td><td>NO-GO</td><td>Requires owner-approved live evidence, remote CI, restore drill, target-host MFA/rate-limit smoke, and explicit production approval.</td></tr>
+          <tr><td>D: Paid Beta</td><td>NO-GO</td><td>Requires PR-14 evidence, owner pricing/tax/refund approval, support readiness, post-merge launch-candidate CI, VPS/staging smoke, and explicit paid-beta approval.</td></tr>
+          <tr><td>E: Public Production Launch</td><td>NO-GO</td><td>Requires owner-approved live evidence, post-merge launch-candidate CI, restore drill, target-host MFA/rate-limit smoke, and explicit production approval.</td></tr>
         </tbody>
       </table>
     </section>

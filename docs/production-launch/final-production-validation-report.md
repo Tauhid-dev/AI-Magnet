@@ -20,7 +20,7 @@ The repository has moved from the 2026-05-23 audited state of 35/100 production 
 
 Public production launch remains NO-GO because required external launch evidence has not been executed in this PR-12 run:
 
-- remote CI evidence for the final PR-12A branch
+- post-merge launch-candidate CI evidence after PR #31 merge; PR #31 itself passed remote CI at `51687cec8695e397c41bb0daa377370be4da214f` before the final Actions-runtime cleanup
 - owner-approved staging/VPS deployment smoke
 - production super-admin MFA smoke on the target environment
 - Redis-backed application rate-limit smoke on the target environment

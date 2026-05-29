@@ -669,11 +669,63 @@ Append-only production phase run history.
   - Secret pattern scan - pass, no matches.
   - `npm audit --audit-level=high` - pass after sandbox escalation at high threshold; moderate transitive PostCSS advisory through Next.js remains noted.
   - `npx npm@10 ci` - pass after regenerating `frontend/package-lock.json` with npm 10 to include missing `@emnapi/runtime` and `@emnapi/core` entries for GitHub Actions.
+- Remote PR #31 CI closure:
+  - Initial PR #31 CI failed in the frontend dependency-install step because `frontend/package-lock.json` did not contain required `@emnapi/runtime` and `@emnapi/core` lock entries.
+  - Corrective lockfile commit: `51687cec8695e397c41bb0daa377370be4da214f`.
+  - Subsequent pull-request workflow run: GitHub Actions run `26661669094`, head SHA `51687cec8695e397c41bb0daa377370be4da214f`, conclusion `success`.
+  - Required jobs passed: Frontend checks `78585466164`, Backend checks `78585466174`, Compose config `78585466181`, Security scans `78585466200`.
+  - GitHub Actions still emitted Node.js 20 JavaScript-action deprecation warnings for `actions/checkout@v4`, `actions/setup-node@v4`, and `actions/setup-python@v5`; the final evidence-sync cleanup upgrades these actions and enables the Node 24 opt-in for the next CI run.
 - Known gaps:
   - Public production launch remains NO-GO until owner-approved live evidence and explicit launch approval are recorded.
-  - Remote CI evidence for PR-13A remains pending until the branch is pushed and CI completes.
   - Production PostgreSQL multi-worker `SKIP LOCKED` smoke, Redis/rate-limit abuse analytics smoke, live backend-integrated browser smoke, TLS/firewall, backup/restore, worker/Redis, controlled crawl/document upload, production-equivalent PostgreSQL/pgvector RAG, `/ready`, log/alert destination, and quota-limit smoke remain PR-14 external evidence.
   - Paid beta operation still needs owner approval for pricing, GST/tax handling, refunds, support process, and manual invoicing acceptance.
   - Scanned-document OCR runtime remains gated and should not be claimed as available.
 - Next phase permitted: `Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only`.
 - Commit hash: see pushed branch head and final completion report.
+
+## 2026-05-30 - PR-13A Evidence Sync and GitHub Actions Runtime Maintenance
+
+- Instruction received: `CODEX INSTRUCTION - Final PR-13A Evidence Sync and GitHub Actions Node 24 Compatibility Cleanup`.
+- Phase selected: PR-13A maintenance on existing pull request #31.
+- Branch: `production/pr-13a-consolidated-remediation`.
+- Starting branch head: `51687cec8695e397c41bb0daa377370be4da214f`.
+- PR status verified through GitHub API because `gh` is unavailable locally:
+  - PR #31 is open: `https://github.com/Tauhid-dev/AI-Magnet/pull/31`.
+  - Head ref: `production/pr-13a-consolidated-remediation`.
+  - Base ref: `master`.
+  - Latest confirmed PR run before this cleanup: GitHub Actions run `26661669094`, conclusion `success`.
+  - Required jobs passed: Backend checks, Frontend checks, Compose config, and Security scans.
+- Files changed:
+  - `.github/workflows/ci.yml`
+  - `production-control/04_CURRENT_STATUS.md`
+  - `production-control/06_EXECUTION_LOG.md`
+  - `production-control/08_VALIDATION_MATRIX.md`
+  - `production-control/02_MASTER_PRODUCTION_ROADMAP.md`
+  - `production-control/status/production-status.json`
+  - `production-control/visual/production-roadmap-status.mmd`
+  - `production-control/visual/production-roadmap-status.svg`
+  - `production-control/visual/production-status-dashboard.html`
+  - `docs/production-audit/post-pr12a-final-audit/pr-13a-validation-execution-report.md`
+  - `docs/production-launch/final-production-validation-report.md`
+- Implementation summary:
+  - Replaced stale PR-13A remote-CI-pending language with the confirmed PR #31 successful run at `51687cec8695e397c41bb0daa377370be4da214f`.
+  - Preserved the accurate history that the first PR run failed due to an incomplete frontend lockfile and was corrected by the lockfile commit.
+  - Upgraded official GitHub JavaScript actions from `actions/checkout@v4`, `actions/setup-node@v4`, and `actions/setup-python@v5` to current inspected official v6 releases and enabled `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` for compatibility testing.
+  - Kept public production launch NO-GO and PR-14 as the next external validation phase.
+- Validation run/result:
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - SVG parse check for `production-control/visual/production-roadmap-status.svg` - pass.
+  - `git diff --check` - pass.
+  - `npx npm@10 ci` - pass after sandbox network escalation.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run test:e2e` - pass after sandbox escalation for localhost binding, 5 Playwright Chromium tests.
+  - `npm run build` - pass.
+  - `npm audit --audit-level=high` - pass after sandbox network escalation; moderate transitive PostCSS advisory through Next.js remains below the high threshold.
+  - Post-push GitHub Actions confirmation for this maintenance commit remains required before owner merge.
+- Known gaps:
+  - Public production launch remains NO-GO until PR-14 owner-approved VPS/staging evidence and explicit owner approval are recorded.
+  - This maintenance commit must pass the same required GitHub Actions checks before PR #31 is recommended for owner merge.
+- Next phase permitted after PR #31 merge: `Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only`.
+- Commit hash: pending until commit.

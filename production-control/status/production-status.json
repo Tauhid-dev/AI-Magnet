@@ -42,7 +42,7 @@
         "PR-13A"
       ],
       "remaining_conditions": [
-        "Remote CI evidence for the current production remediation branch",
+        "Post-merge launch-candidate CI evidence after PR #31 merge",
         "Owner-approved VPS smoke for TLS/firewall exposure",
         "Production super-admin MFA smoke on the target environment",
         "Redis-backed app rate-limit smoke on the target environment",
@@ -73,7 +73,7 @@
         "PR-13A"
       ],
       "remaining_conditions": [
-        "Remote CI evidence for the latest production remediation branch",
+        "Post-merge launch-candidate CI evidence after PR #31 merge",
         "Owner-approved VPS/staging smoke before any real customer data",
         "Live /ready readiness check against production-equivalent PostgreSQL",
         "Logging/alert destination configured and verified",
@@ -107,7 +107,7 @@
       ],
       "remaining_conditions": [
         "Owner approval for pricing, GST/tax handling, refund terms, and support process",
-        "Remote CI evidence for the final remediation branch",
+        "Post-merge launch-candidate CI evidence after PR #31 merge",
         "VPS/staging smoke for auth, manual entitlement changes, quotas, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, and /ready checks",
         "Confirmation that manual invoicing is acceptable for the first paid beta; Stripe remains deferred"
       ],
@@ -127,7 +127,7 @@
         "PR-14"
       ],
       "remaining_conditions": [
-        "Remote CI evidence for the launch candidate",
+        "Post-merge launch-candidate CI evidence",
         "Owner-approved staging/VPS validation run",
         "Production super-admin MFA smoke on the target environment",
         "Redis-backed app rate-limit smoke on the target environment",
@@ -291,7 +291,7 @@
         "production-control/phases/PR-13A_FINAL_REPOSITORY_REMEDIATION_BEFORE_STAGING_VALIDATION.md"
       ],
       "branch": "production/pr-13a-consolidated-remediation",
-      "commit": "pending",
+      "commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf + 51687cec8695e397c41bb0daa377370be4da214f",
       "pr13_finding_status": "AUD-HIGH-001 closed by PR-13A; live PostgreSQL multi-worker smoke remains PR-14 external evidence"
     },
     {
@@ -401,7 +401,7 @@
         "frontend/e2e/README.md"
       ],
       "branch": "production/pr-13a-consolidated-remediation",
-      "commit": "pending",
+      "commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf + 51687cec8695e397c41bb0daa377370be4da214f",
       "pr13_finding_status": "AUD-HIGH-003 closed by PR-13A mocked browser E2E; live backend-integrated staging E2E remains PR-14 external evidence"
     },
     {
@@ -432,7 +432,7 @@
         "backend/tests/analytics/test_usage_analytics.py"
       ],
       "branch": "production/pr-13a-consolidated-remediation",
-      "commit": "pending",
+      "commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf + 51687cec8695e397c41bb0daa377370be4da214f",
       "pr13_finding_status": "AUD-HIGH-002 closed by PR-13A privacy-safe persisted rate-limit exceed events and aggregate analytics"
     },
     {
@@ -544,7 +544,7 @@
       ],
       "priority": "p0",
       "criticality": "repository_remediation_gate",
-      "validation_status": "pass_repository_external_conditions_pending",
+      "validation_status": "pass_repository_remote_ci_passed_node24_cleanup_pending_final_run",
       "last_updated": "2026-05-30",
       "evidence_links": [
         "production-control/phases/PR-13A_FINAL_REPOSITORY_REMEDIATION_BEFORE_STAGING_VALIDATION.md",
@@ -556,7 +556,27 @@
         ".github/workflows/ci.yml"
       ],
       "branch": "production/pr-13a-consolidated-remediation",
-      "commit": "pending",
+      "commit": "51687cec8695e397c41bb0daa377370be4da214f",
+      "commit_chain": {
+        "implementation_commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf",
+        "execution_log_commit": "bbc47886549e686d251399565edbfa064930289e",
+        "lockfile_ci_fix_commit": "51687cec8695e397c41bb0daa377370be4da214f",
+        "final_evidence_sync_commit": "recorded_in_final_response_after_commit"
+      },
+      "remote_ci": {
+        "pull_request": 31,
+        "run_id": 26661669094,
+        "head_sha": "51687cec8695e397c41bb0daa377370be4da214f",
+        "conclusion": "success",
+        "jobs": {
+          "Backend checks": "pass",
+          "Frontend checks": "pass",
+          "Compose config": "pass",
+          "Security scans": "pass"
+        },
+        "node20_warning_before_cleanup": true,
+        "node24_action_cleanup": "pending_post_push_ci_for_this_evidence_sync_commit"
+      },
       "closed_findings": [
         "AUD-HIGH-001",
         "AUD-HIGH-002",
@@ -624,7 +644,7 @@
       "phase": "PR-14 external validation"
     },
     {
-      "item": "Paid-beta live operation approval, pricing/GST/refund confirmation, support readiness, remote CI, and VPS/staging smoke evidence",
+      "item": "Paid-beta live operation approval, pricing/GST/refund confirmation, support readiness, post-merge launch-candidate CI, and VPS/staging smoke evidence",
       "phase": "Gate D / PR-14"
     },
     {

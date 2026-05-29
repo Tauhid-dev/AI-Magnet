@@ -295,3 +295,15 @@ Append-only ADR-lite log for production remediation.
   - Add only more static/unit tests: rejected because the finding specifically required browser-level evidence.
   - Claim mocked E2E proves backend integration: rejected; PR-14 still needs owner-approved target-environment smoke for live backend, Redis, PostgreSQL, worker, widget-origin, and cookie/MFA behavior.
 - Follow-up impact: Future frontend changes should keep the mocked browser suite green, and PR-14 should add live/staging smoke evidence without real customer data.
+
+## DEC-PR-20260530-027: PR-13A Upgrades Official GitHub Actions For Node 24 Compatibility
+
+- Date: 2026-05-30
+- Decision: Keep the CI workflow on official GitHub-maintained actions, upgrade `actions/checkout`, `actions/setup-node`, and `actions/setup-python` to inspected official v6 releases, and set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` so the next PR #31 run validates Node 24 JavaScript-action execution.
+- Reason: GitHub Actions reported Node.js 20 runtime deprecation warnings after the PR-13A lockfile fix. The safest maintenance path is to upgrade the official actions already in use and opt in to Node 24 compatibility testing rather than disabling checks or swapping in third-party actions.
+- Affected files/phases: PR-13A, `.github/workflows/ci.yml`, `docs/production-audit/post-pr12a-final-audit/pr-13a-validation-execution-report.md`, `production-control/*`.
+- Alternatives rejected:
+  - Ignore the warning until PR-14: rejected because PR #31 is already being prepared for owner merge.
+  - Pin an insecure runtime opt-out: rejected because it would hide the deprecation rather than validating compatibility.
+  - Replace official actions with third-party actions: rejected because no repository need justifies expanding the CI supply-chain surface.
+- Follow-up impact: The post-push PR #31 workflow run must remain green and should be checked for residual Node.js runtime warnings before owner merge.

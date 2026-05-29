@@ -149,7 +149,7 @@
     <rect class="gate-no" x="350" y="970" width="260" height="82" rx="10" />
     <text class="card-title" x="368" y="998">Gate B</text>
     <text class="card-text" x="368" y="1022">Private demo: conditional</text>
-    <text class="card-text" x="368" y="1043">VPS/CI/owner evidence</text>
+    <text class="card-text" x="368" y="1043">VPS/owner evidence; CI passed</text>
 
     <rect class="gate-no" x="640" y="970" width="260" height="82" rx="10" />
     <text class="card-title" x="658" y="998">Gate C</text>
@@ -170,7 +170,7 @@
   <path class="arrow" d="M1380 955 V970" />
 
   <text class="blocker" x="60" y="1120">PR-13A closed High repository findings: worker atomic claiming, persisted rate-limit abuse analytics, and reproducible mocked browser E2E.</text>
-  <text class="blocker" x="60" y="1149">External gates still required: remote CI, VPS TLS/firewall, backup/restore, pgvector RAG, worker/Redis, crawl/document, alerts, quota smoke.</text>
+  <text class="blocker" x="60" y="1149">External gates still required: post-merge CI, VPS TLS/firewall, backup/restore, pgvector RAG, worker/Redis, crawl/document, alerts, quota smoke.</text>
   <text class="small" x="60" y="1180">Recommended next command: Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only. Public production remains NO-GO.</text>
   <text class="small" x="60" y="1210">Generated deterministically as static SVG and kept consistent with production-control/status/production-status.json.</text>
 </svg>
