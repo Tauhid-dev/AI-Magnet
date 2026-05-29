@@ -26,7 +26,7 @@ Append-only production phase run history.
   - No PR-01 or later product remediation was implemented.
   - Production remains NO-GO beyond controlled internal demo with synthetic/sample data.
 - Next phase permitted: PR-01.
-- Commit hash: pending until commit.
+- Commit hash: see pushed branch head and final completion report.
 
 ## 2026-05-28 - PR-01: Production Authentication, Session Security and Admin Access
 
@@ -676,4 +676,4 @@ Append-only production phase run history.
   - Paid beta operation still needs owner approval for pricing, GST/tax handling, refunds, support process, and manual invoicing acceptance.
   - Scanned-document OCR runtime remains gated and should not be claimed as available.
 - Next phase permitted: `Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only`.
-- Commit hash: pending until commit.
+- Commit hash: see pushed branch head and final completion report.
