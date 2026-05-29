@@ -252,3 +252,26 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
 | Compose/security/status checks | pass | Dev/prod Compose config, production data-service port check, script syntax, Bandit, pip-audit, secret pattern scan, npm audit high-threshold, status JSON parse, SVG parse, and `git diff --check` |
 | Live VPS/staging MFA and Redis rate-limit smoke | not_run | Required before launch-gate change; not executed without explicit owner approval |
+
+## PR-13 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Default branch baseline established | pass | `master` updated to `d390f4dfa7853bb06cd6fd6558a820bdf696f122`; PR-12 and PR-12A merge commits visible locally |
+| GitHub PR/CI metadata | not_verified | `gh` is unavailable in this environment; remote PR/CI status must be verified externally |
+| Full backend test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 106 passed |
+| Focused production super-admin MFA tests | pass | 4 focused tests in `backend/tests/admin/test_admin_api.py` passed |
+| Focused Redis-backed rate-limit tests | pass | `backend/tests/security/test_rate_limit_backend.py` - 5 passed |
+| Focused tenant integrity test | pass | `backend/tests/security/test_pr03_tenant_integrity.py` - 1 passed |
+| Focused ingestion, worker, RAG, chat tests | pass | 38 focused tests passed |
+| Backend compile/lint | pass | `compileall` and Ruff passed |
+| Alembic upgrade/downgrade/upgrade smoke | pass | SQLite smoke using `/private/tmp/ai_magnet_pr13_alembic_20260530.db` passed |
+| Frontend lint/typecheck/static test/build | pass | `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` passed |
+| Compose and production data-service port validation | pass | Dev/prod Compose rendered; production JSON check confirmed no PostgreSQL/Redis published ports |
+| Backup/restore/pgvector script syntax | pass | `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` passed |
+| Security scans | pass_with_warning | Bandit passed; pip-audit found no Python vulnerabilities; secret pattern scan had no matches; npm audit passed high threshold with moderate PostCSS advisory noted |
+| Production-control artifact syntax | pass | Status JSON parsed; SVG parsed; phase/status consistency checked |
+| Worker multi-process atomic claim proof | fail_gap | PR-13 finding AUD-HIGH-001; no atomic claim or concurrency race test found |
+| Persisted rate-limit abuse analytics | fail_gap | PR-13 finding AUD-HIGH-002; rate-limit exceeds are logged but not written to `UsageEventType.RATE_LIMIT_EXCEEDED` |
+| Reproducible browser/e2e evidence | fail_gap | PR-13 finding AUD-HIGH-003; frontend committed test is static only |
+| External VPS/staging launch evidence | not_run | Required in PR-14 with owner approval |

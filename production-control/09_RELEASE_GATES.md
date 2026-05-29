@@ -1,6 +1,6 @@
 # Release Gates
 
-Last updated: 2026-05-29
+Last updated: 2026-05-30
 
 ## Gate A: Controlled Internal Demo
 
@@ -20,9 +20,9 @@ Required:
 
 ## Gate B: Secure Private Internet Demo
 
-Current status: REPOSITORY READY WITH CONDITIONS.
+Current status: CONDITIONAL.
 
-PR-01 through PR-06 are verified in repository-controlled code and tests. Before operating a private internet demo, the owner still needs remote CI evidence plus VPS smoke validation for TLS, firewall exposure, worker health, Redis reachability, backups, restore, PostgreSQL/pgvector migration checks, and any owner-approved controlled real-site crawl smoke.
+PR-01 through PR-06 are implemented in repository-controlled code and tests. PR-13 found worker concurrency and abuse-analytics gaps that should be remediated or explicitly scoped before broader exposure. Before operating a private internet demo, the owner still needs remote CI evidence plus VPS smoke validation for TLS, firewall exposure, worker health, Redis reachability, backups, restore, PostgreSQL/pgvector migration checks, and any owner-approved controlled real-site crawl smoke.
 
 Requires verified:
 
@@ -35,7 +35,7 @@ Requires verified:
 
 ## Gate C: Real Customer Pilot
 
-Current status: REPOSITORY READY WITH CONDITIONS.
+Current status: NO-GO pending PR-13 remediation and external evidence.
 
 Requires verified:
 
@@ -46,6 +46,8 @@ Requires verified:
 Remaining conditions before a real customer pilot may begin:
 
 - Remote CI evidence for the latest production remediation branch.
+- PR-13A remediation for worker concurrency-safe claiming and persisted abuse/rate-limit analytics, unless explicitly scoped out for a limited staging-only run.
+- PR-13B browser/e2e evidence or an owner-approved manual validation protocol for primary onboarding/widget workflows.
 - VPS/staging `/ready` smoke against production-equivalent PostgreSQL/pgvector.
 - Logging/alert destination configured and verified.
 - Controlled quota-limit smoke test.
@@ -56,7 +58,7 @@ Remaining conditions before a real customer pilot may begin:
 
 ## Gate D: Paid Beta
 
-Current status: REPOSITORY READY WITH CONDITIONS.
+Current status: NO-GO pending PR-13 remediation, external evidence, and owner commercial approval.
 
 Requires verified:
 
@@ -68,7 +70,8 @@ Requires verified:
 Remaining conditions before paid beta may begin:
 
 - Owner approval for pricing, GST/tax handling, refund terms, and support process.
-- Remote CI evidence for the PR-11 branch.
+- Remote CI evidence for the final remediation branch.
+- PR-13A/PR-13B remediation or explicit owner risk acceptance.
 - VPS/staging smoke evidence for auth, quotas, manual entitlement changes, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, and readiness checks.
 - Confirmation that manual invoicing is acceptable for the first paid beta; Stripe remains deferred.
 
@@ -76,11 +79,12 @@ Remaining conditions before paid beta may begin:
 
 Current status: NO-GO.
 
-PR-12A repository security corrections are verified, but public launch remains blocked.
+PR-12A repository security corrections are verified and PR-13 audit is complete with findings. Public launch remains blocked.
 
 Requires:
 
 - Remote CI evidence for the final launch candidate.
+- PR-13A security/operations correctness remediation and PR-13B customer-flow evidence remediation, unless a later audit proves the risks otherwise closed.
 - Owner-approved staging/VPS validation using `docs/production-launch/vps-staging-validation-runbook.md`.
 - Production super-admin MFA smoke on the target environment.
 - Redis-backed application rate-limit smoke on the target environment.

@@ -50,13 +50,13 @@ The current portal has useful MVP screens, but a tenant cannot complete a produc
 - [x] Add widget domain/key/branding controls.
 - [x] Improve conversations/leads UX states.
 - [x] Add responsive/accessibility checks.
-- [x] Add browser/e2e tests.
+- [ ] Add committed/reproducible browser/e2e tests. Reopened by PR-13 because the committed frontend test is static and the prior browser smoke was manual evidence.
 - [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
 - Frontend lint/typecheck/test/build.
-- Browser/e2e tests for onboarding, ingestion, agent test, widget setup, leads.
+- Browser/e2e tests for onboarding, ingestion, agent test, widget setup, leads. PR-13 found this remains a repository evidence gap unless covered by a committed test suite or owner-approved manual protocol.
 - Backend API tests for new workflow routes.
 
 ## Security Considerations
@@ -73,11 +73,11 @@ Schema changes may be needed for onboarding/profile/branding. Provide migrations
 - Frontend setup, agent test, knowledge-job, widget branding/copy, leads, and conversations UX: `frontend/app/portal/onboarding/page.tsx`, `frontend/app/portal/agent/page.tsx`, `frontend/app/portal/documents/page.tsx`, `frontend/app/portal/widget/page.tsx`, `frontend/app/portal/leads/page.tsx`, `frontend/app/portal/conversations/page.tsx`, `frontend/components/PortalShell.tsx`.
 - API client/types and static checks: `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`, `frontend/tests/static-check.mjs`.
 - Backend tests: `backend/tests/business/test_business_portal_api.py`.
-- Validation: `backend/.venv/bin/python -m pytest backend/tests/business/test_business_portal_api.py` passed, 12 tests; `backend/.venv/bin/python -m pytest backend/tests` passed, 89 tests; `backend/.venv/bin/python -m ruff check backend/app backend/tests` passed; `npm run test`, `npm run typecheck`, `npm run lint`, and `npm run build` passed; local browser smoke confirmed the portal login route and protected portal route fallback render through Next.js.
+- Validation: `backend/.venv/bin/python -m pytest backend/tests/business/test_business_portal_api.py` passed, 12 tests; `backend/.venv/bin/python -m pytest backend/tests` passed, 89 tests; `backend/.venv/bin/python -m ruff check backend/app backend/tests` passed; `npm run test`, `npm run typecheck`, `npm run lint`, and `npm run build` passed; local browser smoke confirmed the portal login route and protected portal route fallback render through Next.js. PR-13 later found that this is not equivalent to committed browser/e2e coverage.
 
 ## Blockers
 
-No repository-controlled PR-09 blocker remains. PR-10 monitoring, quotas, metering, and cost controls are still required before real customer pilot gates can pass.
+PR-13 reopened one evidence blocker: committed/reproducible browser/e2e coverage is still required, or the owner must approve a manual validation protocol for limited staging.
 
 ## Completion Criteria
 

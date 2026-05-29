@@ -1,5 +1,7 @@
 # Release Evidence Checklist
 
+PR-13 update, 2026-05-30: before using this checklist for a real customer pilot, paid beta, or public launch, first resolve or explicitly scope the PR-13 findings recorded in `docs/production-audit/post-pr12a-final-audit/implementation-gap-register.md`.
+
 Date: 2026-05-29  
 Phase: PR-12 with PR-12A correction package
 

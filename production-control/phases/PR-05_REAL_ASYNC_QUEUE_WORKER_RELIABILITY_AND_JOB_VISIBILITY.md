@@ -79,8 +79,8 @@ Schema may be needed for job status. Provide downgrade and job-state compatibili
 
 ## Blockers
 
-No repository-controlled PR-05 blockers remain. Live worker smoke on the target VPS remains release-gate evidence before internet demo operation.
+PR-13 reopened one repository-controlled risk: the current job acquisition path is not proven atomic/concurrency-safe for multiple worker processes. Live worker smoke on the target VPS remains release-gate evidence before internet demo operation.
 
 ## Completion Criteria
 
-A real worker consumes queued jobs with reliable failure/retry visibility; placeholder worker is no longer presented as production-ready. Criteria met in repository with backend, frontend, security, migration, and static compose validation.
+A real worker consumes queued jobs with reliable failure/retry visibility; placeholder worker is no longer presented as production-ready. PR-13 found this is complete for single-worker repository validation but needs atomic claim/concurrency tests before multi-worker production scaling is claimed.

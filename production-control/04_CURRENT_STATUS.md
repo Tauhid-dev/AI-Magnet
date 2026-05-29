@@ -1,6 +1,6 @@
 # Current Production Status
 
-Last updated: 2026-05-29
+Last updated: 2026-05-30
 
 ## Read First
 
@@ -8,21 +8,23 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-No automatic production implementation phase is active.
+No product implementation phase is active. PR-13 post-merge audit is complete with findings.
 
-Status: PR-12A repository security corrections are verified. Public production launch remains NO-GO pending owner-approved live validation evidence and explicit launch approval.
+Status: PR-12A repository security corrections are present in merged `master`, and PR-13 verified the repository from `d390f4dfa7853bb06cd6fd6558a820bdf696f122`. Public production launch remains NO-GO pending repository remediation where required, owner-approved live validation evidence, and explicit launch approval.
 
 ## Last Completed Phase
 
-PR-12A.
+PR-13.
 
 ## Next Permitted Phase
 
-There is no next automatic PR implementation phase. The next safe commands are explicit owner-directed release actions, such as:
+The next recommended safe command is:
 
-- `Run owner-approved staging validation`
-- `Review PR-12A launch evidence`
-- `Prepare production deployment plan`
+- `Implement remediation phase PR-13A`
+
+After PR-13A and PR-13B are addressed or explicitly scoped, the next external phase can be:
+
+- `Implement external validation phase PR-14`
 
 Do not perform live deployment, DNS/TLS changes, payment activation, production database migration, or real customer onboarding unless explicitly requested.
 
@@ -31,10 +33,10 @@ Do not perform live deployment, DNS/TLS changes, payment activation, production 
 | Target | Current status |
 |---|---|
 | Gate A: Controlled Internal Demo, synthetic/sample data only | GO WITH CONDITIONS |
-| Gate B: Secure Private Internet Demo | REPOSITORY READY WITH CONDITIONS after PR-05; live VPS smoke, remote CI evidence, and owner approval still required |
-| Gate C: Real Customer Pilot | REPOSITORY READY WITH CONDITIONS after PR-10; live VPS/staging smoke, alerting/log destination setup, controlled quota-limit smoke, backup/restore, worker/Redis, crawl/document/RAG smoke, and owner approval still required |
-| Gate D: Paid Beta | REPOSITORY READY WITH CONDITIONS after PR-11; owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval still required |
-| Gate E: Public Production Launch | NO-GO. PR-12A repository security corrections are complete, but external VPS/staging evidence and explicit owner approval are still required |
+| Gate B: Secure Private Internet Demo | CONDITIONAL. PR-01 through PR-05 are implemented, but PR-13 recommends PR-13A before broader exposure; live VPS smoke, remote CI evidence, target MFA/rate-limit smoke, and owner approval still required |
+| Gate C: Real Customer Pilot | NO-GO until PR-13A/PR-13B remediation is addressed and live VPS/staging smoke, alerting/log destination setup, controlled quota-limit smoke, backup/restore, worker/Redis, crawl/document/RAG smoke, and owner approval are recorded |
+| Gate D: Paid Beta | NO-GO until PR-13A/PR-13B remediation, owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval are recorded |
+| Gate E: Public Production Launch | NO-GO. PR-12A corrections are present and PR-13 audit is complete, but repository findings plus external VPS/staging evidence and explicit owner approval remain |
 
 ## Baseline
 
@@ -53,30 +55,36 @@ Do not perform live deployment, DNS/TLS changes, payment activation, production 
 - PR-11 implemented tenant-scoped manual paid-beta subscriptions, beta plan catalog, admin entitlement assignment controls, business billing/compliance visibility, subscription-aware quota enforcement, subscription export in privacy workflows, docs, and validation tests. Stripe/payment-provider automation remains deferred.
 - PR-12 created the final validation package, release evidence checklist, VPS/staging validation runbook, rollback/restore runbook, final GO/NO-GO statement, and updated production-control launch-gate status. It did not perform live deployment.
 - PR-12A corrected independent-review repository security gaps: production active `super_admin` accounts now require configured TOTP MFA, Redis-backed application rate limiting is required for production, and readiness reports admin MFA/rate-limit backend health.
+- PR-13 performed the post-merge full repository audit, created `docs/production-audit/post-pr12a-final-audit/`, and found high remediation needs for worker concurrency-safe claiming, persisted rate-limit abuse analytics, and reproducible browser/e2e evidence.
 
 ## Unresolved Critical Risks
 
-- No unresolved critical repository-controlled implementation blockers remain for PR-01 through PR-12A.
-- Public production launch is still a NO-GO because live VPS/staging validation, restore drill evidence, remote CI evidence, and explicit owner launch approval are not recorded.
+- No unresolved critical repository-controlled implementation blocker was found in PR-13.
+- Public production launch is still a NO-GO because PR-13 high findings, live VPS/staging validation, restore drill evidence, remote CI evidence, and explicit owner launch approval are not recorded.
 
 ## Unresolved High Risks
 
+- PR-13 found that background job claiming is not proven atomic/concurrency-safe for multiple worker processes.
+- PR-13 found that application rate-limit exceed events are logged but not persisted into tenant usage/abuse analytics.
+- PR-13 found that PR-09 browser/e2e coverage claims exceed committed reproducible test evidence.
 - Paid-beta live operation still requires owner approval for pricing, GST/tax handling, refund terms, support process, and manual invoicing acceptance.
 - Scanned-document OCR runtime remains gated and not implemented; do not claim scanned-PDF OCR support.
-- First remote CI run for the pushed PR-12A branch is required.
+- Remote CI evidence for the merged/audit branch is required.
 - First VPS certificate issuance/renewal, backup/restore drill, worker/Redis smoke, controlled real-site crawl and document-upload smoke, live PostgreSQL/pgvector RAG smoke, `/ready` smoke, log/alert destination verification, and controlled quota-limit smoke run are pending release-gate validation.
 
 ## Last Validation Commands
 
-Latest PR-12A validation commands:
+Latest PR-13 validation commands:
 
 - Focused mandatory production super-admin MFA tests - pass, 4 tests.
 - Focused Redis-backed rate-limit tests - pass, 5 tests.
 - `backend/.venv/bin/python -m pytest backend/tests` - pass, 106 tests.
 - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
 - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr12a_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr12a_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0011` - pass.
+- Focused ingestion/worker/RAG/chat tests - pass, 38 tests.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13_alembic_20260530.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13_alembic_20260530.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0011` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13_alembic_20260530.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
 - `npm run lint` - pass.
 - `npm run typecheck` - pass.
 - `npm test` - pass.

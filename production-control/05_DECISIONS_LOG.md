@@ -249,3 +249,15 @@ Append-only ADR-lite log for production remediation.
   - Rely on Nginx-only limits: rejected because endpoint-specific tenant/account/widget scopes need application enforcement too.
   - Continue with in-memory app limits in production: rejected because they reset on restart and do not coordinate across app instances.
 - Follow-up impact: Staging/VPS validation must prove Redis rate limiting and production super-admin MFA readiness before any public launch gate can change.
+
+## DEC-PR-20260530-023: PR-13 Reopens Specific Completion Claims Instead Of Marking Launch Ready
+
+- Date: 2026-05-30
+- Decision: Treat PR-13 as a post-merge audit phase and record high findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and reproducible browser/e2e evidence. Keep public production NO-GO and recommend PR-13A/PR-13B before external launch validation.
+- Reason: The merged repository passes local tests and contains the PR-12A security corrections, but production readiness requires evidence that claims are true in code and tests. A complete audit should reopen overstated phase claims instead of preserving optimistic status.
+- Affected files/phases: PR-13, PR-05, PR-09, PR-10, `docs/production-audit/post-pr12a-final-audit/*`, `production-control/*`, `production-control/visual/*`.
+- Alternatives rejected:
+  - Mark all phases fully complete because tests pass: rejected because PR-13 found untested production-risk paths and documentation overclaims.
+  - Proceed directly to staging/VPS validation: rejected because repository findings should be remediated or explicitly scoped first.
+  - Implement fixes inside PR-13: rejected because the instruction defined PR-13 as audit-only except for documentation/status corrections.
+- Follow-up impact: The next safe command is `Implement remediation phase PR-13A`, followed by PR-13B where customer browser-flow evidence is required, then owner-approved PR-14 external validation.

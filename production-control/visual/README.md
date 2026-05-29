@@ -1,6 +1,6 @@
 # Production Visual Status
 
-Last updated: 2026-05-29
+Last updated: 2026-05-30
 
 ## Purpose
 
@@ -42,7 +42,9 @@ The current baseline must preserve:
 - Internal MVP Demo: GO WITH CONDITIONS.
 - 2026-05-23 audited production readiness: 35/100.
 
-Current launch posture after PR-12A:
+Current launch posture after PR-13:
 
-- Paid Beta: REPOSITORY READY WITH CONDITIONS.
-- Public Production: NO-GO until owner-approved live evidence, target-environment super-admin MFA and Redis rate-limit smoke, and explicit owner approval.
+- Private stakeholder demo: CONDITIONAL.
+- Real customer pilot: NO-GO pending PR-13A/PR-13B remediation and external evidence.
+- Paid Beta: NO-GO pending PR-13A/PR-13B remediation, external evidence, and owner commercial approval.
+- Public Production: NO-GO until repository findings are remediated where required, owner-approved live evidence, target-environment super-admin MFA and Redis rate-limit smoke, and explicit owner approval.

@@ -98,8 +98,8 @@ Validation:
 
 ## Blockers
 
-No repository-controlled PR-10 blockers remain. Live logging/alert destination setup, VPS `/ready` smoke, quota-limit smoke, and operational incident/restore drills remain release-gate evidence before real customer pilot use.
+PR-13 reopened one repository-controlled risk: application rate-limit exceed events are logged but not persisted into tenant usage/abuse analytics. Live logging/alert destination setup, VPS `/ready` smoke, quota-limit smoke, and operational incident/restore drills remain release-gate evidence before real customer pilot use.
 
 ## Completion Criteria
 
-The operator can observe failures and usage, enforce limits, and identify tenant/provider cost risk before accepting paid usage.
+The operator can observe core failures and usage, enforce quotas, and identify tenant/provider cost risk before accepting paid usage. PR-13 found that abuse/rate-limit event persistence must be added before claiming complete abuse analytics.

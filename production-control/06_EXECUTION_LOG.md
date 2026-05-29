@@ -521,6 +521,57 @@ Append-only production phase run history.
 - Next phase permitted: no automatic PR phase remains. Next safe action is owner-approved staging/VPS validation or launch-candidate review.
 - Commit hash: pending until commit.
 
+## 2026-05-30 - PR-13: Full Post-Merge Production Readiness Audit
+
+- Instruction received: `CODEX INSTRUCTION - PR-13 Full Post-Merge Production Readiness Audit and Phase Completeness Verification`.
+- Phase selected: PR-13.
+- Branch: `production/pr-13-full-post-merge-audit`.
+- Audited default branch/commit: `master` at `d390f4dfa7853bb06cd6fd6558a820bdf696f122`.
+- PR-12/PR-12A merge presence:
+  - PR-12 merge visible in local history: `Merge pull request #28 from Tauhid-dev/production/pr-12-final-production-validation-launch-gate`.
+  - PR-12A merge visible in local history: `Merge pull request #29 from Tauhid-dev/production/pr-12a-security-corrections-before-staging`.
+- Files changed:
+  - Audit evidence pack: `docs/production-audit/post-pr12a-final-audit/*`.
+  - Production-control phase/status: `production-control/phases/PR-13_FULL_POST_MERGE_PRODUCTION_READINESS_AUDIT.md`, `production-control/02_MASTER_PRODUCTION_ROADMAP.md`, `production-control/04_CURRENT_STATUS.md`, `production-control/05_DECISIONS_LOG.md`, `production-control/07_RISK_REGISTER.md`, `production-control/08_VALIDATION_MATRIX.md`, `production-control/09_RELEASE_GATES.md`, `production-control/status/production-status.json`, `production-control/visual/*`.
+- Implementation summary:
+  - Performed evidence-based audit of PR-00 through PR-12A against source code, migrations, tests, CI, Docker/Nginx, security controls, RAG/ingestion, frontend UX and production-control artifacts.
+  - Created a complete PR-13 audit pack.
+  - Kept public production launch NO-GO.
+  - Reopened specific completion claims as findings: worker job claiming lacks concurrent/atomic proof, rate-limit exceed events are not persisted into usage analytics, and PR-09 browser/e2e evidence is not committed/reproducible.
+  - Did not implement product features, deploy, change DNS/TLS, activate payments, onboard customers, or change launch status to GO.
+- Validations run/result:
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 106 tests.
+  - Focused mandatory production super-admin MFA tests - pass, 4 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests/security/test_rate_limit_backend.py` - pass, 5 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests/security/test_pr03_tenant_integrity.py` - pass, 1 test.
+  - Focused ingestion/worker/RAG/chat tests - pass, 38 tests.
+  - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
+  - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+  - SQLite Alembic upgrade/downgrade/upgrade smoke using `/private/tmp/ai_magnet_pr13_alembic_20260530.db` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass, static frontend test.
+  - `npm run build` - pass.
+  - `docker compose config` - pass.
+  - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+  - Production Compose JSON check for `postgres` and `redis` published ports - pass, no published ports.
+  - `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` - pass.
+  - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+  - `backend/.venv/bin/python -m pip_audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass after sandbox escalation, no known Python vulnerabilities.
+  - Secret pattern scan - pass, no matches.
+  - `npm audit --audit-level=high` - pass after sandbox escalation at high threshold; moderate transitive PostCSS advisory through Next.js remains noted.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass before PR-13 edits.
+  - SVG parse check - pass before PR-13 edits.
+  - Status/phase consistency script - pass before PR-13 edits.
+- Known gaps:
+  - PR-13A recommended for atomic/concurrency-safe worker job claiming and persisted abuse/rate-limit analytics.
+  - PR-13B recommended for committed browser/e2e evidence for primary customer workflows.
+  - PR-14 external staging/VPS validation remains required after repository remediation.
+  - GitHub CLI is unavailable, so merged PR status and remote CI results were not verified from this environment.
+  - Live TLS/firewall, backup/restore, worker/Redis, controlled crawl/document upload, production-equivalent PostgreSQL/pgvector RAG, `/ready`, log/alert destination, quota-limit and abuse smoke evidence remain pending.
+- Next phase permitted: `Implement remediation phase PR-13A`.
+- Commit hash: pending until commit.
+
 ## 2026-05-29 - PR-12A: Final Repository Security Corrections Before Staging Validation
 
 - Instruction received: `Implement correction phase PR-12A: Final Repository Security Corrections Before Staging Validation`.
