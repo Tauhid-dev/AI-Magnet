@@ -668,7 +668,7 @@ Append-only production phase run history.
   - `backend/.venv/bin/python -m pip_audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass after sandbox escalation, no known Python vulnerabilities.
   - Secret pattern scan - pass, no matches.
   - `npm audit --audit-level=high` - pass after sandbox escalation at high threshold; moderate transitive PostCSS advisory through Next.js remains noted.
-  - `npm ci` - attempted but terminated after hanging with no output in this local sandbox; CI still runs `npm ci`, and local installed-dependency frontend checks passed.
+  - `npx npm@10 ci` - pass after regenerating `frontend/package-lock.json` with npm 10 to include missing `@emnapi/runtime` and `@emnapi/core` entries for GitHub Actions.
 - Known gaps:
   - Public production launch remains NO-GO until owner-approved live evidence and explicit launch approval are recorded.
   - Remote CI evidence for PR-13A remains pending until the branch is pushed and CI completes.

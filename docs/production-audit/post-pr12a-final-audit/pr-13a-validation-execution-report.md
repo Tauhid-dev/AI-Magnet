@@ -28,7 +28,7 @@ Public production launch remains NO-GO. PR-14 must still gather owner-approved e
 | Alembic upgrade | `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13a_alembic.sqlite backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` | PASS | SQLite migration smoke reached head. |
 | Alembic downgrade | `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13a_alembic.sqlite backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0011` | PASS | Downgraded latest revision. |
 | Alembic re-upgrade | `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13a_alembic.sqlite backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` | PASS | Re-upgraded to head. |
-| Frontend install validation | `npm ci` | NOT COMPLETED | Attempted locally but hung with no output and was terminated. CI still uses `npm ci`; local installed-dependency checks below passed. |
+| Frontend install validation | `npx npm@10 ci` | PASS | Lockfile was regenerated with npm 10 after CI reported missing `@emnapi/runtime` and `@emnapi/core`; npm 10 clean install added 361 packages successfully. |
 | Frontend lint | `npm run lint` | PASS | ESLint completed with zero warnings. |
 | Frontend typecheck | `npm run typecheck` | PASS | TypeScript completed. |
 | Frontend unit/static test | `npm test` | PASS | 1 static test passed. |
