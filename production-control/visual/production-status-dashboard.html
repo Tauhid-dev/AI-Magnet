@@ -118,19 +118,19 @@
     <section class="grid summary">
       <div class="card">
         <h2>Current State</h2>
-        <div class="metric">PR-12A verified</div>
-        <p>The repository launch-gate package includes the independent-review security corrections. Public production remains NO-GO until owner-approved live validation evidence and explicit launch approval are recorded.</p>
+        <div class="metric">PR-13 audit complete</div>
+        <p>The post-merge audit verified PR-12A is present on master and found follow-up remediation needs. Public production remains NO-GO until repository findings, live validation evidence, and owner approval are recorded.</p>
       </div>
       <div class="card">
         <h2>Next Permitted Action</h2>
-        <div class="metric">Owner approval</div>
-        <p>Run staging/VPS validation or launch-candidate review only after explicit owner direction.</p>
+        <div class="metric">PR-13A</div>
+        <p>Implement remediation for worker concurrency-safe claiming and persisted abuse/rate-limit analytics before real customer pilot or launch validation.</p>
       </div>
       <div class="card">
         <h2>Progress</h2>
-        <div class="metric">14 / 14 phases</div>
+        <div class="metric">15 phases</div>
         <div class="progress"><span style="width: 100%;"></span></div>
-        <p>PR-00 through PR-12A are verified as repository-controlled phases.</p>
+        <p>PR-00 through PR-12A are implemented; PR-13 is verified with findings. PR-05, PR-09 and PR-10 are reopened with residual/evidence gaps.</p>
       </div>
       <div class="card">
         <h2>Launch Gate</h2>
@@ -142,6 +142,8 @@
     <section>
       <h2>Critical Blockers</h2>
       <div class="blockers">
+        <div class="blocker">PR-13A worker concurrency and abuse analytics remediation remains pending</div>
+        <div class="blocker">PR-13B browser/e2e evidence remediation remains pending</div>
         <div class="blocker">Owner-approved live validation evidence remains pending</div>
         <div class="blocker">Production super-admin MFA smoke on the target environment remains pending</div>
         <div class="blocker">Redis-backed application rate-limit smoke on the target environment remains pending</div>
@@ -162,15 +164,16 @@
         <div class="card phase verified"><h3>PR-02: Abuse Protection</h3><p>Status: verified. Rate limits, widget origins, CSRF/CSP review, and key lifecycle controls are implemented.</p></div>
         <div class="card phase verified"><h3>PR-03: Tenant DB and Privacy</h3><p>Status: verified. Tenant integrity, export/delete/offboarding, global audit handling, and PII-redacted audit attributes are implemented.</p></div>
         <div class="card phase verified"><h3>PR-04: Production Infrastructure</h3><p>Status: verified. Private DB/Redis production topology, TLS/HSTS templates, backups, CI scans, and correlation logs are implemented.</p></div>
-        <div class="card phase verified"><h3>PR-05: Queue and Worker</h3><p>Status: verified. Durable jobs, Redis wake signals, retries, failure visibility, worker health, and async ingestion/notification jobs are implemented.</p></div>
+        <div class="card phase high"><h3>PR-05: Queue and Worker</h3><p>Status: complete with PR-13 residual risk. Durable jobs exist, but multi-worker atomic claim proof is pending.</p></div>
         <div class="card phase verified"><h3>PR-06: Website/Sitemap Ingestion</h3><p>Status: verified. Tenant source tracking, SSRF-safe crawling, crawl history, queued indexing jobs, and portal controls are implemented.</p></div>
         <div class="card phase verified"><h3>PR-07: Document Ingestion</h3><p>Status: verified. Secure file upload, private storage, PDF/DOCX extraction, gated OCR path, and refresh/delete controls are implemented.</p></div>
         <div class="card phase verified"><h3>PR-08: RAG Quality</h3><p>Status: verified. SQL pgvector retrieval path, citations, thresholds, no-answer fallback, and safety evals are implemented.</p></div>
-        <div class="card phase verified"><h3>PR-09: Onboarding UX</h3><p>Status: verified. Customer setup, agent test, source display, and widget installation UX are implemented.</p></div>
-        <div class="card phase verified"><h3>PR-10: Monitoring and Quotas</h3><p>Status: verified. Ops visibility, metering, quotas, readiness, and cost controls are implemented.</p></div>
+        <div class="card phase high"><h3>PR-09: Onboarding UX</h3><p>Status: complete with PR-13 evidence gap. UX exists, but committed browser/e2e coverage is pending.</p></div>
+        <div class="card phase high"><h3>PR-10: Monitoring and Quotas</h3><p>Status: complete with PR-13 residual risk. Quotas exist, but app rate-limit exceed events are not persisted to usage analytics.</p></div>
         <div class="card phase verified"><h3>PR-11: Paid Beta Controls</h3><p>Status: verified. Manual subscriptions, plan entitlements, admin controls, portal billing status, and server-side quota enforcement are implemented.</p></div>
         <div class="card phase verified"><h3>PR-12: Final Launch Gate</h3><p>Status: verified. Final evidence package exists; public production remains NO-GO pending owner-approved live validation.</p></div>
         <div class="card phase verified"><h3>PR-12A: Security Corrections</h3><p>Status: verified. Mandatory production super-admin TOTP MFA and Redis-backed production application rate limiting are implemented.</p></div>
+        <div class="card phase high"><h3>PR-13: Post-Merge Audit</h3><p>Status: verified with findings. Audit pack exists and recommends PR-13A, PR-13B and PR-14.</p></div>
       </div>
     </section>
 
@@ -180,10 +183,10 @@
         <thead><tr><th>Gate</th><th>Status</th><th>Requirement</th></tr></thead>
         <tbody>
           <tr><td>A: Controlled Internal Demo</td><td>GO WITH CONDITIONS</td><td>Synthetic/sample data only.</td></tr>
-          <tr><td>B: Secure Private Internet Demo</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-05 plus PR-12A security corrections are verified; VPS smoke, target MFA/rate-limit smoke, remote CI evidence, and owner approval still required.</td></tr>
-          <tr><td>C: Real Customer Pilot</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-10 are verified; VPS readiness, alerting, quota-limit, backup/restore, worker/Redis, crawl/document, RAG smoke, and owner approval still required.</td></tr>
-          <tr><td>D: Paid Beta</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-11 are verified; owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval still required.</td></tr>
-          <tr><td>E: Public Production Launch</td><td>NO-GO</td><td>Requires owner-approved live evidence, remote CI, restore drill, target-host MFA/rate-limit smoke, and explicit production approval.</td></tr>
+          <tr><td>B: Secure Private Internet Demo</td><td>CONDITIONAL</td><td>PR-13A remediation or explicit scoping, VPS smoke, target MFA/rate-limit smoke, remote CI evidence, and owner approval still required.</td></tr>
+          <tr><td>C: Real Customer Pilot</td><td>NO-GO</td><td>Requires PR-13A/PR-13B remediation, VPS readiness, alerting, quota-limit, backup/restore, worker/Redis, crawl/document, RAG smoke, and owner approval.</td></tr>
+          <tr><td>D: Paid Beta</td><td>NO-GO</td><td>Requires PR-13A/PR-13B remediation, owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval.</td></tr>
+          <tr><td>E: Public Production Launch</td><td>NO-GO</td><td>Requires repository remediation, owner-approved live evidence, remote CI, restore drill, target-host MFA/rate-limit smoke, and explicit production approval.</td></tr>
         </tbody>
       </table>
     </section>
@@ -197,6 +200,7 @@
       <a href="../09_RELEASE_GATES.md">Release Gates</a>
       <a href="../../docs/production-launch/final-production-validation-report.md">Final Validation Report</a>
       <a href="../../docs/production-launch/final-go-no-go-statement.md">Final GO/NO-GO</a>
+      <a href="../../docs/production-audit/post-pr12a-final-audit/README.md">PR-13 Audit Pack</a>
       <a href="production-roadmap-status.svg">Roadmap SVG</a>
       <a href="production-roadmap-status.mmd">Mermaid Source</a>
     </section>

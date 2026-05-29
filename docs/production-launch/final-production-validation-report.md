@@ -8,6 +8,8 @@ Branch: `production/pr-12a-security-corrections-before-staging`
 
 This report re-audits the AI-Magnet repository against the 2026-05-23 production-readiness baseline and the PR-00 through PR-12 production remediation plan.
 
+Post-merge update: PR-13 on 2026-05-30 is the latest readiness audit. It confirms PR-12A is present in merged `master`, keeps public production NO-GO, and records follow-up findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and reproducible browser/e2e evidence. See `docs/production-audit/post-pr12a-final-audit/`.
+
 This PR-12/PR-12A run validates repository-controlled code, configuration, documentation, migrations, tests, security scans, and release artifacts. It does not perform live deployment, DNS changes, certificate issuance, production database migration, payment activation, or real customer onboarding.
 
 PR-12A was required after an independent review found two repository-level launch-gate gaps in the PR-12 package: production super-admin MFA was not mandatory for every active `super_admin`, and application-level rate limiting still relied on process-local memory instead of durable cross-instance coordination. PR-12A corrects those repository issues while preserving Public Production Launch as NO-GO until external evidence and owner approval are recorded.
