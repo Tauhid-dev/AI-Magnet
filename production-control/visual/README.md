@@ -42,7 +42,7 @@ The current baseline must preserve:
 - Internal MVP Demo: GO WITH CONDITIONS.
 - 2026-05-23 audited production readiness: 35/100.
 
-Current launch posture after PR-12:
+Current launch posture after PR-12A:
 
 - Paid Beta: REPOSITORY READY WITH CONDITIONS.
-- Public Production: NO-GO until owner-approved live evidence and explicit owner approval.
+- Public Production: NO-GO until owner-approved live evidence, target-environment super-admin MFA and Redis rate-limit smoke, and explicit owner approval.

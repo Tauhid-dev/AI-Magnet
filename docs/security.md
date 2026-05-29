@@ -1,6 +1,6 @@
 # Security Checklist
 
-## MVP Security Goals
+## Security Goals
 
 - Keep tenant-owned data isolated by `tenant_id`.
 - Prevent business portal tokens from authorizing super admin APIs.
@@ -30,13 +30,23 @@ High-risk paths that require tests:
 
 Business portal sessions and super admin sessions use separate HMAC secrets and token payloads. A token from one portal must not authorize the other portal.
 
-Production authentication now uses password verification, session-version revocation, failed-login lockout, HttpOnly/SameSite cookies for browser sessions, and admin TOTP enforcement when MFA is enabled. Unsafe cookie-authenticated writes require `X-AI-Magnet-CSRF`.
+Production authentication now uses password verification, session-version revocation, failed-login lockout, HttpOnly/SameSite cookies for browser sessions, and mandatory TOTP enforcement for active `super_admin` records. In production, super-admin login and existing session validation fail closed when MFA is disabled or no valid MFA secret is configured. Unsafe cookie-authenticated writes require `X-AI-Magnet-CSRF`.
 
 Production hardening still required before public launch:
 
 - Add admin MFA enrollment/rotation UX.
-- Move abuse controls from single-process app memory to production proxy/distributed enforcement where needed.
 - Add operational incident response runbooks.
+
+## Rate Limiting And Abuse Controls
+
+Application-level rate limiting supports two explicit backends:
+
+- `RATE_LIMIT_BACKEND=memory` for local development and tests only.
+- `RATE_LIMIT_BACKEND=redis` for production.
+
+Production startup validation rejects non-Redis rate limiting. Redis-backed limits coordinate across backend instances and cover the same sensitive scopes used by the API routes: admin login, business login, widget initialisation, chat start/message, portal writes, and high-risk admin writes. If Redis is unavailable while Redis limiting is selected, protected endpoints fail closed with HTTP 503 and `/ready` reports degraded rate-limit readiness.
+
+Nginx IP-level limits remain defence in depth, not the sole protection.
 
 ## Production Runtime Guardrails
 
@@ -48,6 +58,8 @@ In `APP_ENV=production`, the backend rejects startup when:
 - `ENABLE_API_DOCS=true`.
 - `AUTH_COOKIE_SECURE=false`.
 - `APP_LOG_FORMAT` is not `json`.
+- `RATE_LIMIT_BACKEND` is not `redis`.
+- `RATE_LIMIT_REDIS_KEY_PREFIX` is missing or `RATE_LIMIT_REDIS_TIMEOUT_SECONDS` is invalid.
 - `DATABASE_URL` uses SQLite, default credentials, or placeholder credentials.
 - `REDIS_URL` points to localhost instead of a private service hostname.
 - OpenAI-compatible AI is selected without `AI_API_KEY`.

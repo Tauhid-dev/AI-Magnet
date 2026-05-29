@@ -31,6 +31,17 @@ def verify_totp_code(
     return False
 
 
+def is_totp_secret_configured(secret: str | None) -> bool:
+    """Return true when a TOTP secret is present and parseable."""
+    if not secret or not secret.strip():
+        return False
+    try:
+        _decode_secret(secret)
+    except Exception:
+        return False
+    return True
+
+
 def generate_totp_code(secret: str, counter: int) -> str:
     """Generate a six-digit TOTP code for tests and verification."""
     key = _decode_secret(secret)

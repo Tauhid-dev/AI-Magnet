@@ -86,9 +86,9 @@ npm install
 npm run dev
 ```
 
-The portal talks to the backend through `NEXT_PUBLIC_API_BASE_URL`. It includes sign-in, dashboard metrics, knowledge document upload/status, leads, conversations, widget setup, and basic analytics screens.
+The portal talks to the backend through `NEXT_PUBLIC_API_BASE_URL`. It includes password sign-in, dashboard metrics, knowledge document upload/status, leads, conversations, widget setup, billing visibility, and analytics screens.
 
-The Phase 5 sign-in flow is an MVP tenant-aware email/session contract for local validation. Production auth hardening belongs to a later security/auth phase.
+Production browser sessions use HttpOnly/SameSite cookies with CSRF confirmation for unsafe cookie-authenticated writes. Local tests and scripts can still use the bearer-token compatibility path.
 
 ## Super admin portal
 
@@ -104,7 +104,7 @@ Current admin scope:
 - limited tenant support context
 - tenant-scoped admin audit logs
 
-Super admins are stored separately from tenant business users in `admin_users`. The current sign-in flow is an MVP email/session contract for local validation and must be hardened before production.
+Super admins are stored separately from tenant business users in `admin_users`. Production super-admin login requires a password plus configured TOTP MFA; active `super_admin` records without MFA are rejected in production.
 
 ## Lead notifications
 

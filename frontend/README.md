@@ -15,14 +15,15 @@ The app expects the backend API at `NEXT_PUBLIC_API_BASE_URL`, defaulting to `ht
 
 ## Current scope
 
-- Business login and signed session storage.
+- Business password login with HttpOnly/SameSite browser sessions.
 - Tenant dashboard.
 - Knowledge document upload/status view.
 - Leads and conversation review.
 - Widget setup and key creation.
 - Basic analytics.
 - Super admin tenant management, usage, health, support, and audit views.
+- Super admin password login with production TOTP enforcement.
 
-The current login flow is an MVP tenant-session contract for active `BusinessUser` records. Production password or identity-provider authentication should be hardened before launch.
+Production browser sessions are stored in HttpOnly cookies and unsafe cookie-authenticated writes require the `X-AI-Magnet-CSRF` confirmation header. Local development may still use the bearer-token compatibility path for tests and scripts.
 
-The admin login flow is a separate MVP session contract for active `AdminUser` records with the `super_admin` role.
+In production, every active `super_admin` must have `mfa_required=true` and a valid TOTP secret before login or existing session validation succeeds. Local/test setup may keep MFA disabled only outside production for developer ergonomics.

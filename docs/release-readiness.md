@@ -4,14 +4,14 @@ Last updated: 2026-05-29
 
 ## Production Remediation Status
 
-The historical MVP Phase 0-10 work remains build evidence. Production remediation PR-01 through PR-12 is the current release-readiness track.
+The historical MVP Phase 0-10 work remains build evidence. Production remediation PR-01 through PR-12A is the current release-readiness track.
 
-PR-01 through PR-11 are verified in repository-controlled code, tests, docs, and production-control status artifacts. PR-12 records the final validation package and launch gate. Public production launch remains NO-GO until owner-approved live evidence and explicit launch approval are recorded.
+PR-01 through PR-12A are verified in repository-controlled code, tests, docs, and production-control status artifacts. PR-12 records the final validation package and launch gate; PR-12A adds independent-review security corrections for mandatory production super-admin MFA and Redis-backed production application rate limiting. Public production launch remains NO-GO until owner-approved live evidence and explicit launch approval are recorded.
 
 ## Completed Repository Readiness Items
 
-- Production authentication with password verification, admin MFA support, HttpOnly/SameSite browser sessions, revocation, lockout, and tests.
-- Public/API abuse controls with rate limiting, widget origin enforcement, widget key lifecycle controls, CSRF confirmation, CSP/security headers, and tests.
+- Production authentication with password verification, mandatory configured TOTP MFA for active production `super_admin` accounts, HttpOnly/SameSite browser sessions, revocation, lockout, and tests.
+- Public/API abuse controls with Redis-backed production application rate limiting, widget origin enforcement, widget key lifecycle controls, CSRF confirmation, CSP/security headers, and tests.
 - Same-tenant database integrity constraints, privacy export/delete/offboarding workflow, PII-redacted global admin audit logs, and tenant isolation tests.
 - Separate production Compose topology with private PostgreSQL/Redis networking, Nginx TLS/HSTS templates, certificate renewal path, restart policies, health checks, and no public data-service ports.
 - Production secret/config validation for sessions, database, Redis, AI, SMTP/email, frontend/API config, backups, cookies, and logging.
@@ -34,7 +34,7 @@ Run:
 backend/.venv/bin/python -m pytest backend/tests
 backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations
 backend/.venv/bin/python -m ruff check backend/app backend/tests
-DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr12_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head
+DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr12a_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head
 docker compose config
 docker compose --env-file .env.production.example -f docker-compose.prod.yml config
 sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh
@@ -51,7 +51,8 @@ cd frontend && npm audit --audit-level=high
 
 ## Known Pre-Production Gaps
 
-- Remote CI must pass for the final PR-12 branch before relying on it as release evidence.
+- Remote CI must pass for the final PR-12A branch before relying on it as release evidence.
+- Production super-admin MFA and Redis-backed application rate limiting must be smoke-tested on the target environment before any launch-gate change.
 - TLS certificate issuance and renewal commands are documented but not executed on the VPS in this repository pass.
 - Encrypted backup scripts exist, but the first scheduled backup and restore drill must be run on staging/VPS before launch.
 - Live PostgreSQL/pgvector migration and RAG smoke must be run on production-equivalent infrastructure before launch.
@@ -61,4 +62,4 @@ cd frontend && npm audit --audit-level=high
 
 ## Release Recommendation
 
-Controlled internal demo remains GO WITH CONDITIONS. Secure private demo, real customer pilot, and paid beta are repository-ready with conditions. Public production launch remains NO-GO until the PR-12 external evidence checklist is complete and the owner explicitly approves launch.
+Controlled internal demo remains GO WITH CONDITIONS. Secure private demo, real customer pilot, and paid beta are repository-ready with conditions. Public production launch remains NO-GO until the PR-12A external evidence checklist is complete and the owner explicitly approves launch.

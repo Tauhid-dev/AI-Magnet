@@ -520,3 +520,54 @@ Append-only production phase run history.
   - Scanned-document OCR runtime remains gated and should not be claimed as available.
 - Next phase permitted: no automatic PR phase remains. Next safe action is owner-approved staging/VPS validation or launch-candidate review.
 - Commit hash: pending until commit.
+
+## 2026-05-29 - PR-12A: Final Repository Security Corrections Before Staging Validation
+
+- Instruction received: `Implement correction phase PR-12A: Final Repository Security Corrections Before Staging Validation`.
+- Phase selected: PR-12A.
+- Branch: `production/pr-12a-security-corrections-before-staging`.
+- Files changed:
+  - Backend security/runtime: `backend/app/admin/auth.py`, `backend/app/core/rate_limit.py`, `backend/app/core/config.py`, `backend/app/core/totp.py`, `backend/app/api/health.py`, `backend/app/schemas/health.py`, `backend/app/db/seed.py`.
+  - Backend tests: `backend/tests/admin/test_admin_api.py`, `backend/tests/security/test_rate_limit_backend.py`, `backend/tests/test_config.py`.
+  - Runtime config: `.env.example`, `.env.production.example`, `docker-compose.yml`, `docker-compose.prod.yml`.
+  - Docs/status: `Readme.md`, `frontend/README.md`, `docs/security.md`, `docs/deployment.md`, `docs/release-readiness.md`, `docs/production-launch/*`, `production-control/*`, `production-control/visual/*`.
+- Implementation summary:
+  - Enforced mandatory configured TOTP MFA for every active production `super_admin`.
+  - Rejected production super-admin login and existing session validation when MFA is disabled or no valid MFA secret is configured.
+  - Kept local/test MFA behaviour explicitly non-production.
+  - Added Redis-backed application-level rate limiting for production with in-memory fallback limited to explicitly configured local/dev/test.
+  - Added fail-closed HTTP 503 behaviour and `/ready` visibility when Redis-backed rate limiting is selected but unavailable.
+  - Updated launch docs, release checklists, dashboard, Mermaid/SVG roadmap, risk register, validation matrix, and current status to record the independent-review correction.
+  - Did not deploy, change DNS/TLS, activate payments, onboard customers, or change public production to GO.
+- Validations run/result:
+  - Focused mandatory production super-admin MFA tests - pass, 4 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests/security/test_rate_limit_backend.py` - pass, 5 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 106 tests.
+  - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
+  - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr12a_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr12a_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0011` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `docker compose config` - pass.
+  - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+  - Production Compose JSON check for `postgres` and `redis` published ports - pass, no published ports.
+  - `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` - pass.
+  - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+  - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass, no known Python vulnerabilities.
+  - Secret pattern scan - pass, no matches.
+  - `npm audit --audit-level=high` - pass at high threshold; npm reported moderate transitive PostCSS advisories through Next.js.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
+- Known gaps:
+  - Public production launch remains NO-GO until owner-approved live evidence and explicit launch approval are recorded.
+  - Remote CI evidence for the pushed PR-12A branch remains pending until push/CI completes.
+  - Production super-admin MFA and Redis-backed rate limiting still require target-environment smoke before any launch-gate change.
+  - Live VPS TLS/firewall, backup/restore, worker/Redis, controlled crawl/document upload, production-equivalent PostgreSQL/pgvector RAG, `/ready`, log/alert destination, quota-limit, and abuse smoke evidence remain pending.
+  - Paid beta operation still needs owner approval for pricing, GST/tax handling, refunds, support process, and manual invoicing acceptance.
+  - Scanned-document OCR runtime remains gated and should not be claimed as available.
+- Next phase permitted: no automatic PR phase remains. Next safe action is owner-approved staging/VPS validation or launch-candidate review.
+- Commit hash: pending until commit.

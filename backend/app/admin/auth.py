@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
 from app.core.passwords import verify_password
-from app.core.totp import verify_totp_code
+from app.core.totp import is_totp_secret_configured, verify_totp_code
 from app.models.admin import AdminUser
 
 
@@ -60,7 +60,13 @@ class AdminPortalAuthService:
         if not verify_password(password, admin.password_hash):
             self._register_failed_login(admin)
             return None
-        if admin.mfa_required and not verify_totp_code(admin.mfa_secret, mfa_code):
+        if not self._admin_has_required_mfa(admin):
+            self._register_failed_login(admin)
+            return None
+        if self._admin_requires_mfa(admin) and not verify_totp_code(
+            admin.mfa_secret,
+            mfa_code,
+        ):
             self._register_failed_login(admin)
             return None
         self._register_successful_login(admin)
@@ -141,7 +147,35 @@ class AdminPortalAuthService:
             return None
         if admin.session_version != token_session_version:
             return None
+        if not self._admin_has_required_mfa(admin):
+            return None
         return admin
+
+    def production_super_admin_mfa_issue_count(self) -> int:
+        """Count active super admins that would be blocked by production MFA rules."""
+        if not self.settings.is_production():
+            return 0
+        statement = select(AdminUser).where(
+            AdminUser.status == "active",
+            AdminUser.role.in_(SUPER_ADMIN_ROLES),
+        )
+        return sum(
+            1
+            for admin in self.session.scalars(statement).all()
+            if not self._admin_has_required_mfa(admin)
+        )
+
+    def _admin_requires_mfa(self, admin: AdminUser) -> bool:
+        """Return whether the admin must provide MFA for the current environment."""
+        if self.settings.is_production() and admin.role in SUPER_ADMIN_ROLES:
+            return True
+        return bool(admin.mfa_required)
+
+    def _admin_has_required_mfa(self, admin: AdminUser) -> bool:
+        """Return true when required MFA is enabled and has a configured secret."""
+        if not self._admin_requires_mfa(admin):
+            return True
+        return bool(admin.mfa_required and is_totp_secret_configured(admin.mfa_secret))
 
     def _register_failed_login(self, admin: AdminUser) -> None:
         admin.failed_login_count += 1

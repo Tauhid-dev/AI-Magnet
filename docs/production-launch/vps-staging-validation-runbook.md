@@ -1,7 +1,7 @@
 # VPS/Staging Validation Runbook
 
 Date: 2026-05-29  
-Phase: PR-12
+Phase: PR-12 with PR-12A correction package
 
 This runbook is for an owner-approved staging or OCI VPS validation pass. Do not run these commands against live production infrastructure unless the owner explicitly authorizes the deployment step, target host, domain, and data policy.
 
@@ -9,6 +9,8 @@ This runbook is for an owner-approved staging or OCI VPS validation pass. Do not
 
 - A reviewed branch or release commit has been selected.
 - `.env` is created from `.env.production.example` with real non-placeholder secrets.
+- `RATE_LIMIT_BACKEND=redis` is configured and Redis is private to the Compose network.
+- At least one active production `super_admin` has `mfa_required=true` and a valid TOTP secret.
 - The host firewall is configured before starting public services.
 - The test data set is synthetic or explicitly owner-approved.
 - Backup destination and encryption passphrase are prepared.
@@ -97,8 +99,32 @@ curl -f https://your-domain.example/api/ready
 Expected:
 
 - `/health` passes.
-- `/ready` passes with database and production config checks healthy.
+- `/ready` passes with database, production config, production super-admin MFA, and Redis rate-limit backend checks healthy.
 - Responses include request/correlation identifiers.
+
+## Production Admin MFA Smoke
+
+Use only an owner-approved test admin account or a staging-only super-admin account.
+
+1. Confirm production mode is active with `APP_ENV=production`.
+2. Attempt super-admin login with the correct password and no MFA code. It must fail.
+3. Attempt super-admin login with the correct password and an invalid MFA code. It must fail.
+4. Attempt super-admin login with the correct password and a valid TOTP code. It must succeed.
+5. Confirm `/api/ready` does not report a production super-admin MFA failure.
+
+Do not record raw passwords, TOTP secrets, or session tokens in evidence logs.
+
+## Redis-Backed Rate-Limit Smoke
+
+Use controlled requests only:
+
+1. Confirm `.env` uses `RATE_LIMIT_BACKEND=redis`.
+2. Trigger a low-risk protected scope, such as repeated failed login attempts, until a 429 is returned.
+3. Confirm the response includes `Retry-After`.
+4. Confirm a second backend instance, if present, observes the same Redis-backed limit.
+5. In a staging-only maintenance window, temporarily make Redis unreachable and confirm protected endpoints fail closed with HTTP 503 and `/api/ready` reports degraded rate-limit readiness.
+
+Restore Redis immediately after the fail-closed test.
 
 ## Worker And Redis Smoke
 

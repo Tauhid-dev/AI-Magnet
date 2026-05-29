@@ -114,6 +114,9 @@ class Settings:
     rate_limit_enabled: bool = field(
         default_factory=lambda: parse_bool(os.getenv("RATE_LIMIT_ENABLED"), default=True)
     )
+    rate_limit_backend: str = field(
+        default_factory=lambda: os.getenv("RATE_LIMIT_BACKEND", "memory")
+    )
     rate_limit_window_seconds: int = field(
         default_factory=lambda: int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
     )
@@ -134,6 +137,15 @@ class Settings:
     )
     rate_limit_admin_write_per_minute: int = field(
         default_factory=lambda: int(os.getenv("RATE_LIMIT_ADMIN_WRITE_PER_MINUTE", "30"))
+    )
+    rate_limit_redis_key_prefix: str = field(
+        default_factory=lambda: os.getenv(
+            "RATE_LIMIT_REDIS_KEY_PREFIX",
+            "ai-magnet:rate-limit",
+        )
+    )
+    rate_limit_redis_timeout_seconds: float = field(
+        default_factory=lambda: float(os.getenv("RATE_LIMIT_REDIS_TIMEOUT_SECONDS", "2"))
     )
     widget_require_allowed_origins: bool = field(
         default_factory=lambda: parse_bool(
@@ -326,9 +338,13 @@ class Settings:
         default_factory=lambda: os.getenv("BACKUP_ENCRYPTION_PASSPHRASE") or None
     )
 
+    def is_production(self) -> bool:
+        """Return true when the runtime environment is production-like."""
+        return self.environment.strip().lower() in {"prod", "production"}
+
     def production_security_issues(self) -> list[str]:
         """Return production-only configuration issues."""
-        if self.environment.strip().lower() not in {"prod", "production"}:
+        if not self.is_production():
             return []
         issues: list[str] = []
         if is_placeholder(self.business_portal_session_secret) or len(
@@ -355,6 +371,8 @@ class Settings:
             issues.append("APP_LOG_FORMAT must be json in production")
         if not self.rate_limit_enabled:
             issues.append("RATE_LIMIT_ENABLED must be true in production")
+        if self.rate_limit_backend.strip().lower() != "redis":
+            issues.append("RATE_LIMIT_BACKEND must be redis in production")
         if self.rate_limit_window_seconds <= 0:
             issues.append("RATE_LIMIT_WINDOW_SECONDS must be greater than 0 in production")
         if self.rate_limit_login_per_minute <= 0:
@@ -365,6 +383,14 @@ class Settings:
             issues.append("RATE_LIMIT_CHAT_START_PER_MINUTE must be greater than 0 in production")
         if self.rate_limit_chat_message_per_minute <= 0:
             issues.append("RATE_LIMIT_CHAT_MESSAGE_PER_MINUTE must be greater than 0 in production")
+        if self.rate_limit_portal_write_per_minute <= 0:
+            issues.append("RATE_LIMIT_PORTAL_WRITE_PER_MINUTE must be greater than 0 in production")
+        if self.rate_limit_admin_write_per_minute <= 0:
+            issues.append("RATE_LIMIT_ADMIN_WRITE_PER_MINUTE must be greater than 0 in production")
+        if not self.rate_limit_redis_key_prefix.strip():
+            issues.append("RATE_LIMIT_REDIS_KEY_PREFIX must be set in production")
+        if self.rate_limit_redis_timeout_seconds <= 0:
+            issues.append("RATE_LIMIT_REDIS_TIMEOUT_SECONDS must be greater than 0 in production")
         if not self.widget_require_allowed_origins:
             issues.append("WIDGET_REQUIRE_ALLOWED_ORIGINS must be true in production")
         if self.privacy_default_retention_days <= 0:

@@ -1,4 +1,4 @@
-"""Small app-level rate limiting helpers for public and portal endpoints."""
+"""Application-level rate limiting helpers for public and portal endpoints."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import time
 from collections import defaultdict, deque
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import Protocol
 
 from fastapi import HTTPException, Request, status
 
@@ -25,11 +26,27 @@ class RateLimitResult:
     retry_after_seconds: int
 
 
-class InMemoryRateLimiter:
-    """Fixed-window-ish limiter that avoids external infrastructure dependencies.
+class RateLimiter(Protocol):
+    """Shared rate-limiter interface."""
 
-    PR-02 uses this as the immediate application safety net. PR-04/PR-05 can add
-    Nginx/Redis-backed limits for horizontally scaled production deployments.
+    def check(self, key: str, *, limit: int, window_seconds: int) -> RateLimitResult:
+        """Return whether the request is allowed for the key/window."""
+        ...
+
+    def ping(self) -> bool:
+        """Return true when the limiter backend is reachable."""
+        ...
+
+
+class RateLimitUnavailable(RuntimeError):
+    """Raised when the selected distributed limiter cannot be reached."""
+
+
+class InMemoryRateLimiter:
+    """Local fixed-window-ish limiter used only for explicitly configured dev/test mode.
+
+    Production must use Redis so limits survive restarts and coordinate across app
+    instances. The production config validator rejects this backend.
     """
 
     def __init__(self) -> None:
@@ -53,8 +70,61 @@ class InMemoryRateLimiter:
         """Clear limiter state for tests."""
         self._events.clear()
 
+    def ping(self) -> bool:
+        """Return true for the in-process test/development limiter."""
+        return True
+
+
+class RedisRateLimiter:
+    """Redis-backed fixed-window limiter for production-sensitive API surfaces."""
+
+    def __init__(self, settings: Settings, *, client=None, clock=time.time) -> None:
+        self.settings = settings
+        self._client = client
+        self._clock = clock
+
+    @property
+    def client(self):
+        """Create a Redis client lazily."""
+        if self._client is None:
+            from redis import Redis
+
+            self._client = Redis.from_url(
+                self.settings.redis_url,
+                socket_timeout=self.settings.rate_limit_redis_timeout_seconds,
+                socket_connect_timeout=self.settings.rate_limit_redis_timeout_seconds,
+                decode_responses=True,
+            )
+        return self._client
+
+    def check(self, key: str, *, limit: int, window_seconds: int) -> RateLimitResult:
+        """Increment a shared Redis bucket and return the rate-limit result."""
+        if limit <= 0 or window_seconds <= 0:
+            return RateLimitResult(allowed=True, retry_after_seconds=0)
+        now = int(self._clock())
+        bucket = now // window_seconds
+        redis_key = f"{self.settings.rate_limit_redis_key_prefix}:{key}:{bucket}"
+        retry_after = max(1, ((bucket + 1) * window_seconds) - now)
+        try:
+            count = int(self.client.incr(redis_key))
+            if count == 1:
+                self.client.expire(redis_key, window_seconds + 5)
+        except Exception as exc:
+            raise RateLimitUnavailable("Redis rate limiter unavailable") from exc
+        if count > limit:
+            return RateLimitResult(allowed=False, retry_after_seconds=retry_after)
+        return RateLimitResult(allowed=True, retry_after_seconds=0)
+
+    def ping(self) -> bool:
+        """Return true when the Redis limiter backend is reachable."""
+        try:
+            return bool(self.client.ping())
+        except Exception:
+            return False
+
 
 rate_limiter = InMemoryRateLimiter()
+_redis_rate_limiters: dict[tuple[str, str, float], RedisRateLimiter] = {}
 
 
 def client_ip(request: Request) -> str:
@@ -84,13 +154,23 @@ def enforce_rate_limit(
     identifiers: Iterable[str] = (),
     limit: int,
     window_seconds: int | None = None,
+    limiter: RateLimiter | None = None,
 ) -> None:
     """Raise HTTP 429 when a request exceeds a configured policy."""
     if not settings.rate_limit_enabled:
         return
     window = window_seconds or settings.rate_limit_window_seconds
     key = rate_limit_key(scope, [client_ip(request), *identifiers])
-    result = rate_limiter.check(key, limit=limit, window_seconds=window)
+    selected_limiter = limiter or get_rate_limiter(settings)
+    try:
+        result = selected_limiter.check(key, limit=limit, window_seconds=window)
+    except RateLimitUnavailable:
+        logger.error("rate_limit_backend_unavailable", extra={"scope": scope})
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Rate limiting is temporarily unavailable. Please try again shortly.",
+            headers={"Retry-After": "5"},
+        ) from None
     if result.allowed:
         return
     logger.warning(
@@ -102,3 +182,34 @@ def enforce_rate_limit(
         detail="Too many requests. Please wait before trying again.",
         headers={"Retry-After": str(result.retry_after_seconds)},
     )
+
+
+def get_rate_limiter(settings: Settings) -> RateLimiter:
+    """Return the configured app-level rate limiter."""
+    backend = settings.rate_limit_backend.strip().lower()
+    if backend == "memory":
+        return rate_limiter
+    if backend == "redis":
+        cache_key = (
+            settings.redis_url,
+            settings.rate_limit_redis_key_prefix,
+            settings.rate_limit_redis_timeout_seconds,
+        )
+        if cache_key not in _redis_rate_limiters:
+            _redis_rate_limiters[cache_key] = RedisRateLimiter(settings)
+        return _redis_rate_limiters[cache_key]
+    raise RateLimitUnavailable(f"Unsupported rate-limit backend: {backend}")
+
+
+def rate_limit_readiness(settings: Settings) -> tuple[str, str]:
+    """Return readiness status and detail for the configured limiter backend."""
+    if not settings.rate_limit_enabled:
+        return "disabled", "not_configured"
+    backend = settings.rate_limit_backend.strip().lower()
+    if backend == "memory":
+        if settings.is_production():
+            return "fail", "memory_backend_not_allowed_in_production"
+        return "pass", "memory_dev_only"
+    if backend != "redis":
+        return "fail", "unsupported_backend"
+    return ("pass", "redis") if get_rate_limiter(settings).ping() else ("fail", "redis_unavailable")

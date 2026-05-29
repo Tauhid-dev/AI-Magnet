@@ -45,6 +45,9 @@ WIDGET_REQUIRE_ALLOWED_ORIGINS=true
 POSTGRES_PASSWORD=<strong-random-password>
 DATABASE_URL=postgresql+psycopg://ai_magnet:<strong-random-password>@postgres:5432/ai_magnet
 REDIS_URL=redis://redis:6379/0
+RATE_LIMIT_BACKEND=redis
+RATE_LIMIT_REDIS_KEY_PREFIX=ai-magnet:rate-limit
+RATE_LIMIT_REDIS_TIMEOUT_SECONDS=2
 WORKER_QUEUE_NAME=default
 WORKER_REDIS_QUEUE_KEY=ai-magnet:jobs:default
 WORKER_DEFAULT_MAX_ATTEMPTS=3
@@ -62,7 +65,7 @@ AI_API_KEY=<provider-api-key>
 BACKUP_ENCRYPTION_PASSPHRASE=<strong-random-backup-passphrase>
 ```
 
-Do not use wildcard CORS, placeholder session secrets, insecure cookie settings, local Redis URLs, console email delivery, missing AI provider keys, missing SMTP values, missing backup encryption passphrases, disabled document malware scanning, or enabled API docs in production. The backend refuses to start in production when these unsafe settings are detected.
+Do not use wildcard CORS, placeholder session secrets, insecure cookie settings, local Redis URLs, in-memory production rate limiting, console email delivery, missing AI provider keys, missing SMTP values, missing backup encryption passphrases, disabled document malware scanning, or enabled API docs in production. The backend refuses to start in production when these unsafe settings are detected.
 
 ## Local/Dev Start
 
@@ -258,7 +261,8 @@ curl -f https://your-domain.example/api/health
 Then verify:
 
 - Business portal login.
-- Super admin login.
+- Super admin login with configured TOTP MFA; production must reject active `super_admin` accounts without valid MFA configuration.
+- Redis-backed application rate limiting for admin login, business login, widget init, chat, and write scopes; production must fail closed if Redis is unavailable.
 - Widget initialization with an active widget key.
 - A test conversation does not retrieve another tenant's knowledge.
 - Email notification provider is configured for the environment.

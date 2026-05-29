@@ -1,23 +1,27 @@
 # Final Production Validation Report
 
 Date: 2026-05-29  
-Phase: PR-12  
-Branch: `production/pr-12-final-production-validation-launch-gate`
+Phase: PR-12 with PR-12A correction package
+Branch: `production/pr-12a-security-corrections-before-staging`
 
 ## Scope
 
 This report re-audits the AI-Magnet repository against the 2026-05-23 production-readiness baseline and the PR-00 through PR-12 production remediation plan.
 
-This PR-12 run validates repository-controlled code, configuration, documentation, migrations, tests, security scans, and release artifacts. It does not perform live deployment, DNS changes, certificate issuance, production database migration, payment activation, or real customer onboarding.
+This PR-12/PR-12A run validates repository-controlled code, configuration, documentation, migrations, tests, security scans, and release artifacts. It does not perform live deployment, DNS changes, certificate issuance, production database migration, payment activation, or real customer onboarding.
+
+PR-12A was required after an independent review found two repository-level launch-gate gaps in the PR-12 package: production super-admin MFA was not mandatory for every active `super_admin`, and application-level rate limiting still relied on process-local memory instead of durable cross-instance coordination. PR-12A corrects those repository issues while preserving Public Production Launch as NO-GO until external evidence and owner approval are recorded.
 
 ## Executive Finding
 
-The repository has moved from the 2026-05-23 audited state of 35/100 production readiness to a repository-ready production remediation state for controlled beta preparation. PR-01 through PR-11 have evidence-backed implementations in code, tests, docs, and production-control status files.
+The repository has moved from the 2026-05-23 audited state of 35/100 production readiness to a repository-ready production remediation state for controlled beta preparation. PR-01 through PR-12A have evidence-backed implementations in code, tests, docs, and production-control status files.
 
 Public production launch remains NO-GO because required external launch evidence has not been executed in this PR-12 run:
 
-- remote CI evidence for the final PR-12 branch
+- remote CI evidence for the final PR-12A branch
 - owner-approved staging/VPS deployment smoke
+- production super-admin MFA smoke on the target environment
+- Redis-backed application rate-limit smoke on the target environment
 - TLS certificate issuance and renewal verification
 - firewall exposure proof for production host
 - scheduled encrypted backup and restore drill evidence
@@ -32,8 +36,8 @@ Public production launch remains NO-GO because required external launch evidence
 
 | 2026-05-23 blocker | Remediation phase | Repository status | Evidence |
 |---|---|---|---|
-| Email-only business and admin authentication | PR-01 | Verified | `backend/app/business/auth.py`, `backend/app/admin/auth.py`, `backend/tests/business/test_business_portal_api.py`, `backend/tests/admin/test_admin_api.py` |
-| Public endpoints lacked rate limiting and widget origin controls | PR-02 | Verified | `backend/app/core/rate_limit.py`, `backend/app/widget/service.py`, `backend/tests/chat/test_chat_api.py`, `frontend/app/portal/widget/page.tsx` |
+| Email-only business and admin authentication | PR-01 / PR-12A | Verified; production `super_admin` MFA now mandatory | `backend/app/business/auth.py`, `backend/app/admin/auth.py`, `backend/tests/business/test_business_portal_api.py`, `backend/tests/admin/test_admin_api.py` |
+| Public endpoints lacked rate limiting and widget origin controls | PR-02 / PR-12A | Verified; production application limiter now requires Redis and fails closed when unavailable | `backend/app/core/rate_limit.py`, `backend/app/widget/service.py`, `backend/tests/chat/test_chat_api.py`, `backend/tests/security/test_rate_limit_backend.py`, `frontend/app/portal/widget/page.tsx` |
 | Tenant isolation relied too heavily on application conventions | PR-03 | Verified | `backend/migrations/versions/20260528_0007_pr03_tenant_privacy_integrity.py`, `backend/tests/security/test_pr03_tenant_integrity.py` |
 | Production topology exposed data-service risks and lacked TLS/backups/scans | PR-04 | Verified in repository; live evidence pending | `docker-compose.prod.yml`, `infra/nginx/templates/prod.conf.template`, `scripts/backup_postgres.sh`, `.github/workflows/ci.yml`, `docs/deployment.md` |
 | Worker process was a placeholder | PR-05 | Verified | `backend/app/jobs/service.py`, `backend/app/workers/runner.py`, `backend/tests/workers/test_background_jobs.py` |
@@ -43,19 +47,34 @@ Public production launch remains NO-GO because required external launch evidence
 | Customer onboarding and widget setup flow was incomplete | PR-09 | Verified | `frontend/app/portal/onboarding/page.tsx`, `frontend/app/portal/agent/page.tsx`, `frontend/app/portal/widget/page.tsx` |
 | Monitoring, quotas, metering, and cost protection were incomplete | PR-10 | Verified in repository; live alerting/quota smoke pending | `backend/app/usage/quotas.py`, `backend/app/api/health.py`, `docs/operations-monitoring.md` |
 | Billing/entitlements were missing | PR-11 | Verified for manual paid beta; payment automation deferred | `backend/app/billing/service.py`, `backend/app/models/billing.py`, `frontend/app/admin/billing/page.tsx`, `docs/paid-beta-readiness.md` |
-| Final launch evidence and go/no-go were missing | PR-12 | Verified as a documentation/control gate; production GO pending owner/live evidence | `docs/production-launch/*`, `production-control/status/production-status.json` |
+| Final launch evidence and go/no-go were missing | PR-12 / PR-12A | Verified as a documentation/control gate plus security correction package; production GO pending owner/live evidence | `docs/production-launch/*`, `production-control/status/production-status.json`, `production-control/phases/PR-12A_FINAL_REPOSITORY_SECURITY_CORRECTIONS_BEFORE_STAGING_VALIDATION.md` |
 
 ## Release Gate Decision
 
 | Gate | Decision | Reason |
 |---|---|---|
 | Gate A: Controlled Internal Demo | GO WITH CONDITIONS | Repository is safe for synthetic/sample-data review. |
-| Gate B: Secure Private Internet Demo | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-05 are verified; target-host smoke and owner approval remain required. |
+| Gate B: Secure Private Internet Demo | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-05 and PR-12A repository corrections are verified; target-host smoke and owner approval remain required. |
 | Gate C: Real Customer Pilot | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-10 are verified; real-data safeguards need staging/VPS evidence. |
 | Gate D: Paid Beta | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-11 are verified; owner commercial approval and live smoke remain required. |
-| Gate E: Public Production Launch | NO-GO | PR-12 repository validation is complete, but external launch evidence and explicit owner approval are not recorded. |
+| Gate E: Public Production Launch | NO-GO | PR-12A repository corrections are complete, but external launch evidence and explicit owner approval are not recorded. |
 
-## PR-12 Validation Results
+## PR-12A Correction Results
+
+Repository-controlled corrections added after independent review:
+
+- production active `super_admin` accounts must have `mfa_required=true` and a valid TOTP secret before login can succeed;
+- production super-admin login with a valid password but missing/invalid MFA code is rejected;
+- local/test behaviour remains explicitly non-production and does not weaken the production guarantee;
+- production application rate limiting requires Redis-backed coordination and fails closed with readiness visibility if Redis is unavailable;
+- Nginx limits remain defense in depth, not the only production limiter.
+
+Focused PR-12A tests:
+
+- `backend/tests/admin/test_admin_api.py` production super-admin MFA cases;
+- `backend/tests/security/test_rate_limit_backend.py` Redis limiter selection, retry headers and fail-closed behaviour.
+
+## PR-12/PR-12A Validation Results
 
 The final command results are recorded in `production-control/06_EXECUTION_LOG.md` and `production-control/08_VALIDATION_MATRIX.md`.
 
@@ -74,9 +93,11 @@ Repository-controlled validations required for PR-12:
 - production-control JSON/SVG parse checks
 - whitespace diff check
 
-Live/staging validations not run in this PR-12 repository pass:
+Live/staging validations not run in this PR-12A repository pass:
 
 - owner-approved VPS deployment smoke
+- production super-admin MFA smoke on the target environment
+- Redis-backed application rate-limit smoke on the target environment
 - live TLS issuance/renewal
 - external firewall/port scan
 - scheduled backup execution and restore drill
@@ -90,8 +111,8 @@ Live/staging validations not run in this PR-12 repository pass:
 
 | Area | Repository status | Launch status |
 |---|---|---|
-| Authentication and sessions | Verified | Needs live smoke |
-| Public API abuse controls | Verified | Needs target-host abuse/rate smoke |
+| Authentication and sessions | Verified; production super-admin MFA corrected in PR-12A | Needs target-host auth/MFA smoke |
+| Public API abuse controls | Verified; Redis-backed production app limiter corrected in PR-12A | Needs target-host abuse/rate smoke |
 | Tenant isolation and privacy lifecycle | Verified | Needs owner privacy process approval |
 | Infrastructure topology | Verified statically | Needs VPS/firewall/TLS evidence |
 | Backups and restore | Scripts/runbook verified | Needs scheduled backup and restore drill |

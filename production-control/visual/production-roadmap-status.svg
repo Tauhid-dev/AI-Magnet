@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1150" viewBox="0 0 1600 1150" role="img" aria-labelledby="title desc">
   <title id="title">AI-Magnet Production Readiness Roadmap</title>
-  <desc id="desc">Production readiness phase status from PR-00 to PR-12 with launch gates and critical blockers.</desc>
+  <desc id="desc">Production readiness phase status from PR-00 to PR-12A with launch gates and critical blockers.</desc>
   <defs>
     <style>
       .bg { fill: #f8fafc; }
@@ -148,8 +148,16 @@
   <rect x="968" y="795" width="70" height="22" rx="5" fill="#15803d" />
   <text class="badge" x="981" y="811">verified</text>
 
+  <rect class="verified" x="1240" y="710" width="280" height="105" rx="10" />
+  <text class="card-title" x="1258" y="740">PR-12A</text>
+  <text class="card-text" x="1258" y="765">Security corrections</text>
+  <text class="card-text" x="1258" y="788">MFA + Redis app limiter</text>
+  <rect x="1258" y="795" width="70" height="22" rx="5" fill="#15803d" />
+  <text class="badge" x="1271" y="811">verified</text>
+
   <path class="arrow" d="M1385 560 V762 H840" />
   <path class="arrow" d="M840 762 H950" />
+  <path class="arrow" d="M1210 762 H1240" />
 
   <!-- Gates -->
   <rect class="gate-ok" x="60" y="900" width="260" height="82" rx="10" />
@@ -175,10 +183,12 @@
   <rect class="gate-no" x="1220" y="900" width="300" height="82" rx="10" />
   <text class="card-title" x="1238" y="928">Gate E</text>
   <text class="card-text" x="1238" y="952">Public production launch: NO-GO</text>
-  <text class="card-text" x="1238" y="973">Requires live evidence + owner approval</text>
+  <text class="card-text" x="1238" y="973">Needs live MFA/rate smoke + owner OK</text>
 
-  <text class="blocker" x="60" y="1045">Current blockers: owner-approved live evidence, gated OCR runtime, controlled crawl/document-upload smoke,</text>
+  <path class="arrow" d="M1380 815 V900" />
+
+  <text class="blocker" x="60" y="1045">Current blockers: owner-approved live evidence, target super-admin MFA and Redis app-rate-limit smoke,</text>
   <text class="blocker" x="60" y="1074">VPS TLS/firewall validation, backup/restore, worker/Redis, readiness, alerting, quota-limit and pgvector RAG smoke.</text>
   <text class="small" x="60" y="1103">High blockers ahead: owner paid-beta approval, remote CI, VPS/staging smoke, and explicit launch approval.</text>
-  <text class="small" x="60" y="1132">Generated deterministically as a static SVG and updated through PR-12. Keep it consistent with production-control/status/production-status.json.</text>
+  <text class="small" x="60" y="1132">Generated deterministically as a static SVG and updated through PR-12A. Keep it consistent with production-control/status/production-status.json.</text>
 </svg>
