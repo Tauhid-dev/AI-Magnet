@@ -8,23 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-No product implementation phase is active. PR-13 post-merge audit is complete with findings.
+No product implementation phase is active. PR-13A repository remediation is complete at repository level.
 
-Status: PR-12A repository security corrections are present in merged `master`, and PR-13 verified the repository from `d390f4dfa7853bb06cd6fd6558a820bdf696f122`. Public production launch remains NO-GO pending repository remediation where required, owner-approved live validation evidence, and explicit launch approval.
+Status: PR-13A closed the three PR-13 High repository findings for worker job claiming, rate-limit abuse analytics, and reproducible browser evidence. Public production launch remains NO-GO pending owner-approved live VPS/staging validation evidence and explicit launch approval.
 
 ## Last Completed Phase
 
-PR-13.
+PR-13A.
 
 ## Next Permitted Phase
 
 The next recommended safe command is:
 
-- `Implement remediation phase PR-13A`
-
-After PR-13A and PR-13B are addressed or explicitly scoped, the next external phase can be:
-
-- `Implement external validation phase PR-14`
+- `Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only`
 
 Do not perform live deployment, DNS/TLS changes, payment activation, production database migration, or real customer onboarding unless explicitly requested.
 
@@ -33,10 +29,10 @@ Do not perform live deployment, DNS/TLS changes, payment activation, production 
 | Target | Current status |
 |---|---|
 | Gate A: Controlled Internal Demo, synthetic/sample data only | GO WITH CONDITIONS |
-| Gate B: Secure Private Internet Demo | CONDITIONAL. PR-01 through PR-05 are implemented, but PR-13 recommends PR-13A before broader exposure; live VPS smoke, remote CI evidence, target MFA/rate-limit smoke, and owner approval still required |
-| Gate C: Real Customer Pilot | NO-GO until PR-13A/PR-13B remediation is addressed and live VPS/staging smoke, alerting/log destination setup, controlled quota-limit smoke, backup/restore, worker/Redis, crawl/document/RAG smoke, and owner approval are recorded |
-| Gate D: Paid Beta | NO-GO until PR-13A/PR-13B remediation, owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval are recorded |
-| Gate E: Public Production Launch | NO-GO. PR-12A corrections are present and PR-13 audit is complete, but repository findings plus external VPS/staging evidence and explicit owner approval remain |
+| Gate B: Secure Private Internet Demo | CONDITIONAL. Repository High findings are closed, but live VPS smoke, remote CI evidence, target MFA/rate-limit smoke, and owner approval are still required |
+| Gate C: Real Customer Pilot | NO-GO until PR-14 live VPS/staging smoke, alerting/log destination setup, controlled quota-limit smoke, backup/restore, worker/Redis, crawl/document/RAG smoke, and owner approval are recorded |
+| Gate D: Paid Beta | NO-GO until PR-14 evidence, owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval are recorded |
+| Gate E: Public Production Launch | NO-GO. Repository remediation is complete, but external VPS/staging evidence and explicit owner approval remain |
 
 ## Baseline
 
@@ -56,17 +52,18 @@ Do not perform live deployment, DNS/TLS changes, payment activation, production 
 - PR-12 created the final validation package, release evidence checklist, VPS/staging validation runbook, rollback/restore runbook, final GO/NO-GO statement, and updated production-control launch-gate status. It did not perform live deployment.
 - PR-12A corrected independent-review repository security gaps: production active `super_admin` accounts now require configured TOTP MFA, Redis-backed application rate limiting is required for production, and readiness reports admin MFA/rate-limit backend health.
 - PR-13 performed the post-merge full repository audit, created `docs/production-audit/post-pr12a-final-audit/`, and found high remediation needs for worker concurrency-safe claiming, persisted rate-limit abuse analytics, and reproducible browser/e2e evidence.
+- PR-13A implemented concurrency-safe job acquisition, persisted privacy-safe rate-limit abuse events, added Playwright mocked browser evidence for supported portal/admin flows, wired browser E2E into CI, and updated production-control status while keeping public launch NO-GO.
 
 ## Unresolved Critical Risks
 
-- No unresolved critical repository-controlled implementation blocker was found in PR-13.
-- Public production launch is still a NO-GO because PR-13 high findings, live VPS/staging validation, restore drill evidence, remote CI evidence, and explicit owner launch approval are not recorded.
+- No unresolved critical repository-controlled implementation blocker is recorded after PR-13A.
+- Public production launch is still a NO-GO because live VPS/staging validation, restore drill evidence, remote CI evidence for this branch, and explicit owner launch approval are not recorded.
 
 ## Unresolved High Risks
 
-- PR-13 found that background job claiming is not proven atomic/concurrency-safe for multiple worker processes.
-- PR-13 found that application rate-limit exceed events are logged but not persisted into tenant usage/abuse analytics.
-- PR-13 found that PR-09 browser/e2e coverage claims exceed committed reproducible test evidence.
+- PR-13A closed AUD-HIGH-001 in repository code/tests. Production PostgreSQL `FOR UPDATE SKIP LOCKED` job acquisition still needs owner-approved staging/VPS multi-worker smoke before horizontal scaling is trusted.
+- PR-13A closed AUD-HIGH-002 in repository code/tests. Live Redis/rate-limit abuse analytics smoke remains PR-14 external evidence.
+- PR-13A closed AUD-HIGH-003 with mocked Playwright browser tests. Live backend-integrated customer/admin/widget smoke remains PR-14 external evidence.
 - Paid-beta live operation still requires owner approval for pricing, GST/tax handling, refund terms, support process, and manual invoicing acceptance.
 - Scanned-document OCR runtime remains gated and not implemented; do not claim scanned-PDF OCR support.
 - Remote CI evidence for the merged/audit branch is required.
@@ -74,29 +71,27 @@ Do not perform live deployment, DNS/TLS changes, payment activation, production 
 
 ## Last Validation Commands
 
-Latest PR-13 validation commands:
+Latest PR-13A validation commands:
 
-- Focused mandatory production super-admin MFA tests - pass, 4 tests.
-- Focused Redis-backed rate-limit tests - pass, 5 tests.
-- `backend/.venv/bin/python -m pytest backend/tests` - pass, 106 tests.
+- Focused worker concurrency tests: `backend/.venv/bin/python -m pytest backend/tests/workers/test_background_jobs.py -q` - pass, 11 tests.
+- Focused rate-limit analytics tests: `backend/.venv/bin/python -m pytest backend/tests/security/test_rate_limit_backend.py backend/tests/analytics/test_usage_analytics.py backend/tests/business/test_business_portal_api.py backend/tests/chat/test_chat_api.py backend/tests/admin/test_admin_api.py -q` - pass, 44 tests.
+- `backend/.venv/bin/python -m pytest backend/tests -q` - pass, 116 tests.
 - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
 - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
-- Focused ingestion/worker/RAG/chat tests - pass, 38 tests.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13_alembic_20260530.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13_alembic_20260530.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0011` - pass.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr13_alembic_20260530.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+- SQLite Alembic upgrade/downgrade/upgrade smoke using `/private/tmp/ai_magnet_pr13a_alembic.sqlite` - pass.
 - `npm run lint` - pass.
 - `npm run typecheck` - pass.
 - `npm test` - pass.
 - `npm run build` - pass.
+- `npm run test:e2e` - pass, 5 mocked Chromium browser tests.
 - `docker compose config` - pass.
 - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
 - Production Compose JSON check for `postgres` and `redis` published ports - pass, no published ports.
-- `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` - pass.
 - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
-- `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass, no known Python vulnerabilities.
+- `backend/.venv/bin/python -m pip_audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass after sandbox escalation, no known Python vulnerabilities.
 - Secret pattern scan - pass, no matches.
-- `npm audit --audit-level=high` - pass at high threshold; moderate transitive PostCSS advisory through Next.js remains noted.
+- `npm audit --audit-level=high` - pass after sandbox escalation at high threshold; moderate transitive PostCSS advisory through Next.js remains noted.
+- `npm ci` - attempted but terminated after hanging with no output in this local sandbox; CI still runs `npm ci`, and local frontend lint/typecheck/test/build/E2E passed with installed dependencies.
 - `python3 -m json.tool production-control/status/production-status.json` - pass.
 - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
 - `git diff --check` - pass.

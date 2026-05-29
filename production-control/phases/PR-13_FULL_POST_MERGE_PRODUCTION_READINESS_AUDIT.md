@@ -81,6 +81,8 @@ PR-13 found no new critical repository implementation blocker. It did find high-
 - Application rate-limit exceed events are not persisted into tenant usage/abuse analytics.
 - Browser/e2e coverage claims exceed committed evidence.
 
+PR-13A update: the three High repository findings above are closed at repository level by PR-13A. External staging/VPS evidence remains required in PR-14 before any real customer pilot, paid beta, or public production launch.
+
 ## Migration And Rollback Notes
 
 No application migrations or feature changes are made in PR-13. The audit branch can be reverted by removing the audit docs and production-control status updates.
@@ -98,7 +100,7 @@ No application migrations or feature changes are made in PR-13. The audit branch
 
 ## Blockers
 
-Public production launch remains NO-GO. Recommended next phase is PR-13A, followed by PR-13B/PR-14 as appropriate.
+Public production launch remains NO-GO. PR-13A is now the completed repository remediation phase. The next safe phase is PR-14 owner-approved external VPS/staging validation with synthetic data only.
 
 ## Completion Criteria
 
@@ -107,4 +109,3 @@ Public production launch remains NO-GO. Recommended next phase is PR-13A, follow
 - Production-control memory and visuals updated.
 - Public production launch remains NO-GO.
 - Follow-up remediation phases are recommended.
-

@@ -50,13 +50,13 @@ The current portal has useful MVP screens, but a tenant cannot complete a produc
 - [x] Add widget domain/key/branding controls.
 - [x] Improve conversations/leads UX states.
 - [x] Add responsive/accessibility checks.
-- [ ] Add committed/reproducible browser/e2e tests. Reopened by PR-13 because the committed frontend test is static and the prior browser smoke was manual evidence.
+- [x] Add committed/reproducible browser/e2e tests. Reopened by PR-13 and closed by PR-13A with Playwright Chromium tests for supported business/admin flows using synthetic API mocks.
 - [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
 - Frontend lint/typecheck/test/build.
-- Browser/e2e tests for onboarding, ingestion, agent test, widget setup, leads. PR-13 found this remains a repository evidence gap unless covered by a committed test suite or owner-approved manual protocol.
+- Browser/e2e tests for onboarding, ingestion, agent test, widget setup, leads. PR-13A adds committed Playwright tests for supported browser flows; PR-14 must still run live backend-integrated smoke before real customer pilot use.
 - Backend API tests for new workflow routes.
 
 ## Security Considerations
@@ -72,12 +72,13 @@ Schema changes may be needed for onboarding/profile/branding. Provide migrations
 - Backend profile, agent sandbox, widget branding, and tenant-scoped portal APIs: `backend/app/api/business_portal.py`, `backend/app/business/service.py`, `backend/app/schemas/business_portal.py`, `backend/app/widget/service.py`.
 - Frontend setup, agent test, knowledge-job, widget branding/copy, leads, and conversations UX: `frontend/app/portal/onboarding/page.tsx`, `frontend/app/portal/agent/page.tsx`, `frontend/app/portal/documents/page.tsx`, `frontend/app/portal/widget/page.tsx`, `frontend/app/portal/leads/page.tsx`, `frontend/app/portal/conversations/page.tsx`, `frontend/components/PortalShell.tsx`.
 - API client/types and static checks: `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`, `frontend/tests/static-check.mjs`.
+- Committed browser evidence: `frontend/playwright.config.ts`, `frontend/e2e/business-portal.spec.ts`, `frontend/e2e/admin-console.spec.ts`, `frontend/e2e/support/mock-api.ts`, and `frontend/e2e/README.md`.
 - Backend tests: `backend/tests/business/test_business_portal_api.py`.
-- Validation: `backend/.venv/bin/python -m pytest backend/tests/business/test_business_portal_api.py` passed, 12 tests; `backend/.venv/bin/python -m pytest backend/tests` passed, 89 tests; `backend/.venv/bin/python -m ruff check backend/app backend/tests` passed; `npm run test`, `npm run typecheck`, `npm run lint`, and `npm run build` passed; local browser smoke confirmed the portal login route and protected portal route fallback render through Next.js. PR-13 later found that this is not equivalent to committed browser/e2e coverage.
+- Validation: `backend/.venv/bin/python -m pytest backend/tests/business/test_business_portal_api.py` passed; `backend/.venv/bin/python -m pytest backend/tests` passed with 116 tests; `backend/.venv/bin/python -m ruff check backend/app backend/tests` passed; `npm run test`, `npm run typecheck`, `npm run lint`, `npm run build`, and `npm run test:e2e` passed. PR-13A browser tests are mocked UI-flow evidence, not live backend-integrated proof.
 
 ## Blockers
 
-PR-13 reopened one evidence blocker: committed/reproducible browser/e2e coverage is still required, or the owner must approve a manual validation protocol for limited staging.
+No repository-controlled High blocker remains after PR-13A. Live backend-integrated customer/admin/widget smoke on the target VPS/staging environment remains PR-14 external release-gate evidence.
 
 ## Completion Criteria
 

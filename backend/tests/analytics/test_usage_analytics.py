@@ -7,6 +7,7 @@ from app.analytics.service import AnalyticsService
 from app.db.base import Base
 from app.models import (
     Conversation,
+    GlobalAuditLog,
     KnowledgeDocument,
     Lead,
     Message,
@@ -175,6 +176,17 @@ def test_platform_analytics_snapshot_aggregates_without_pii():
                     event_source=UsageEventSource.CHAT_WIDGET,
                     attributes={"safe": True},
                 ),
+                UsageLog(
+                    tenant_id=tenant_a.id,
+                    event_type=UsageEventType.RATE_LIMIT_EXCEEDED,
+                    event_source=UsageEventSource.CHAT_WIDGET,
+                    attributes={"scope": "chat_start_public"},
+                ),
+                GlobalAuditLog(
+                    action=UsageEventType.RATE_LIMIT_EXCEEDED,
+                    target_type="rate_limit",
+                    attributes={"scope": "admin_login"},
+                ),
             ]
         )
         session.commit()
@@ -187,6 +199,7 @@ def test_platform_analytics_snapshot_aggregates_without_pii():
         assert snapshot.leads_total == 2
         assert snapshot.leads_qualified == 1
         assert snapshot.ai_responses_total == 1
+        assert snapshot.rate_limit_events_total == 2
         assert {tenant.tenant_slug for tenant in snapshot.tenant_usage} == {
             "tenant-a",
             "tenant-b",

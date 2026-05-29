@@ -15,8 +15,11 @@ The following items are not repository implementation tasks. They require owner-
 | Scheduled encrypted backup proof | Real customer pilot and later | Scripts exist; live schedule evidence absent. |
 | Restore drill from encrypted backup | Real customer pilot and later | Runbook exists; live drill proof absent. |
 | Live PostgreSQL/pgvector migration and RAG retrieval smoke | Real customer pilot and later | Unit/SQLite tests and migrations exist; live pgvector smoke absent. |
+| PostgreSQL multi-worker job claiming smoke | Real customer pilot and later | PR-13A repository tests pass; live PostgreSQL `FOR UPDATE SKIP LOCKED` smoke absent. |
 | Live Redis-backed application limiter smoke | Private internet demo and later | Repository tests pass; target-host smoke absent. |
+| Live rate-limit abuse analytics smoke | Real customer pilot and later | PR-13A repository tests pass; target-host Redis/usage analytics smoke absent. |
 | Live worker/Redis queue smoke | Private internet demo and later | Repository tests pass; target-host smoke absent. |
+| Live backend-integrated browser/customer workflow smoke | Real customer pilot and later | PR-13A mocked Playwright tests pass; live backend-integrated smoke absent. |
 | Controlled website/sitemap ingestion smoke | Real customer pilot if website ingestion used | Repository tests pass; real-site smoke absent. |
 | Controlled document upload/extraction smoke | Real customer pilot if documents used | Repository tests pass; target-host smoke absent. |
 | `/ready` health/readiness smoke with production-like dependencies | Private internet demo and later | Not present in repository. |
@@ -35,5 +38,4 @@ The following items are not repository implementation tasks. They require owner-
 
 ## Public Production Gate
 
-Public production launch remains NO-GO until repository remediation findings are closed where required and the external evidence above is recorded.
-
+PR-13A closed the repository remediation findings from PR-13. Public production launch remains NO-GO until the external evidence above and explicit owner approval are recorded.

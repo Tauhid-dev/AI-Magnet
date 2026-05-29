@@ -1,6 +1,6 @@
 # Release Evidence Checklist
 
-PR-13 update, 2026-05-30: before using this checklist for a real customer pilot, paid beta, or public launch, first resolve or explicitly scope the PR-13 findings recorded in `docs/production-audit/post-pr12a-final-audit/implementation-gap-register.md`.
+PR-13A update, 2026-05-30: the repository High findings from PR-13 are closed in `production/pr-13a-consolidated-remediation`. Use this checklist for PR-14 owner-approved external VPS/staging evidence before any real customer pilot, paid beta, or public production launch.
 
 Date: 2026-05-29  
 Phase: PR-12 with PR-12A correction package
@@ -40,6 +40,7 @@ External evidence still required:
 - [ ] Worker heartbeat and Redis connectivity are verified.
 - [ ] Encrypted backup and restore drill are completed.
 - [ ] PostgreSQL/pgvector migration smoke passes.
+- [ ] PostgreSQL multi-worker background job claiming smoke confirms a job is not executed by two workers.
 
 ## Gate C: Real Customer Pilot
 
@@ -62,6 +63,8 @@ External evidence still required:
 - [ ] Production-equivalent RAG smoke returns tenant-only cited answers.
 - [ ] Log/alert destination receives request, job, error, and quota signals.
 - [ ] Quota-limit smoke blocks at least one controlled operation gracefully.
+- [ ] Live Redis-backed rate-limit abuse analytics smoke records a safe denial event.
+- [ ] Live backend-integrated browser smoke covers onboarding, agent test, citations, widget setup, and admin access using synthetic data.
 - [ ] Incident-response contact path is documented and tested.
 
 ## Gate D: Paid Beta
@@ -90,8 +93,8 @@ Status: NO-GO.
 
 Required before changing to GO:
 
-- [ ] PR-12A final correction branch is merged after review.
-- [ ] All repository-controlled PR-12A validation commands pass.
+- [ ] PR-13A final repository remediation branch is merged after review.
+- [ ] All repository-controlled PR-13A validation commands pass.
 - [ ] Remote CI passes on the production launch candidate.
 - [ ] Staging/VPS validation run passes.
 - [ ] Production super-admin MFA smoke passes on the target environment.

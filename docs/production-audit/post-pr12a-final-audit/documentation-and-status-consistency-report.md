@@ -41,3 +41,10 @@ After PR-13 edits:
 - Public production remains NO-GO.
 - Recommended next action is remediation phase PR-13A, not external launch.
 
+After PR-13A edits:
+
+- PR-13A is added and marked verified in status JSON, phase docs, roadmap, Mermaid, SVG and dashboard artifacts.
+- PR-05, PR-09 and PR-10 are represented as verified after PR-13A, with live PostgreSQL/browser/Redis smoke still external.
+- AUD-HIGH-001, AUD-HIGH-002 and AUD-HIGH-003 are marked closed at repository level.
+- Public production remains NO-GO.
+- Recommended next action is owner-approved PR-14 external VPS/staging validation with synthetic data only.

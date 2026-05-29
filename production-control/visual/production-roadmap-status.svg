@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1250" viewBox="0 0 1600 1250" role="img" aria-labelledby="title desc">
-  <title id="title">AI-Magnet Production Readiness Roadmap After PR-13</title>
-  <desc id="desc">Production readiness phase status from PR-00 to PR-13 with launch gates and PR-13 findings.</desc>
+  <title id="title">AI-Magnet Production Readiness Roadmap After PR-13A</title>
+  <desc id="desc">Production readiness phase status from PR-00 to PR-13A with launch gates and external PR-14 validation pending.</desc>
   <defs>
     <style>
       .bg { fill: #f8fafc; }
@@ -24,14 +24,14 @@
   </defs>
   <rect class="bg" width="1600" height="1250" />
   <text class="title" x="60" y="55">AI-Magnet Production Readiness Roadmap</text>
-  <text class="subtitle" x="60" y="86">After PR-13 audit. Internal Demo: GO WITH CONDITIONS. Real Customer/Paid/Public: NO-GO pending remediation and external evidence.</text>
-  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Next command: Implement remediation phase PR-13A.</text>
+  <text class="subtitle" x="60" y="86">After PR-13A remediation. Internal Demo: GO WITH CONDITIONS. Real Customer/Paid/Public: NO-GO pending external evidence.</text>
+  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Next command: Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only.</text>
 
   <rect class="legend" x="60" y="135" width="1480" height="64" rx="8" />
   <rect x="86" y="156" width="22" height="22" fill="#dcfce7" stroke="#15803d" />
   <text class="small" x="116" y="173">verified</text>
   <rect x="220" y="156" width="22" height="22" fill="#ffedd5" stroke="#c2410c" />
-  <text class="small" x="250" y="173">complete with PR-13 finding</text>
+  <text class="small" x="250" y="173">audit finding / external gate</text>
   <rect x="470" y="156" width="22" height="22" fill="#fef3c7" stroke="#b45309" />
   <text class="small" x="500" y="173">launch gate blocked</text>
   <text class="small" x="770" y="173">Public production remains NO-GO. External VPS/staging proof is still required.</text>
@@ -62,10 +62,10 @@
     <text class="card-text" x="958" y="288">Prod infra/TLS</text>
     <rect x="958" y="298" width="70" height="22" rx="5" fill="#15803d" /><text class="badge" x="971" y="314">verified</text>
 
-    <rect class="high" x="1180" y="235" width="240" height="92" rx="10" />
+    <rect class="verified" x="1180" y="235" width="240" height="92" rx="10" />
     <text class="card-title" x="1198" y="263">PR-05</text>
     <text class="card-text" x="1198" y="288">Worker queue</text>
-    <text class="card-text" x="1198" y="310">Finding: atomic claim proof</text>
+    <text class="card-text" x="1198" y="310">PR-13A concurrency fix</text>
   </g>
 
   <path class="arrow" d="M250 281 H280" />
@@ -90,15 +90,15 @@
     <text class="card-text" x="493" y="550">pgvector RAG/citations</text>
     <rect x="493" y="563" width="70" height="22" rx="5" fill="#15803d" /><text class="badge" x="506" y="579">verified</text>
 
-    <rect class="high" x="790" y="495" width="230" height="100" rx="10" />
+    <rect class="verified" x="790" y="495" width="230" height="100" rx="10" />
     <text class="card-title" x="808" y="525">PR-09</text>
     <text class="card-text" x="808" y="550">Onboarding/widget UX</text>
-    <text class="card-text" x="808" y="573">Finding: e2e evidence</text>
+    <text class="card-text" x="808" y="573">Playwright mocked E2E</text>
 
-    <rect class="high" x="1105" y="495" width="245" height="100" rx="10" />
+    <rect class="verified" x="1105" y="495" width="245" height="100" rx="10" />
     <text class="card-title" x="1123" y="525">PR-10</text>
     <text class="card-text" x="1123" y="550">Monitoring/quotas</text>
-    <text class="card-text" x="1123" y="573">Finding: abuse analytics</text>
+    <text class="card-text" x="1123" y="573">Rate-limit events persisted</text>
   </g>
 
   <path class="arrow" d="M1300 327 V480 H390" />
@@ -127,12 +127,18 @@
     <text class="card-title" x="1278" y="775">PR-13</text>
     <text class="card-text" x="1278" y="800">Post-merge audit</text>
     <text class="card-text" x="1278" y="823">Verified with findings</text>
+
+    <rect class="verified" x="1260" y="875" width="240" height="80" rx="10" />
+    <text class="card-title" x="1278" y="903">PR-13A</text>
+    <text class="card-text" x="1278" y="928">Repository remediation</text>
+    <rect x="1278" y="938" width="70" height="22" rx="5" fill="#15803d" /><text class="badge" x="1291" y="954">verified</text>
   </g>
 
   <path class="arrow" d="M1227 595 V795 H580" />
   <path class="arrow" d="M580 795 H650" />
   <path class="arrow" d="M880 795 H950" />
   <path class="arrow" d="M1190 795 H1260" />
+  <path class="arrow" d="M1380 845 V875" />
 
   <g id="gates">
     <rect class="gate-ok" x="60" y="970" width="260" height="82" rx="10" />
@@ -143,17 +149,17 @@
     <rect class="gate-no" x="350" y="970" width="260" height="82" rx="10" />
     <text class="card-title" x="368" y="998">Gate B</text>
     <text class="card-text" x="368" y="1022">Private demo: conditional</text>
-    <text class="card-text" x="368" y="1043">PR-13A/VPS/owner evidence</text>
+    <text class="card-text" x="368" y="1043">VPS/CI/owner evidence</text>
 
     <rect class="gate-no" x="640" y="970" width="260" height="82" rx="10" />
     <text class="card-title" x="658" y="998">Gate C</text>
     <text class="card-text" x="658" y="1022">Real customer pilot: NO-GO</text>
-    <text class="card-text" x="658" y="1043">PR-13A/PR-13B + live smoke</text>
+    <text class="card-text" x="658" y="1043">PR-14 live smoke</text>
 
     <rect class="gate-no" x="930" y="970" width="260" height="82" rx="10" />
     <text class="card-title" x="948" y="998">Gate D</text>
     <text class="card-text" x="948" y="1022">Paid beta: NO-GO</text>
-    <text class="card-text" x="948" y="1043">Owner + remediation + VPS</text>
+    <text class="card-text" x="948" y="1043">Owner + PR-14 VPS</text>
 
     <rect class="gate-no" x="1220" y="970" width="300" height="82" rx="10" />
     <text class="card-title" x="1238" y="998">Gate E</text>
@@ -161,10 +167,10 @@
     <text class="card-text" x="1238" y="1043">Live evidence + owner approval</text>
   </g>
 
-  <path class="arrow" d="M1380 845 V970" />
+  <path class="arrow" d="M1380 955 V970" />
 
-  <text class="blocker" x="60" y="1120">PR-13 high findings: worker atomic claim proof, persisted rate-limit abuse analytics, reproducible browser/e2e coverage.</text>
+  <text class="blocker" x="60" y="1120">PR-13A closed High repository findings: worker atomic claiming, persisted rate-limit abuse analytics, and reproducible mocked browser E2E.</text>
   <text class="blocker" x="60" y="1149">External gates still required: remote CI, VPS TLS/firewall, backup/restore, pgvector RAG, worker/Redis, crawl/document, alerts, quota smoke.</text>
-  <text class="small" x="60" y="1180">Recommended next command: Implement remediation phase PR-13A. Public production remains NO-GO.</text>
+  <text class="small" x="60" y="1180">Recommended next command: Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only. Public production remains NO-GO.</text>
   <text class="small" x="60" y="1210">Generated deterministically as static SVG and kept consistent with production-control/status/production-status.json.</text>
 </svg>

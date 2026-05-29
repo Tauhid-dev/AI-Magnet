@@ -8,7 +8,7 @@ Branch: `production/pr-12a-security-corrections-before-staging`
 
 This report re-audits the AI-Magnet repository against the 2026-05-23 production-readiness baseline and the PR-00 through PR-12 production remediation plan.
 
-Post-merge update: PR-13 on 2026-05-30 is the latest readiness audit. It confirms PR-12A is present in merged `master`, keeps public production NO-GO, and records follow-up findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and reproducible browser/e2e evidence. See `docs/production-audit/post-pr12a-final-audit/`.
+Post-merge update: PR-13 on 2026-05-30 audited the merged repository and recorded follow-up findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and reproducible browser/e2e evidence. PR-13A then closed those repository-level High findings while keeping public production NO-GO pending external PR-14 evidence and owner approval. See `docs/production-audit/post-pr12a-final-audit/`.
 
 This PR-12/PR-12A run validates repository-controlled code, configuration, documentation, migrations, tests, security scans, and release artifacts. It does not perform live deployment, DNS changes, certificate issuance, production database migration, payment activation, or real customer onboarding.
 
@@ -16,7 +16,7 @@ PR-12A was required after an independent review found two repository-level launc
 
 ## Executive Finding
 
-The repository has moved from the 2026-05-23 audited state of 35/100 production readiness to a repository-ready production remediation state for controlled beta preparation. PR-01 through PR-12A have evidence-backed implementations in code, tests, docs, and production-control status files.
+The repository has moved from the 2026-05-23 audited state of 35/100 production readiness to a repository-ready production remediation state for controlled beta preparation. PR-01 through PR-13A have evidence-backed implementations in code, tests, docs, and production-control status files.
 
 Public production launch remains NO-GO because required external launch evidence has not been executed in this PR-12 run:
 
@@ -28,7 +28,10 @@ Public production launch remains NO-GO because required external launch evidence
 - firewall exposure proof for production host
 - scheduled encrypted backup and restore drill evidence
 - production-equivalent PostgreSQL/pgvector migration and RAG smoke
+- PostgreSQL multi-worker background job claiming smoke
 - worker/Redis queue smoke on the target host
+- live Redis-backed rate-limit abuse analytics smoke
+- live backend-integrated browser/customer/admin/widget smoke with synthetic data
 - controlled website crawl and document upload smoke
 - log/alert destination verification
 - quota-limit and abuse-control smoke
@@ -42,12 +45,12 @@ Public production launch remains NO-GO because required external launch evidence
 | Public endpoints lacked rate limiting and widget origin controls | PR-02 / PR-12A | Verified; production application limiter now requires Redis and fails closed when unavailable | `backend/app/core/rate_limit.py`, `backend/app/widget/service.py`, `backend/tests/chat/test_chat_api.py`, `backend/tests/security/test_rate_limit_backend.py`, `frontend/app/portal/widget/page.tsx` |
 | Tenant isolation relied too heavily on application conventions | PR-03 | Verified | `backend/migrations/versions/20260528_0007_pr03_tenant_privacy_integrity.py`, `backend/tests/security/test_pr03_tenant_integrity.py` |
 | Production topology exposed data-service risks and lacked TLS/backups/scans | PR-04 | Verified in repository; live evidence pending | `docker-compose.prod.yml`, `infra/nginx/templates/prod.conf.template`, `scripts/backup_postgres.sh`, `.github/workflows/ci.yml`, `docs/deployment.md` |
-| Worker process was a placeholder | PR-05 | Verified | `backend/app/jobs/service.py`, `backend/app/workers/runner.py`, `backend/tests/workers/test_background_jobs.py` |
+| Worker process was a placeholder | PR-05 / PR-13A | Verified; PR-13A added atomic job acquisition and concurrency/retry/recovery tests | `backend/app/jobs/service.py`, `backend/app/workers/runner.py`, `backend/tests/workers/test_background_jobs.py` |
 | Website/sitemap ingestion was missing | PR-06 | Verified in repository; controlled real-site smoke pending | `backend/app/rag/website_ingestion.py`, `backend/app/rag/web_security.py`, `backend/tests/rag/test_website_ingestion.py` |
 | Secure PDF/DOCX/OCR document ingestion was missing | PR-07 | Verified for PDF/DOCX extraction; OCR runtime gated | `backend/app/rag/document_validation.py`, `backend/app/rag/extraction.py`, `backend/tests/rag/test_secure_document_ingestion.py`, `docs/document-ingestion.md` |
 | RAG retrieval was Python-side and lacked citations/safety evals | PR-08 | Verified in repository; production pgvector smoke pending | `backend/app/rag/retrieval.py`, `backend/app/rag/safety.py`, `backend/tests/rag/test_rag_safety_eval.py`, `docs/rag-quality.md` |
-| Customer onboarding and widget setup flow was incomplete | PR-09 | Verified | `frontend/app/portal/onboarding/page.tsx`, `frontend/app/portal/agent/page.tsx`, `frontend/app/portal/widget/page.tsx` |
-| Monitoring, quotas, metering, and cost protection were incomplete | PR-10 | Verified in repository; live alerting/quota smoke pending | `backend/app/usage/quotas.py`, `backend/app/api/health.py`, `docs/operations-monitoring.md` |
+| Customer onboarding and widget setup flow was incomplete | PR-09 / PR-13A | Verified; PR-13A added committed Playwright browser E2E coverage for supported portal/admin flows | `frontend/app/portal/onboarding/page.tsx`, `frontend/app/portal/agent/page.tsx`, `frontend/app/portal/widget/page.tsx`, `frontend/e2e/` |
+| Monitoring, quotas, metering, and cost protection were incomplete | PR-10 / PR-13A | Verified in repository; PR-13A added durable rate-limit abuse event persistence; live alerting/quota/rate-limit smoke pending | `backend/app/usage/quotas.py`, `backend/app/core/rate_limit.py`, `backend/app/analytics/service.py`, `backend/app/api/health.py`, `docs/operations-monitoring.md` |
 | Billing/entitlements were missing | PR-11 | Verified for manual paid beta; payment automation deferred | `backend/app/billing/service.py`, `backend/app/models/billing.py`, `frontend/app/admin/billing/page.tsx`, `docs/paid-beta-readiness.md` |
 | Final launch evidence and go/no-go were missing | PR-12 / PR-12A | Verified as a documentation/control gate plus security correction package; production GO pending owner/live evidence | `docs/production-launch/*`, `production-control/status/production-status.json`, `production-control/phases/PR-12A_FINAL_REPOSITORY_SECURITY_CORRECTIONS_BEFORE_STAGING_VALIDATION.md` |
 
@@ -57,9 +60,9 @@ Public production launch remains NO-GO because required external launch evidence
 |---|---|---|
 | Gate A: Controlled Internal Demo | GO WITH CONDITIONS | Repository is safe for synthetic/sample-data review. |
 | Gate B: Secure Private Internet Demo | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-05 and PR-12A repository corrections are verified; target-host smoke and owner approval remain required. |
-| Gate C: Real Customer Pilot | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-10 are verified; real-data safeguards need staging/VPS evidence. |
-| Gate D: Paid Beta | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-11 are verified; owner commercial approval and live smoke remain required. |
-| Gate E: Public Production Launch | NO-GO | PR-12A repository corrections are complete, but external launch evidence and explicit owner approval are not recorded. |
+| Gate C: Real Customer Pilot | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-13A are verified at repository level; real-data safeguards need staging/VPS evidence. |
+| Gate D: Paid Beta | REPOSITORY READY WITH CONDITIONS | PR-01 through PR-13A are verified at repository level; owner commercial approval and live smoke remain required. |
+| Gate E: Public Production Launch | NO-GO | PR-13A repository remediation is complete, but external launch evidence and explicit owner approval are not recorded. |
 
 ## PR-12A Correction Results
 

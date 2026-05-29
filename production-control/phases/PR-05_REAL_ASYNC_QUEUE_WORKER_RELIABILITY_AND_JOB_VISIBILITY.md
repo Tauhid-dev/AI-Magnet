@@ -75,12 +75,13 @@ Schema may be needed for job status. Provide downgrade and job-state compatibili
 - Async integrations: business document upload queues `rag.document_ingestion`; chat lead notifications queue `notification.send_delivery`.
 - Visibility APIs: `GET /business-portal/jobs`, `GET /business-portal/jobs/{job_id}`, `GET /admin/jobs`, `GET /admin/worker-heartbeats`, and queue counts in `GET /admin/health`.
 - Tests: `backend/tests/workers/test_background_jobs.py`, updated business/admin API tests.
-- Validation: full backend tests passed with 63 tests; migration upgrade/downgrade passed on SQLite.
+- PR-13A concurrency remediation: `backend/app/jobs/service.py` now claims jobs through an atomic `UPDATE ... RETURNING` path with PostgreSQL `FOR UPDATE SKIP LOCKED` candidate selection, preserving queue/status/schedule guards while setting `locked_by`, `locked_at`, `started_at`, `attempts`, and `running` in one database operation.
+- Validation: full backend tests passed with 116 tests; focused worker tests passed with 11 tests; migration upgrade/downgrade/upgrade smoke passed on SQLite.
 
 ## Blockers
 
-PR-13 reopened one repository-controlled risk: the current job acquisition path is not proven atomic/concurrency-safe for multiple worker processes. Live worker smoke on the target VPS remains release-gate evidence before internet demo operation.
+PR-13 reopened one repository-controlled risk: job acquisition was not proven atomic/concurrency-safe for multiple worker processes. PR-13A closed the repository risk with atomic claim implementation and concurrent worker tests. Live PostgreSQL multi-worker smoke on the target VPS remains PR-14 external release-gate evidence before horizontal worker scaling is trusted.
 
 ## Completion Criteria
 
-A real worker consumes queued jobs with reliable failure/retry visibility; placeholder worker is no longer presented as production-ready. PR-13 found this is complete for single-worker repository validation but needs atomic claim/concurrency tests before multi-worker production scaling is claimed.
+A real worker consumes queued jobs with reliable failure/retry visibility; placeholder worker is no longer presented as production-ready. PR-13A closes the repository-level atomic claim/concurrency evidence gap. Production scaling still needs PR-14 owner-approved PostgreSQL/Redis worker smoke evidence.

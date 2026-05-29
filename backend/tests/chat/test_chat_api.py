@@ -18,6 +18,7 @@ from app.widget.service import WidgetService
 from app.main import create_app
 from app.core.config import Settings, get_settings
 from app.core.rate_limit import rate_limiter
+from app.usage import UsageEventType
 from fastapi.testclient import TestClient
 
 
@@ -182,7 +183,12 @@ def test_widget_init_enforces_allowed_origin():
 def test_widget_init_rate_limit_blocks_repeated_requests(monkeypatch):
     with create_test_session() as session:
         widget_key = "wm_live_rate_widget_a"
-        seed_tenant_with_widget(session, "Tenant A Plumbing", "tenant-a", widget_key)
+        tenant, _widget = seed_tenant_with_widget(
+            session,
+            "Tenant A Plumbing",
+            "tenant-a",
+            widget_key,
+        )
         session.commit()
         monkeypatch.setenv("RATE_LIMIT_WIDGET_INIT_PER_MINUTE", "1")
         client = create_client(
@@ -196,6 +202,59 @@ def test_widget_init_rate_limit_blocks_repeated_requests(monkeypatch):
 
         assert first_response.status_code == 200
         assert limited_response.status_code == 429
+        event = session.scalars(
+            select(UsageLog).where(UsageLog.event_type == UsageEventType.RATE_LIMIT_EXCEEDED)
+        ).one()
+        assert event.tenant_id == tenant.id
+        assert event.event_source == "chat_widget"
+        assert event.attributes["scope"] == "widget_init"
+        assert event.attributes["actor_category"] == "chat_widget"
+        assert event.attributes["route"] == "/widget/init"
+        serialized = str(event.attributes).lower()
+        assert widget_key.lower() not in serialized
+        assert widget_key[:16].lower() not in serialized
+
+
+def test_chat_start_rate_limit_records_tenant_attributed_event(monkeypatch):
+    with create_test_session() as session:
+        widget_key = "wm_live_rate_chat_a"
+        tenant, _widget = seed_tenant_with_widget(
+            session,
+            "Tenant A Plumbing",
+            "tenant-a",
+            widget_key,
+        )
+        session.commit()
+        monkeypatch.setenv("RATE_LIMIT_CHAT_START_PER_MINUTE", "1")
+        client = create_client(
+            session,
+            DeterministicEmbeddingProvider(16),
+            RecordingChatProvider(),
+        )
+
+        first_response = client.post(
+            "/chat/conversations",
+            json={"widget_key": widget_key, "visitor_label": "Visitor"},
+        )
+        limited_response = client.post(
+            "/chat/conversations",
+            json={"widget_key": widget_key, "visitor_label": "Visitor"},
+        )
+
+        assert first_response.status_code == 200
+        assert limited_response.status_code == 429
+        assert int(limited_response.headers["Retry-After"]) > 0
+        event = session.scalars(
+            select(UsageLog).where(UsageLog.event_type == UsageEventType.RATE_LIMIT_EXCEEDED)
+        ).one()
+        assert event.tenant_id == tenant.id
+        assert event.event_source == "chat_widget"
+        assert event.attributes["scope"] == "chat_start_public"
+        assert event.attributes["actor_category"] == "chat_widget"
+        assert event.attributes["route"] == "/chat/conversations"
+        serialized = str(event.attributes).lower()
+        assert widget_key.lower() not in serialized
+        assert widget_key[:16].lower() not in serialized
 
 
 def test_conversation_message_uses_only_current_tenant_rag_context_and_captures_lead():
