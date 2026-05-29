@@ -15,7 +15,8 @@ const navItems = [
   { href: "/portal/leads", label: "Leads" },
   { href: "/portal/conversations", label: "Conversations" },
   { href: "/portal/widget", label: "Widget" },
-  { href: "/portal/analytics", label: "Analytics" }
+  { href: "/portal/analytics", label: "Analytics" },
+  { href: "/portal/billing", label: "Billing" }
 ];
 
 export function PortalShell({ children }: { children: React.ReactNode }) {

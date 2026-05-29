@@ -18,6 +18,7 @@ from app.api.session_cookies import (
     require_csrf_header_for_cookie_session,
     set_session_cookie,
 )
+from app.billing import BillingPlan, BillingService
 from app.core.config import Settings, get_settings
 from app.core.rate_limit import enforce_rate_limit
 from app.db.base import utc_now
@@ -30,11 +31,13 @@ from app.jobs.service import (
     JOB_STATUS_RUNNING,
 )
 from app.models.job import BackgroundJob, WorkerHeartbeat
+from app.models.billing import TenantSubscription
 from app.models.tenant import Business, BusinessUser, Tenant
 from app.models.usage import AuditLog, GlobalAuditLog, UsageLog
 from app.schemas.admin import (
     AdminAuditLogResponse,
     AdminAnalyticsBreakdownResponse,
+    AdminBillingPlanResponse,
     AdminBusinessResponse,
     AdminBusinessUserResponse,
     AdminHealthResponse,
@@ -52,6 +55,8 @@ from app.schemas.admin import (
     AdminTenantMetricsResponse,
     AdminTenantOffboardRequest,
     AdminTenantPrivacyExportResponse,
+    AdminTenantSubscriptionRequest,
+    AdminTenantSubscriptionResponse,
     AdminTenantStatusUpdateRequest,
     AdminTenantSummaryResponse,
     AdminTenantUsageSummaryResponse,
@@ -286,6 +291,102 @@ def get_tenant(
     )
     session.commit()
     return tenant_detail_response(service, tenant)
+
+
+@router.get("/billing/plans", response_model=list[AdminBillingPlanResponse])
+def list_billing_plans(
+    _admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+) -> list[AdminBillingPlanResponse]:
+    """List manually controlled paid-beta plans."""
+    return [billing_plan_response(plan) for plan in BillingService(session).plan_catalog()]
+
+
+@router.get(
+    "/tenants/{tenant_id}/subscription",
+    response_model=AdminTenantSubscriptionResponse | None,
+)
+def get_tenant_subscription(
+    tenant_id: str,
+    _admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+) -> AdminTenantSubscriptionResponse | None:
+    """Return one tenant's subscription entitlement state."""
+    service = BillingService(session)
+    if not service.tenant_exists(tenant_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    subscription = service.get_subscription(tenant_id)
+    if subscription is None:
+        return None
+    return subscription_response(subscription)
+
+
+@router.put(
+    "/tenants/{tenant_id}/subscription",
+    response_model=AdminTenantSubscriptionResponse,
+)
+def set_tenant_subscription(
+    request: Request,
+    tenant_id: str,
+    payload: AdminTenantSubscriptionRequest,
+    admin_session: AdminPortalSession = Depends(get_current_admin_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> AdminTenantSubscriptionResponse:
+    """Set or update a tenant's manual paid-beta plan and subscription status."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope="admin_tenant_subscription_write",
+        identifiers=[admin_session.admin_id, tenant_id],
+        limit=settings.rate_limit_admin_write_per_minute,
+    )
+    service = BillingService(session)
+    existing_subscription = service.get_subscription(tenant_id)
+    try:
+        subscription = service.set_manual_subscription(
+            tenant_id=tenant_id,
+            plan_code=payload.plan_code,
+            status=payload.status,
+            admin_id=admin_session.admin_id,
+            billing_contact_email=payload.billing_contact_email,
+            manual_reference=payload.manual_reference,
+            notes=payload.notes,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    action = (
+        "tenant_subscription_created"
+        if existing_subscription is None
+        else "tenant_subscription_updated"
+    )
+    attributes = {
+        "plan_code": subscription.plan_code,
+        "status": subscription.status,
+        "billing_mode": subscription.billing_mode,
+        "support_level": subscription.support_level,
+    }
+    AuditService(session).record_admin_action(
+        tenant_id=tenant_id,
+        actor_id=admin_session.admin_id,
+        action=action,
+        target_type="tenant_subscription",
+        target_id=subscription.id,
+        attributes=attributes,
+    )
+    AuditService(session).record_global_admin_action(
+        actor_id=admin_session.admin_id,
+        action=action,
+        target_type="tenant_subscription",
+        target_id=subscription.id,
+        tenant_id=tenant_id,
+        attributes=attributes,
+    )
+    session.commit()
+    return subscription_response(subscription)
 
 
 @router.patch("/tenants/{tenant_id}/status", response_model=AdminTenantDetailResponse)
@@ -737,6 +838,61 @@ def business_user_response(user: BusinessUser) -> AdminBusinessUserResponse:
         role=user.role,
         status=user.status,
         created_at=user.created_at,
+    )
+
+
+def billing_plan_response(plan: BillingPlan) -> AdminBillingPlanResponse:
+    """Map a paid-beta plan definition to API response."""
+    return AdminBillingPlanResponse(
+        code=plan.code,
+        name=plan.name,
+        description=plan.description,
+        monthly_price_cents=plan.monthly_price_cents,
+        currency=plan.currency,
+        support_level=plan.support_level,
+        trial_days=plan.trial_days,
+        chat_conversations_limit=plan.chat_conversations_limit,
+        ai_responses_limit=plan.ai_responses_limit,
+        tokens_limit=plan.tokens_limit,
+        monthly_budget_cents=plan.monthly_budget_cents,
+        documents_limit=plan.documents_limit,
+        storage_mb_limit=plan.storage_mb_limit,
+        pages_crawled_limit=plan.pages_crawled_limit,
+    )
+
+
+def subscription_response(
+    subscription: TenantSubscription,
+) -> AdminTenantSubscriptionResponse:
+    """Map a tenant subscription to admin API response."""
+    return AdminTenantSubscriptionResponse(
+        id=subscription.id,
+        tenant_id=subscription.tenant_id,
+        plan_code=subscription.plan_code,
+        plan_name=subscription.plan_name,
+        status=subscription.status,
+        billing_mode=subscription.billing_mode,
+        currency=subscription.currency,
+        monthly_price_cents=subscription.monthly_price_cents,
+        support_level=subscription.support_level,
+        chat_conversations_limit=subscription.chat_conversations_limit,
+        ai_responses_limit=subscription.ai_responses_limit,
+        tokens_limit=subscription.tokens_limit,
+        monthly_budget_cents=subscription.monthly_budget_cents,
+        documents_limit=subscription.documents_limit,
+        storage_mb_limit=subscription.storage_mb_limit,
+        pages_crawled_limit=subscription.pages_crawled_limit,
+        trial_started_at=subscription.trial_started_at,
+        trial_ends_at=subscription.trial_ends_at,
+        current_period_starts_at=subscription.current_period_starts_at,
+        current_period_ends_at=subscription.current_period_ends_at,
+        canceled_at=subscription.canceled_at,
+        billing_contact_email=subscription.billing_contact_email,
+        manual_reference=subscription.manual_reference,
+        notes=subscription.notes,
+        updated_by_admin_id=subscription.updated_by_admin_id,
+        created_at=subscription.created_at,
+        updated_at=subscription.updated_at,
     )
 
 

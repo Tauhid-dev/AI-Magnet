@@ -252,6 +252,41 @@ class PortalAnalyticsBreakdownResponse(BaseModel):
     count: int
 
 
+class PortalBillingPlanResponse(BaseModel):
+    """Business-visible paid-beta plan summary."""
+
+    code: str
+    name: str
+    description: str
+    monthly_price_cents: int
+    currency: str
+    support_level: str
+    chat_conversations_limit: int
+    ai_responses_limit: int
+    tokens_limit: int
+    monthly_budget_cents: float
+    documents_limit: int
+    storage_mb_limit: int
+    pages_crawled_limit: int
+
+
+class PortalSubscriptionResponse(BaseModel):
+    """Business-visible subscription state without admin notes."""
+
+    id: str
+    tenant_id: str
+    plan_code: str
+    plan_name: str
+    status: str
+    billing_mode: str
+    currency: str
+    monthly_price_cents: int
+    support_level: str
+    trial_ends_at: datetime | None
+    current_period_ends_at: datetime | None
+    canceled_at: datetime | None
+
+
 class PortalUsageEventResponse(BaseModel):
     """Recent tenant usage event."""
 
@@ -283,6 +318,18 @@ class PortalQuotaStatusResponse(BaseModel):
     metrics: list[PortalQuotaMetricResponse]
     warnings: list[str]
     blocked_reasons: list[str]
+
+
+class PortalBillingResponse(BaseModel):
+    """Business portal paid-beta, quota, and compliance status."""
+
+    subscription: PortalSubscriptionResponse | None
+    available_plans: list[PortalBillingPlanResponse]
+    quota_status: PortalQuotaStatusResponse
+    paid_beta_status: str
+    payment_collection: str
+    privacy_operations: list[str]
+    support_workflow: list[str]
 
 
 class PortalJobResponse(BaseModel):

@@ -8,19 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-PR-11: Billing, Compliance Controls and Paid Beta Readiness.
+PR-12: Final Production Validation, VPS Deployment Runbook and Launch Gate.
 
-Status: not_started. PR-01 through PR-10 are verified and PR-11 is the next permitted phase.
+Status: not_started. PR-01 through PR-11 are verified and PR-12 is the next permitted phase.
 
 ## Last Completed Phase
 
-PR-10.
+PR-11.
 
 ## Next Permitted Phase
 
-`Implement production phase PR-11`
+`Implement production phase PR-12`
 
-Do not start PR-12 unless explicitly requested. PR-11 depends on PR-10 and is now the next ordered production remediation phase.
+Do not perform live deployment, DNS/TLS changes, payment activation, or real customer onboarding unless explicitly requested. PR-12 is the final validation and launch-gate phase.
 
 ## Production Go/No-Go
 
@@ -29,7 +29,7 @@ Do not start PR-12 unless explicitly requested. PR-11 depends on PR-10 and is no
 | Gate A: Controlled Internal Demo, synthetic/sample data only | GO WITH CONDITIONS |
 | Gate B: Secure Private Internet Demo | REPOSITORY READY WITH CONDITIONS after PR-05; live VPS smoke, remote CI evidence, and owner approval still required |
 | Gate C: Real Customer Pilot | REPOSITORY READY WITH CONDITIONS after PR-10; live VPS/staging smoke, alerting/log destination setup, controlled quota-limit smoke, backup/restore, worker/Redis, crawl/document/RAG smoke, and owner approval still required |
-| Gate D: Paid Beta | NO-GO until PR-01 through PR-11 verified |
+| Gate D: Paid Beta | REPOSITORY READY WITH CONDITIONS after PR-11; owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval still required |
 | Gate E: Public Production Launch | NO-GO until PR-12 final audit and explicit owner approval |
 
 ## Baseline
@@ -46,29 +46,36 @@ Do not start PR-12 unless explicitly requested. PR-11 depends on PR-10 and is no
 - PR-08 implemented PostgreSQL/pgvector SQL retrieval with tenant/status filters, retrieval indexes, bounded top-K/threshold behavior, no-answer fallback, source citations through the chat API and widget, prompt-injection safety flags for retrieved content and visitor prompts, and RAG evaluation fixtures.
 - PR-09 implemented business profile setup, setup checklist/readiness UX, tenant knowledge/job status views, source-grounded agent sandbox with citations, widget title branding/copy controls, safer cookie-session hydration, leads/conversations loading/error states, and validation/browser smoke coverage.
 - PR-10 implemented tenant usage metering, configurable quota/cost limits, graceful quota blocking, `/ready` readiness checks, estimated token/cost capture for chat and sandbox tests, admin/portal quota visibility, website crawl completion/failure usage events, and an operations monitoring/incident runbook.
+- PR-11 implemented tenant-scoped manual paid-beta subscriptions, beta plan catalog, admin entitlement assignment controls, business billing/compliance visibility, subscription-aware quota enforcement, subscription export in privacy workflows, docs, and validation tests. Stripe/payment-provider automation remains deferred.
 
 ## Unresolved Critical Risks
 
-- No unresolved critical repository-controlled PR-10 blockers remain. Live VPS validation of TLS, firewall, backups, restore, worker health, Redis reachability, controlled real-site crawl smoke, controlled document-upload smoke, production-equivalent PostgreSQL/pgvector RAG smoke, log/alert destination setup, and quota-limit smoke is still required before broader operation.
+- No unresolved critical repository-controlled PR-11 blockers remain. Live VPS validation of TLS, firewall, backups, restore, worker health, Redis reachability, controlled real-site crawl smoke, controlled document-upload smoke, production-equivalent PostgreSQL/pgvector RAG smoke, log/alert destination setup, quota-limit smoke, remote CI evidence, owner paid-beta approval, and final PR-12 audit are still required before broader operation.
 
 ## Unresolved High Risks
 
-- Billing/entitlement controls for paid beta are missing.
+- Paid-beta live operation still requires owner approval for pricing, GST/tax handling, refund terms, support process, and manual invoicing acceptance.
 - Scanned-document OCR runtime remains gated and not implemented.
-- First remote CI run for the pushed PR-10 branch will be required.
+- First remote CI run for the pushed PR-11 branch will be required.
 - First VPS certificate issuance/renewal, backup/restore drill, worker/Redis smoke, controlled real-site crawl and document-upload smoke, live PostgreSQL/pgvector RAG smoke, `/ready` smoke, log/alert destination verification, and controlled quota-limit smoke run are pending release-gate validation.
 
 ## Last Validation Commands
 
-Latest PR-10 validation commands:
+Latest PR-11 validation commands:
 
-- `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/chat/test_chat_api.py backend/tests/test_health.py` - pass, 12 tests.
-- `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
-- `backend/.venv/bin/python -m pytest backend/tests` - pass, 93 tests.
+- `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/admin/test_admin_api.py backend/tests/business/test_business_portal_api.py` - pass, 26 tests.
+- `backend/.venv/bin/python -m pytest backend/tests` - pass, 97 tests.
+- `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
+- `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr11_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr11_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0011` - pass.
 - `npm run lint` - pass.
 - `npm run typecheck` - pass.
 - `npm test` - pass.
 - `npm run build` - pass.
+- `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+- `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass, no known Python vulnerabilities.
+- `npm audit --audit-level=high` - pass at high threshold; moderate transitive PostCSS advisory through Next.js remains noted.
 - `python3 -m json.tool production-control/status/production-status.json` - pass.
 - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
 - `git diff --check` - pass.

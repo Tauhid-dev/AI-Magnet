@@ -45,7 +45,7 @@ Requires verified:
 
 Remaining conditions before a real customer pilot may begin:
 
-- Remote CI evidence for the current PR-10 branch.
+- Remote CI evidence for the latest production remediation branch.
 - VPS/staging `/ready` smoke against production-equivalent PostgreSQL/pgvector.
 - Logging/alert destination configured and verified.
 - Controlled quota-limit smoke test.
@@ -56,7 +56,7 @@ Remaining conditions before a real customer pilot may begin:
 
 ## Gate D: Paid Beta
 
-Current status: NO-GO.
+Current status: REPOSITORY READY WITH CONDITIONS.
 
 Requires verified:
 
@@ -64,6 +64,13 @@ Requires verified:
 - Billing or manual paid-beta entitlement controls.
 - Cost limits and customer-facing privacy/support process.
 - Paid-beta go/no-go review in `06_EXECUTION_LOG.md`.
+
+Remaining conditions before paid beta may begin:
+
+- Owner approval for pricing, GST/tax handling, refund terms, and support process.
+- Remote CI evidence for the PR-11 branch.
+- VPS/staging smoke evidence for auth, quotas, manual entitlement changes, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, and readiness checks.
+- Confirmation that manual invoicing is acceptable for the first paid beta; Stripe remains deferred.
 
 ## Gate E: Public Production Launch
 

@@ -199,6 +199,63 @@ export type QuotaStatus = {
   blocked_reasons: string[];
 };
 
+export type BillingPlan = {
+  code: string;
+  name: string;
+  description: string;
+  monthly_price_cents: number;
+  currency: string;
+  support_level: string;
+  trial_days?: number;
+  chat_conversations_limit: number;
+  ai_responses_limit: number;
+  tokens_limit: number;
+  monthly_budget_cents: number;
+  documents_limit: number;
+  storage_mb_limit: number;
+  pages_crawled_limit: number;
+};
+
+export type TenantSubscription = {
+  id: string;
+  tenant_id: string;
+  plan_code: string;
+  plan_name: string;
+  status: string;
+  billing_mode: string;
+  currency: string;
+  monthly_price_cents: number;
+  support_level: string;
+  chat_conversations_limit?: number;
+  ai_responses_limit?: number;
+  tokens_limit?: number;
+  monthly_budget_cents?: number;
+  documents_limit?: number;
+  storage_mb_limit?: number;
+  pages_crawled_limit?: number;
+  trial_started_at?: string | null;
+  trial_ends_at: string | null;
+  current_period_starts_at?: string | null;
+  current_period_ends_at: string | null;
+  canceled_at: string | null;
+  billing_contact_email?: string | null;
+  manual_reference?: string | null;
+  notes?: string | null;
+  updated_by_admin_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type PortalBilling = {
+  subscription: TenantSubscription | null;
+  available_plans: BillingPlan[];
+  quota_status: QuotaStatus;
+  paid_beta_status: string;
+  payment_collection: string;
+  privacy_operations: string[];
+  support_workflow: string[];
+};
+
 export type PortalAnalytics = {
   documents_total: number;
   documents_ingested: number;

@@ -37,8 +37,12 @@ After every production phase run, Codex must:
 5. Update `production-status-dashboard.html`.
 6. Confirm the visible launch gate status remains accurate.
 
-The current baseline must show:
+The current baseline must preserve:
 
 - Internal MVP Demo: GO WITH CONDITIONS.
-- Public/Paid/Production: NO-GO.
 - 2026-05-23 audited production readiness: 35/100.
+
+Current launch posture after PR-11:
+
+- Paid Beta: REPOSITORY READY WITH CONDITIONS.
+- Public Production: NO-GO until PR-12 and explicit owner approval.

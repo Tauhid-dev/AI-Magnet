@@ -13,6 +13,7 @@ from app.analytics.service import AnalyticsService
 from app.core.config import Settings, get_settings
 from app.core.passwords import hash_password
 from app.db.base import utc_now
+from app.models.billing import TenantSubscription
 from app.models.conversation import Conversation, Message
 from app.models.knowledge import DocumentChunk, KnowledgeDocument
 from app.models.lead import Lead
@@ -165,6 +166,10 @@ class AdminService:
                 widget_config_export(widget)
                 for widget in self._tenant_rows(WidgetConfig, tenant_id)
             ],
+            "subscriptions": [
+                subscription_export(subscription)
+                for subscription in self._tenant_rows(TenantSubscription, tenant_id)
+            ],
         }
 
     def delete_tenant_data(self, tenant_id: str, confirm_slug: str) -> Tenant | None:
@@ -277,6 +282,7 @@ class AdminService:
             UsageLog,
             AuditLog,
             WidgetConfig,
+            TenantSubscription,
             BusinessUser,
             Business,
         ):
@@ -425,4 +431,22 @@ def widget_config_export(widget: WidgetConfig) -> dict[str, Any]:
         "status": widget.status,
         "allowed_origins": widget.allowed_origins,
         "created_at": isoformat_or_none(widget.created_at),
+    }
+
+
+def subscription_export(subscription: TenantSubscription) -> dict[str, Any]:
+    return {
+        "id": subscription.id,
+        "plan_code": subscription.plan_code,
+        "plan_name": subscription.plan_name,
+        "status": subscription.status,
+        "billing_mode": subscription.billing_mode,
+        "currency": subscription.currency,
+        "monthly_price_cents": subscription.monthly_price_cents,
+        "support_level": subscription.support_level,
+        "trial_ends_at": isoformat_or_none(subscription.trial_ends_at),
+        "current_period_ends_at": isoformat_or_none(subscription.current_period_ends_at),
+        "canceled_at": isoformat_or_none(subscription.canceled_at),
+        "created_at": isoformat_or_none(subscription.created_at),
+        "updated_at": isoformat_or_none(subscription.updated_at),
     }

@@ -213,3 +213,15 @@ Append-only ADR-lite log for production remediation.
   - Rely only on external provider billing dashboards: rejected because tenant-level budget controls must be enforceable inside the SaaS workflow before customer pilot use.
   - Leave quotas as documentation only: rejected because chat, AI, document, storage, and crawl entrypoints now need graceful limit enforcement.
 - Follow-up impact: PR-11 can map plans/entitlements onto the PR-10 quota keys, and PR-12 should decide whether to require persistent rollups or external observability integration before public launch.
+
+## DEC-PR-20260529-020: PR-11 Uses Manual Paid-Beta Entitlements Before Stripe
+
+- Date: 2026-05-29
+- Decision: Implement PR-11 with tenant-scoped manual subscription entitlements, a code-defined beta plan catalog, server-side quota enforcement, admin assignment controls, and business-visible billing status. Do not add Stripe, checkout, webhook processing, card storage, or automated payment collection in PR-11.
+- Reason: Controlled paid beta needs enforceable plan/status controls now, but payment-provider automation introduces tax, refund, webhook, idempotency, and operational support complexity that should follow owner-approved pricing and commercial terms.
+- Affected files/phases: PR-11, `backend/app/models/billing.py`, `backend/app/billing/service.py`, `backend/app/usage/quotas.py`, `backend/app/api/admin.py`, `backend/app/api/business_portal.py`, `frontend/app/admin/billing/page.tsx`, `frontend/app/portal/billing/page.tsx`, `docs/paid-beta-readiness.md`.
+- Alternatives rejected:
+  - Add Stripe immediately: deferred until pricing, GST/tax, refund policy, customer portal, webhook replay/idempotency, and support operations are approved.
+  - Leave billing as documentation only: rejected because paid beta must have server-side entitlement and quota controls before any charged use.
+  - Trust frontend plan state: rejected because entitlements must be enforced by backend services and tenant-scoped database state.
+- Follow-up impact: PR-12 must re-audit paid-beta gates, confirm owner approval, validate live/staging smoke evidence, and decide whether manual entitlements are sufficient for launch or Stripe should become a required pre-launch phase.

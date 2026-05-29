@@ -472,3 +472,76 @@ def test_admin_privacy_lifecycle_export_offboard_delete_and_global_audit(monkeyp
             select(GlobalAuditLog).where(GlobalAuditLog.action == "admin_login_succeeded")
         ).first()
         assert login_event.attributes["email"]["redacted"] is True
+
+
+def test_admin_can_manage_manual_paid_beta_subscription_and_audit_actions(monkeypatch):
+    with create_test_session() as session:
+        seed_admin(session)
+        tenant, _user = seed_business_user(
+            session,
+            "Billing Plumbing",
+            "billing-plumbing",
+            "owner@billing.example",
+        )
+        session.commit()
+        client = create_client(session, monkeypatch)
+        token = admin_login(client)
+
+        plans_response = client.get("/admin/billing/plans", headers=auth_header(token))
+        missing_subscription_response = client.get(
+            f"/admin/tenants/{tenant.id}/subscription",
+            headers=auth_header(token),
+        )
+        create_response = client.put(
+            f"/admin/tenants/{tenant.id}/subscription",
+            headers=auth_header(token),
+            json={
+                "plan_code": "pilot_trial",
+                "status": "trialing",
+                "billing_contact_email": "billing@billing.example",
+                "manual_reference": "approval-001",
+                "notes": "Approved for controlled paid-beta trial.",
+            },
+        )
+        update_response = client.put(
+            f"/admin/tenants/{tenant.id}/subscription",
+            headers=auth_header(token),
+            json={
+                "plan_code": "starter_manual",
+                "status": "active",
+                "billing_contact_email": "billing@billing.example",
+                "manual_reference": "invoice-001",
+            },
+        )
+        invalid_response = client.put(
+            f"/admin/tenants/{tenant.id}/subscription",
+            headers=auth_header(token),
+            json={"plan_code": "unknown", "status": "active"},
+        )
+
+        assert plans_response.status_code == 200
+        assert {plan["code"] for plan in plans_response.json()} >= {
+            "pilot_trial",
+            "starter_manual",
+        }
+        assert missing_subscription_response.status_code == 200
+        assert missing_subscription_response.json() is None
+        assert create_response.status_code == 200
+        assert create_response.json()["status"] == "trialing"
+        assert create_response.json()["billing_mode"] == "manual"
+        assert create_response.json()["trial_ends_at"] is not None
+        assert update_response.status_code == 200
+        assert update_response.json()["plan_code"] == "starter_manual"
+        assert update_response.json()["monthly_price_cents"] == 9900
+        assert invalid_response.status_code == 400
+
+        actions = set(session.scalars(select(AuditLog.action)).all())
+        global_actions = set(session.scalars(select(GlobalAuditLog.action)).all())
+        assert {
+            "tenant_subscription_created",
+            "tenant_subscription_updated",
+        }.issubset(actions)
+        assert {
+            "tenant_subscription_created",
+            "tenant_subscription_updated",
+        }.issubset(global_actions)

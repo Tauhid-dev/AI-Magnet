@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "PR-11",
-    "last_completed_phase": "PR-10",
-    "next_permitted_phase": "PR-11",
-    "production_go_no_go": "Gate C repository-ready with conditions; paid beta and public production remain NO-GO",
-    "overall_status": "pr10_monitoring_metering_quotas_verified_next_pr11"
+    "active_phase": "PR-12",
+    "last_completed_phase": "PR-11",
+    "next_permitted_phase": "PR-12",
+    "production_go_no_go": "Gate D repository-ready with conditions; public production remains NO-GO until PR-12 final audit and explicit owner approval",
+    "overall_status": "pr11_billing_compliance_verified_next_pr12"
   },
   "launch_gates": [
     {
@@ -69,7 +69,7 @@
         "PR-10"
       ],
       "remaining_conditions": [
-        "Remote CI evidence for the current PR-10 branch",
+        "Remote CI evidence for the latest production remediation branch",
         "Owner-approved VPS/staging smoke before any real customer data",
         "Live /ready readiness check against production-equivalent PostgreSQL",
         "Logging/alert destination configured and verified",
@@ -86,7 +86,7 @@
     {
       "gate_id": "D",
       "title": "Paid Beta",
-      "status": "no_go",
+      "status": "repository_ready_with_conditions",
       "requires_verified_phases": [
         "PR-01",
         "PR-02",
@@ -99,6 +99,12 @@
         "PR-09",
         "PR-10",
         "PR-11"
+      ],
+      "remaining_conditions": [
+        "Owner approval for pricing, GST/tax handling, refund terms, and support process",
+        "Remote CI evidence for the PR-11 branch",
+        "VPS/staging smoke for auth, manual entitlement changes, quotas, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, and /ready checks",
+        "Confirmation that manual invoicing is acceptable for the first paid beta; Stripe remains deferred"
       ],
       "evidence_links": [
         "production-control/09_RELEASE_GATES.md"
@@ -387,20 +393,32 @@
     {
       "phase_id": "PR-11",
       "title": "Billing, Compliance Controls and Paid Beta Readiness",
-      "status": "not_started",
-      "completion_percent": 0,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-10"
       ],
       "priority": "p1",
       "criticality": "paid_beta_blocker",
-      "validation_status": "not_run",
-      "last_updated": "2026-05-28",
+      "validation_status": "pass",
+      "last_updated": "2026-05-29",
       "evidence_links": [
-        "production-control/phases/PR-11_BILLING_COMPLIANCE_CONTROLS_AND_PAID_BETA_READINESS.md"
+        "production-control/phases/PR-11_BILLING_COMPLIANCE_CONTROLS_AND_PAID_BETA_READINESS.md",
+        "backend/app/models/billing.py",
+        "backend/app/billing/service.py",
+        "backend/app/usage/quotas.py",
+        "backend/app/api/admin.py",
+        "backend/app/api/business_portal.py",
+        "backend/migrations/versions/20260529_0012_pr11_billing_entitlements.py",
+        "backend/tests/admin/test_admin_api.py",
+        "backend/tests/business/test_business_portal_api.py",
+        "backend/tests/usage/test_quota_service.py",
+        "frontend/app/admin/billing/page.tsx",
+        "frontend/app/portal/billing/page.tsx",
+        "docs/paid-beta-readiness.md"
       ],
-      "branch": null,
-      "commit": null
+      "branch": "production/pr-11-billing-compliance-paid-beta",
+      "commit": "pending"
     },
     {
       "phase_id": "PR-12",
@@ -413,7 +431,7 @@
       "priority": "p0",
       "criticality": "final_launch_gate",
       "validation_status": "not_run",
-      "last_updated": "2026-05-28",
+      "last_updated": "2026-05-29",
       "evidence_links": [
         "production-control/phases/PR-12_FINAL_PRODUCTION_VALIDATION_AND_LAUNCH_GATE.md"
       ],
@@ -444,16 +462,20 @@
     }
   ],
     "critical_blockers": [
-        "Billing/entitlement controls remain pending in PR-11",
         "Scanned-document OCR runtime remains gated and unimplemented",
         "First controlled real-site crawl smoke remains pending before pilot use of website ingestion",
         "First controlled document-upload smoke remains pending before pilot use of customer documents",
-        "First VPS validation of TLS, firewall, backup/restore, worker/Redis smoke, PostgreSQL/pgvector RAG smoke, /ready readiness, alert/log destination, and quota-limit smoke remains pending"
+        "First VPS validation of TLS, firewall, backup/restore, worker/Redis smoke, PostgreSQL/pgvector RAG smoke, /ready readiness, alert/log destination, and quota-limit smoke remains pending",
+        "PR-12 final production validation and owner launch approval remain pending"
     ],
   "high_production_requirements": [
     {
-            "item": "Billing, entitlements, paid-beta controls, and commercial compliance review",
-            "phase": "PR-11"
+            "item": "Paid-beta live operation approval, pricing/GST/refund confirmation, support readiness, remote CI, and VPS/staging smoke evidence",
+            "phase": "Gate D / PR-12"
+        },
+        {
+            "item": "Final independent production re-audit and launch gate decision",
+            "phase": "PR-12"
         }
   ]
 }

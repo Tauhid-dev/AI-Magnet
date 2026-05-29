@@ -15,6 +15,7 @@ from app.api.session_cookies import (
     require_csrf_header_for_cookie_session,
     set_session_cookie,
 )
+from app.billing import BillingPlan, BillingService
 from app.business.auth import BusinessPortalAuthService, BusinessPortalSession
 from app.business.service import BusinessPortalService
 from app.core.config import Settings, get_settings
@@ -22,6 +23,7 @@ from app.core.rate_limit import enforce_rate_limit
 from app.db.session import get_db_session
 from app.jobs.service import BackgroundJobService
 from app.models.job import BackgroundJob
+from app.models.billing import TenantSubscription
 from app.models.knowledge import KnowledgeDocument
 from app.providers.ai.base import ChatMessage
 from app.providers.ai.factory import get_chat_completion_provider, get_embedding_provider
@@ -39,6 +41,8 @@ from app.schemas.business_portal import (
     BusinessPortalSessionResponse,
     PortalAnalyticsBreakdownResponse,
     PortalAnalyticsResponse,
+    PortalBillingPlanResponse,
+    PortalBillingResponse,
     PortalConversationDetailResponse,
     PortalConversationResponse,
     PortalBusinessProfileResponse,
@@ -52,6 +56,7 @@ from app.schemas.business_portal import (
     PortalJobResponse,
     PortalQuotaMetricResponse,
     PortalQuotaStatusResponse,
+    PortalSubscriptionResponse,
     PortalWebsiteCrawlPageResponse,
     PortalWebsiteSourceCreateRequest,
     PortalWebsiteSourceResponse,
@@ -1188,32 +1193,118 @@ def get_analytics(
             )
             for event in analytics.recent_usage
         ],
-        quota_status=PortalQuotaStatusResponse(
-            period_start=analytics.quota_status.period_start,
-            period_end=analytics.quota_status.period_end,
-            warning_threshold_percent=analytics.quota_status.warning_threshold_percent,
-            metrics=[
-                PortalQuotaMetricResponse(
-                    key=metric.key,
-                    label=metric.label,
-                    used=metric.used,
-                    limit=metric.limit,
-                    unit=metric.unit,
-                    percent_used=metric.percent_used,
-                    warning=metric.warning,
-                    blocked=metric.blocked,
-                )
-                for metric in analytics.quota_status.metrics
-            ],
-            warnings=analytics.quota_status.warnings,
-            blocked_reasons=analytics.quota_status.blocked_reasons,
+        quota_status=quota_status_response(analytics.quota_status),
+    )
+
+
+@router.get("/billing", response_model=PortalBillingResponse)
+def get_billing(
+    portal_session: BusinessPortalSession = Depends(get_current_business_session),
+    session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> PortalBillingResponse:
+    """Return paid-beta subscription, quota, and compliance controls."""
+    billing = BillingService(session)
+    subscription = billing.get_subscription(portal_session.tenant_id)
+    quota_service = QuotaService(session, settings)
+    quota_snapshot = quota_service.snapshot(portal_session.tenant_id)
+    subscription_blockers = quota_service.subscription_blockers(portal_session.tenant_id)
+    paid_beta_status = (
+        "controlled_paid_beta_enabled"
+        if subscription
+        and subscription.status in {"trialing", "active"}
+        and not subscription_blockers
+        else "not_enabled_or_restricted"
+    )
+    return PortalBillingResponse(
+        subscription=(
+            portal_subscription_response(subscription) if subscription is not None else None
         ),
+        available_plans=[
+            portal_billing_plan_response(plan) for plan in billing.plan_catalog()
+        ],
+        quota_status=quota_status_response(quota_snapshot),
+        paid_beta_status=paid_beta_status,
+        payment_collection="Manual invoice or owner-approved manual entitlement only.",
+        privacy_operations=[
+            "Tenant data export is handled by the platform admin privacy export workflow.",
+            "Deletion/offboarding follows the tenant retention deadline before destructive deletion.",
+            "No card details or payment method data are collected by this application.",
+        ],
+        support_workflow=[
+            "Use the business portal for conversations, leads, knowledge status, and usage.",
+            "Escalate billing or access issues to platform support for manual review.",
+            "Paused, past-due, or canceled subscriptions restrict billable operations server-side.",
+        ],
     )
 
 
 def breakdown_response(item) -> PortalAnalyticsBreakdownResponse:
     """Map analytics breakdown item to API response."""
     return PortalAnalyticsBreakdownResponse(label=item.label, count=item.count)
+
+
+def quota_status_response(snapshot) -> PortalQuotaStatusResponse:
+    """Map tenant quota snapshot to portal API response."""
+    return PortalQuotaStatusResponse(
+        period_start=snapshot.period_start,
+        period_end=snapshot.period_end,
+        warning_threshold_percent=snapshot.warning_threshold_percent,
+        metrics=[
+            PortalQuotaMetricResponse(
+                key=metric.key,
+                label=metric.label,
+                used=metric.used,
+                limit=metric.limit,
+                unit=metric.unit,
+                percent_used=metric.percent_used,
+                warning=metric.warning,
+                blocked=metric.blocked,
+            )
+            for metric in snapshot.metrics
+        ],
+        warnings=snapshot.warnings,
+        blocked_reasons=snapshot.blocked_reasons,
+    )
+
+
+def portal_billing_plan_response(plan: BillingPlan) -> PortalBillingPlanResponse:
+    """Map a manual paid-beta plan to business portal response."""
+    return PortalBillingPlanResponse(
+        code=plan.code,
+        name=plan.name,
+        description=plan.description,
+        monthly_price_cents=plan.monthly_price_cents,
+        currency=plan.currency,
+        support_level=plan.support_level,
+        chat_conversations_limit=plan.chat_conversations_limit,
+        ai_responses_limit=plan.ai_responses_limit,
+        tokens_limit=plan.tokens_limit,
+        monthly_budget_cents=plan.monthly_budget_cents,
+        documents_limit=plan.documents_limit,
+        storage_mb_limit=plan.storage_mb_limit,
+        pages_crawled_limit=plan.pages_crawled_limit,
+    )
+
+
+def portal_subscription_response(
+    subscription: TenantSubscription,
+) -> PortalSubscriptionResponse:
+    """Map subscription state to business-visible fields."""
+    return PortalSubscriptionResponse(
+        id=subscription.id,
+        tenant_id=subscription.tenant_id,
+        plan_code=subscription.plan_code,
+        plan_name=subscription.plan_name,
+        status=subscription.status,
+        billing_mode=subscription.billing_mode,
+        currency=subscription.currency,
+        monthly_price_cents=subscription.monthly_price_cents,
+        support_level=subscription.support_level,
+        trial_ends_at=subscription.trial_ends_at,
+        current_period_ends_at=subscription.current_period_ends_at,
+        canceled_at=subscription.canceled_at,
+    )
 
 
 def lead_response(lead) -> PortalLeadResponse:
