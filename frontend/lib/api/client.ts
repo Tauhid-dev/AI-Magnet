@@ -3,6 +3,7 @@ import type {
   AdminHealth,
   AdminLoginResponse,
   AdminSession,
+  BillingPlan,
   AdminSupportContext,
   AdminTenantDeleteResponse,
   AdminTenantDetail,
@@ -14,6 +15,7 @@ import type {
   LoginResponse,
   PortalAgentTestResponse,
   PortalAnalytics,
+  PortalBilling,
   PortalBusinessProfile,
   PortalConversation,
   PortalConversationDetail,
@@ -22,6 +24,7 @@ import type {
   PortalWebsiteSource,
   PortalLead,
   PortalWidget,
+  TenantSubscription,
   WorkerHeartbeat
 } from "./types";
 
@@ -30,7 +33,7 @@ const COOKIE_SESSION_TOKEN = "__cookie_session__";
 
 type RequestOptions = {
   token?: string | null;
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
 };
 
@@ -258,6 +261,9 @@ export const portalApi = {
   },
   analytics(token?: string | null) {
     return request<PortalAnalytics>("/business-portal/analytics", { token });
+  },
+  billing(token?: string | null) {
+    return request<PortalBilling>("/business-portal/billing", { token });
   }
 };
 
@@ -329,6 +335,31 @@ export const adminApi = {
   supportContext(token: string | null, tenantId: string) {
     return request<AdminSupportContext>(`/admin/tenants/${tenantId}/support-context`, {
       token
+    });
+  },
+  billingPlans(token?: string | null) {
+    return request<BillingPlan[]>("/admin/billing/plans", { token });
+  },
+  tenantSubscription(token: string | null, tenantId: string) {
+    return request<TenantSubscription | null>(`/admin/tenants/${tenantId}/subscription`, {
+      token
+    });
+  },
+  updateTenantSubscription(
+    token: string | null,
+    tenantId: string,
+    payload: {
+      plan_code: string;
+      status: string;
+      billing_contact_email?: string | null;
+      manual_reference?: string | null;
+      notes?: string | null;
+    }
+  ) {
+    return request<TenantSubscription>(`/admin/tenants/${tenantId}/subscription`, {
+      token,
+      method: "PUT",
+      body: payload
     });
   },
   usage(token?: string | null) {

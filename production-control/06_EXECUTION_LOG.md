@@ -432,3 +432,45 @@ Append-only production phase run history.
   - OCR runtime remains gated; scanned PDFs are not claimed as OCR-processed.
 - Next phase permitted: PR-11.
 - Commit hash: pending until commit.
+
+## 2026-05-29 - PR-11: Billing, Compliance Controls and Paid Beta Readiness
+
+- Instruction received: `Implement production phase PR-11`.
+- Phase selected: PR-11.
+- Branch: `production/pr-11-billing-compliance-paid-beta`.
+- Files changed:
+  - Backend billing and entitlements: `backend/app/models/billing.py`, `backend/app/billing/service.py`, `backend/app/usage/quotas.py`, `backend/app/models/__init__.py`.
+  - Backend APIs/schemas/privacy lifecycle: `backend/app/api/admin.py`, `backend/app/api/business_portal.py`, `backend/app/schemas/admin.py`, `backend/app/schemas/business_portal.py`, `backend/app/admin/service.py`.
+  - Migration/tests/docs: `backend/migrations/versions/20260529_0012_pr11_billing_entitlements.py`, `backend/tests/admin/test_admin_api.py`, `backend/tests/business/test_business_portal_api.py`, `backend/tests/usage/test_quota_service.py`, `docs/paid-beta-readiness.md`, `docs/future-modules/billing.md`.
+  - Frontend billing visibility: `frontend/app/admin/billing/page.tsx`, `frontend/app/portal/billing/page.tsx`, `frontend/components/AdminShell.tsx`, `frontend/components/PortalShell.tsx`, `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`, `frontend/tests/static-check.mjs`.
+  - Production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Added tenant-scoped `tenant_subscriptions` manual paid-beta entitlement model and reversible migration.
+  - Added a code-defined beta plan catalog (`pilot_trial`, `starter_manual`, `growth_manual`) and manual subscription service.
+  - Wired subscription limits into the PR-10 quota service so active/trialing subscriptions use plan limits, while `past_due`, `paused`, and `canceled` subscriptions block billable chat, AI, document, and crawl operations server-side.
+  - Added super-admin plan catalog and tenant subscription assignment APIs with tenant/global audit events.
+  - Added business portal billing API and UI showing subscription status, quota limits, manual payment collection, privacy operations, and support workflow.
+  - Added admin billing UI for manual plan/status assignment and business billing UI for paid-beta visibility.
+  - Included subscription state in tenant privacy export/delete lifecycle and documented manual paid-beta operations.
+  - Deliberately deferred Stripe/payment-provider automation, checkout, webhook processing, and card storage.
+- Validations run/result:
+  - `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/admin/test_admin_api.py backend/tests/business/test_business_portal_api.py` - pass, 26 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 97 tests.
+  - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
+  - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr11_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr11_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0011` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+  - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass, no known Python vulnerabilities.
+  - `npm audit --audit-level=high` - pass at high threshold; npm still reports moderate transitive PostCSS advisories through Next.js.
+- Known gaps:
+  - Paid beta is repository-ready with conditions, not unconditional GO. Owner approval for pricing, GST/tax handling, refund terms, support process, manual invoicing acceptance, remote CI evidence, and VPS/staging smoke remains required.
+  - Stripe, checkout, customer portal, webhook signature/idempotency handling, and automated payment collection remain future scope.
+  - Scanned-document OCR runtime remains gated; scanned PDFs are not claimed as OCR-processed.
+  - Live VPS TLS/firewall, backup/restore, worker/Redis, controlled crawl/document upload, production-equivalent PostgreSQL/pgvector RAG, `/ready`, log/alert destination, and quota-limit smoke evidence remain release-gate work.
+- Next phase permitted: PR-12.
+- Commit hash: pending until commit.

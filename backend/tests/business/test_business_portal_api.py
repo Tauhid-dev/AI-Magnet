@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
+from app.billing import BillingService
 from app.core.config import get_settings
 from app.core.passwords import hash_password
 from app.core.rate_limit import rate_limiter
@@ -619,3 +620,50 @@ def test_business_portal_widget_key_lifecycle_controls(monkeypatch):
         assert disabled_key_response.status_code == 401
         assert revoke_response.status_code == 200
         assert revoke_response.json()["status"] == "revoked"
+
+
+def test_business_portal_billing_status_and_subscription_blocks_billable_work(monkeypatch):
+    with create_test_session() as session:
+        monkeypatch.setattr("app.jobs.redis_queue.RedisWakeQueue.notify", lambda *_args: True)
+        tenant, _user = seed_business_user(
+            session,
+            "Paid Beta Plumbing",
+            "paid-beta",
+            "owner@paid-beta.example",
+        )
+        BillingService(session).set_manual_subscription(
+            tenant_id=tenant.id,
+            plan_code="pilot_trial",
+            status="active",
+            admin_id="admin-test",
+            billing_contact_email="billing@paid-beta.example",
+        )
+        session.commit()
+        client = create_client(session, monkeypatch)
+        token = login(client, "paid-beta", "owner@paid-beta.example")
+
+        billing_response = client.get("/business-portal/billing", headers=auth_header(token))
+        subscription = BillingService(session).get_subscription(tenant.id)
+        assert subscription is not None
+        subscription.status = "paused"
+        session.commit()
+        blocked_document_response = client.post(
+            "/business-portal/documents",
+            headers=auth_header(token),
+            json={
+                "filename": "services.txt",
+                "content": "Blocked drains and hot water repairs.",
+                "content_type": "text/plain",
+            },
+        )
+
+        assert billing_response.status_code == 200
+        billing_payload = billing_response.json()
+        assert billing_payload["subscription"]["plan_code"] == "pilot_trial"
+        assert billing_payload["paid_beta_status"] == "controlled_paid_beta_enabled"
+        assert billing_payload["payment_collection"].startswith("Manual invoice")
+        assert billing_payload["quota_status"]["metrics"]
+        assert blocked_document_response.status_code == 429
+        assert "Subscription paused" in blocked_document_response.json()["detail"][
+            "blocked_reasons"
+        ]

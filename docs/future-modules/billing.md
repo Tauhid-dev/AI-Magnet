@@ -2,7 +2,11 @@
 
 ## Status
 
-Research and scoping only. No Stripe, subscription, entitlement, checkout, invoice, or payment code is implemented in Phase 10.
+PR-11 adds manual paid-beta subscription and entitlement controls. Stripe, checkout,
+customer portal, webhook processing, card storage, and automated payment collection remain
+future scope.
+
+See `docs/paid-beta-readiness.md` for the current manual paid-beta workflow.
 
 ## Product intent
 

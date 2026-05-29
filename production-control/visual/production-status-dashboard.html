@@ -112,43 +112,43 @@
   <header>
     <h1>AI-Magnet Production Status Dashboard</h1>
     <p>Baseline audit: 2026-05-23. Production readiness: 35/100.</p>
-    <p><span class="badge ok">Internal MVP Demo: GO WITH CONDITIONS</span> <span class="badge no">Public/Paid/Production: NO-GO</span></p>
+    <p><span class="badge ok">Internal MVP Demo: GO WITH CONDITIONS</span> <span class="badge warn">Paid Beta: CONDITIONAL</span> <span class="badge no">Public Production: NO-GO</span></p>
   </header>
   <main>
     <section class="grid summary">
       <div class="card">
         <h2>Current State</h2>
-        <div class="metric">PR-10 verified</div>
-        <p>Auth, abuse controls, tenant integrity, production infrastructure guardrails, durable worker queue controls, secure ingestion, grounded RAG citations/safety controls, beta setup/widget UX, and quota/cost operations controls are implemented in the repository.</p>
+        <div class="metric">PR-11 verified</div>
+        <p>Auth, abuse controls, tenant integrity, production infrastructure guardrails, durable worker queue controls, secure ingestion, grounded RAG citations/safety controls, beta setup/widget UX, quota/cost operations controls, and manual paid-beta entitlements are implemented in the repository.</p>
       </div>
       <div class="card">
         <h2>Next Permitted Phase</h2>
-        <div class="metric">PR-11</div>
-        <p>Billing, Compliance Controls and Paid Beta Readiness.</p>
+        <div class="metric">PR-12</div>
+        <p>Final Production Validation, VPS Deployment Runbook and Launch Gate.</p>
       </div>
       <div class="card">
         <h2>Progress</h2>
-        <div class="metric">11 / 13 phases</div>
-        <div class="progress"><span style="width: 85%;"></span></div>
-        <p>PR-00 through PR-10 are verified.</p>
+        <div class="metric">12 / 13 phases</div>
+        <div class="progress"><span style="width: 92%;"></span></div>
+        <p>PR-00 through PR-11 are verified.</p>
       </div>
       <div class="card">
         <h2>Launch Gate</h2>
         <div class="metric">CONDITIONAL</div>
-        <p>Real customer pilot is repository-ready with conditions; paid beta and production launch remain blocked.</p>
+        <p>Paid beta is repository-ready with conditions; public production launch remains blocked.</p>
       </div>
     </section>
 
     <section>
       <h2>Critical Blockers</h2>
       <div class="blockers">
-        <div class="blocker">PR-11 billing and entitlement controls are not implemented</div>
         <div class="blocker">Scanned-document OCR runtime remains gated</div>
         <div class="blocker">First controlled real-site crawl smoke remains pending</div>
         <div class="blocker">First controlled document-upload smoke remains pending</div>
         <div class="blocker">First VPS TLS/firewall validation remains pending</div>
         <div class="blocker">First encrypted backup and restore drill remains pending</div>
         <div class="blocker">First live worker/Redis, PostgreSQL/pgvector RAG, readiness, alerting, and quota-limit smoke remains pending</div>
+        <div class="blocker">PR-12 final production validation and owner launch approval remain pending</div>
       </div>
     </section>
 
@@ -166,8 +166,8 @@
         <div class="card phase verified"><h3>PR-08: RAG Quality</h3><p>Status: verified. SQL pgvector retrieval path, citations, thresholds, no-answer fallback, and safety evals are implemented.</p></div>
         <div class="card phase verified"><h3>PR-09: Onboarding UX</h3><p>Status: verified. Customer setup, agent test, source display, and widget installation UX are implemented.</p></div>
         <div class="card phase verified"><h3>PR-10: Monitoring and Quotas</h3><p>Status: verified. Ops visibility, metering, quotas, readiness, and cost controls are implemented.</p></div>
-        <div class="card phase high"><h3>PR-11: Paid Beta Controls</h3><p>Status: next, not started. Adds entitlements/billing or manual paid-beta controls.</p></div>
-        <div class="card phase pending"><h3>PR-12: Final Launch Gate</h3><p>Status: not started. Final audit and explicit owner approval before production.</p></div>
+        <div class="card phase verified"><h3>PR-11: Paid Beta Controls</h3><p>Status: verified. Manual subscriptions, plan entitlements, admin controls, portal billing status, and server-side quota enforcement are implemented.</p></div>
+        <div class="card phase critical"><h3>PR-12: Final Launch Gate</h3><p>Status: next, not started. Final audit and explicit owner approval before production.</p></div>
       </div>
     </section>
 
@@ -179,7 +179,7 @@
           <tr><td>A: Controlled Internal Demo</td><td>GO WITH CONDITIONS</td><td>Synthetic/sample data only.</td></tr>
           <tr><td>B: Secure Private Internet Demo</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-05 are verified; VPS smoke, remote CI evidence, and owner approval still required.</td></tr>
           <tr><td>C: Real Customer Pilot</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-10 are verified; VPS readiness, alerting, quota-limit, backup/restore, worker/Redis, crawl/document, RAG smoke, and owner approval still required.</td></tr>
-          <tr><td>D: Paid Beta</td><td>NO-GO</td><td>Requires PR-01 through PR-11 verified.</td></tr>
+          <tr><td>D: Paid Beta</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-11 are verified; owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval still required.</td></tr>
           <tr><td>E: Public Production Launch</td><td>NO-GO</td><td>Requires PR-12 final audit and explicit owner approval.</td></tr>
         </tbody>
       </table>

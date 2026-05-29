@@ -17,6 +17,8 @@ assert.match(apiClient, /\/business-portal\/auth\/login/);
 assert.match(apiClient, /\/admin\/auth\/login/);
 assert.match(apiClient, /\/admin\/tenants/);
 assert.match(apiClient, /\/admin\/usage/);
+assert.match(apiClient, /\/admin\/billing\/plans/);
+assert.match(apiClient, /\/business-portal\/billing/);
 assert.match(apiClient, /Authorization/);
 assert.doesNotMatch(apiClient, /AI_API_KEY/);
 
@@ -25,6 +27,7 @@ assert.match(portalShell, /getToken/);
 assert.match(portalShell, /tenant_name/);
 assert.match(portalShell, /\/portal\/onboarding/);
 assert.match(portalShell, /\/portal\/agent/);
+assert.match(portalShell, /\/portal\/billing/);
 
 const widgetPage = read("app/portal/widget/page.tsx");
 assert.match(widgetPage, /createWidgetKey/);
@@ -47,6 +50,7 @@ assert.match(agentTestPage, /Sources/);
 const adminShell = read("components/AdminShell.tsx");
 assert.match(adminShell, /getAdminToken/);
 assert.match(adminShell, /Platform console/);
+assert.match(adminShell, /\/admin\/billing/);
 
 const adminTenantsPage = read("app/admin/tenants/page.tsx");
 assert.match(adminTenantsPage, /createTenant/);
@@ -56,3 +60,11 @@ assert.match(portalAnalyticsPage, /usage_event_counts/);
 
 const adminUsagePage = read("app/admin/usage/page.tsx");
 assert.match(adminUsagePage, /tenant_usage/);
+
+const portalBillingPage = read("app/portal/billing/page.tsx");
+assert.match(portalBillingPage, /portalApi\s*\.\s*billing/);
+assert.match(portalBillingPage, /paid_beta_status/);
+
+const adminBillingPage = read("app/admin/billing/page.tsx");
+assert.match(adminBillingPage, /billingPlans/);
+assert.match(adminBillingPage, /updateTenantSubscription/);

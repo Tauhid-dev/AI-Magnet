@@ -1,10 +1,13 @@
+from datetime import timedelta
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
+from app.billing import BillingService
 from app.core.config import Settings
-from app.db.base import Base
+from app.db.base import Base, utc_now
 from app.models import Conversation, KnowledgeDocument, UsageLog
 from app.tenants.service import TenantService
 from app.usage import UsageEventSource, UsageEventType
@@ -106,3 +109,48 @@ def test_quota_block_event_is_recorded_without_customer_content():
             "operation": "chat_message",
             "blocked_reasons": ["Estimated AI cost"],
         }
+
+
+def test_quota_service_uses_manual_paid_beta_entitlements_and_blocks_paused_status():
+    with create_test_session() as session:
+        tenant = seed_tenant(session)
+        BillingService(session).set_manual_subscription(
+            tenant_id=tenant.id,
+            plan_code="starter_manual",
+            status="active",
+            admin_id="admin-test",
+        )
+        session.commit()
+
+        service = QuotaService(session)
+        snapshot = service.snapshot(tenant.id)
+        by_key = {metric.key: metric for metric in snapshot.metrics}
+
+        assert by_key["chat_conversations"].limit == 1000
+        assert by_key["estimated_cost_cents"].limit == 4000
+        assert service.chat_start_blockers(tenant.id) == []
+
+        subscription = BillingService(session).get_subscription(tenant.id)
+        assert subscription is not None
+        subscription.status = "paused"
+        session.commit()
+
+        assert "Subscription paused" in service.chat_start_blockers(tenant.id)
+        assert "Subscription paused" in service.document_blockers(tenant.id)
+
+
+def test_quota_service_blocks_expired_manual_trial():
+    with create_test_session() as session:
+        tenant = seed_tenant(session)
+        subscription = BillingService(session).set_manual_subscription(
+            tenant_id=tenant.id,
+            plan_code="pilot_trial",
+            status="trialing",
+            admin_id="admin-test",
+        )
+        subscription.trial_ends_at = utc_now() - timedelta(days=1)
+        session.commit()
+
+        blockers = QuotaService(session).ai_response_blockers(tenant.id)
+
+        assert blockers == ["Subscription trial expired"]

@@ -26,7 +26,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | pass | SQL retrieval path, citation/schema/widget tests, RAG safety fixtures, SQLite migration smoke; production-equivalent pgvector smoke remains release-gate evidence |
 | Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | pass | backend API tests, frontend static/type/lint/build, authenticated browser smoke |
 | Monitoring/metering/quotas/cost controls | PR-10 | required | required | optional | required if UI | required | required | manual alert/limit checks | pass | quota/metering/readiness tests, admin/portal UI checks, operations runbook |
-| Billing/entitlements/paid-beta controls | PR-11 | required | required | required | required | required | required | manual paid-beta review | not_run | entitlement tests and gate record |
+| Billing/entitlements/paid-beta controls | PR-11 | required | required | required | required | required | required | manual paid-beta review | pass | manual entitlement model/API/UI tests, quota enforcement tests, migration smoke, and paid-beta gate record |
 | Final production launch audit | PR-12 | required | required | required | required | required | required | required | not_run | final audit report and owner approval |
 
 ## PR-00 Validation
@@ -201,3 +201,20 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
 | Live logging/alert destination smoke | not_run | Repository phase does not configure hosted alerting; required before Gate C pilot |
 | Controlled quota-limit/VPS `/ready` smoke | not_run | Repository phase does not deploy to VPS; required before Gate C pilot |
+
+## PR-11 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Manual paid-beta plan catalog and tenant subscription model | pass | `backend/app/billing/service.py`; `backend/app/models/billing.py`; `backend/migrations/versions/20260529_0012_pr11_billing_entitlements.py` |
+| Admin subscription assignment and audit events | pass | `backend/app/api/admin.py`; `backend/tests/admin/test_admin_api.py` |
+| Business portal billing/compliance visibility | pass | `backend/app/api/business_portal.py`; `frontend/app/portal/billing/page.tsx`; `backend/tests/business/test_business_portal_api.py` |
+| Server-side entitlement and quota enforcement | pass | `backend/app/usage/quotas.py`; `backend/tests/usage/test_quota_service.py`; paused subscription document block test |
+| Privacy/export/delete/offboarding alignment | pass | `backend/app/admin/service.py`; `docs/paid-beta-readiness.md`; subscription export is included in tenant privacy export |
+| Backend focused PR-11 tests | pass | `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/admin/test_admin_api.py backend/tests/business/test_business_portal_api.py` - 26 passed |
+| Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 97 passed |
+| Backend compile/lint | pass | `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations`; `backend/.venv/bin/python -m ruff check backend/app backend/tests` |
+| Migration upgrade/downgrade | pass | SQLite upgrade head and downgrade to `20260529_0011` |
+| Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
+| Dependency and static security scans | pass | `pip-audit` found no known Python vulnerabilities; Bandit passed; `npm audit --audit-level=high` passed high threshold with moderate transitive PostCSS advisory noted |
+| Paid-beta live operations review | partial | Repository controls are verified; owner approval, pricing/tax/refund confirmation, remote CI, VPS/staging smoke, and support readiness remain Gate D conditions |

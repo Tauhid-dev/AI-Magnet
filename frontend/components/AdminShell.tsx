@@ -15,6 +15,7 @@ const navItems = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/tenants", label: "Tenants" },
   { href: "/admin/usage", label: "Usage" },
+  { href: "/admin/billing", label: "Billing" },
   { href: "/admin/health", label: "Health" },
   { href: "/admin/audit", label: "Audit" }
 ];

@@ -1,6 +1,6 @@
 # PR-11: Billing, Compliance Controls and Paid Beta Readiness
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -46,14 +46,14 @@ Billing/entitlements are currently planning-only. Paid beta must not start witho
 
 ## Detailed Tasks
 
-- [ ] Decide billing/manual entitlement approach and record decision.
-- [ ] Add plan/entitlement model and enforcement.
-- [ ] Add billing integration or manual paid-beta workflow.
-- [ ] Add webhook/idempotency tests if provider billing is included.
-- [ ] Align privacy/export/delete/support docs.
-- [ ] Add admin/customer visibility where needed.
-- [ ] Perform paid-beta go/no-go review.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Decide billing/manual entitlement approach and record decision.
+- [x] Add plan/entitlement model and enforcement.
+- [x] Add billing integration or manual paid-beta workflow.
+- [x] Add webhook/idempotency tests if provider billing is included. Not applicable: PR-11 deliberately uses manual paid-beta entitlements and no payment provider.
+- [x] Align privacy/export/delete/support docs.
+- [x] Add admin/customer visibility where needed.
+- [x] Perform paid-beta go/no-go review.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -73,12 +73,20 @@ Plan/subscription state requires reversible migrations and clear failed payment 
 
 ## Evidence
 
-To be filled during PR-11.
+- Decision: `DEC-PR-20260529-020` records manual paid-beta entitlement before Stripe/payment-provider automation.
+- Data model and migration: `backend/app/models/billing.py`, `backend/app/billing/service.py`, `backend/migrations/versions/20260529_0012_pr11_billing_entitlements.py`.
+- Enforcement: `backend/app/usage/quotas.py` applies tenant subscription limits and blocks billable work for `past_due`, `paused`, and `canceled` subscriptions.
+- APIs: `backend/app/api/admin.py` exposes plan catalog and tenant subscription controls; `backend/app/api/business_portal.py` exposes business billing status.
+- Frontend: `frontend/app/admin/billing/page.tsx`, `frontend/app/portal/billing/page.tsx`, `frontend/components/AdminShell.tsx`, `frontend/components/PortalShell.tsx`.
+- Docs: `docs/paid-beta-readiness.md`, `docs/future-modules/billing.md`.
+- Tests: `backend/tests/admin/test_admin_api.py`, `backend/tests/business/test_business_portal_api.py`, `backend/tests/usage/test_quota_service.py`, `frontend/tests/static-check.mjs`.
+- Validation: focused PR-11 backend tests passed with 26 tests, full backend suite passed with 97 tests, ruff passed, compileall passed, SQLite Alembic upgrade/downgrade passed, frontend lint/typecheck/static test/build passed, Bandit passed, pip-audit found no known Python vulnerabilities, npm audit passed high threshold with moderate transitive PostCSS advisories still noted.
 
 ## Blockers
 
-Requires PR-01 through PR-10 verified.
+- No repository-controlled PR-11 blocker remains.
+- Live paid-beta operation still requires owner approval, pricing/tax/refund confirmation, remote CI evidence, VPS/staging smoke, backup/restore evidence, and support readiness confirmation.
 
 ## Completion Criteria
 
-Paid beta can only be declared GO after mandatory predecessor gates pass and commercial/usage controls are enforceable.
+Paid-beta repository controls are enforceable through manual entitlements and server-side quota checks. Gate D remains repository-ready with conditions, not unconditional GO, until owner approval and live release evidence are complete.

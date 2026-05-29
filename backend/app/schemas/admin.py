@@ -129,6 +129,67 @@ class AdminTenantDeleteResponse(BaseModel):
     global_audit_id: str
 
 
+class AdminBillingPlanResponse(BaseModel):
+    """Manual paid-beta plan visible to super admins."""
+
+    code: str
+    name: str
+    description: str
+    monthly_price_cents: int
+    currency: str
+    support_level: str
+    trial_days: int
+    chat_conversations_limit: int
+    ai_responses_limit: int
+    tokens_limit: int
+    monthly_budget_cents: float
+    documents_limit: int
+    storage_mb_limit: int
+    pages_crawled_limit: int
+
+
+class AdminTenantSubscriptionRequest(BaseModel):
+    """Create or update a tenant's manual paid-beta subscription."""
+
+    plan_code: str = Field(min_length=1, max_length=80)
+    status: str = Field(min_length=1, max_length=40)
+    billing_contact_email: str | None = Field(default=None, max_length=255)
+    manual_reference: str | None = Field(default=None, max_length=160)
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class AdminTenantSubscriptionResponse(BaseModel):
+    """Tenant subscription and server-enforced entitlement limits."""
+
+    id: str
+    tenant_id: str
+    plan_code: str
+    plan_name: str
+    status: str
+    billing_mode: str
+    currency: str
+    monthly_price_cents: int
+    support_level: str
+    chat_conversations_limit: int
+    ai_responses_limit: int
+    tokens_limit: int
+    monthly_budget_cents: float
+    documents_limit: int
+    storage_mb_limit: int
+    pages_crawled_limit: int
+    trial_started_at: datetime | None
+    trial_ends_at: datetime | None
+    current_period_starts_at: datetime | None
+    current_period_ends_at: datetime | None
+    canceled_at: datetime | None
+    billing_contact_email: str | None
+    manual_reference: str | None
+    notes: str | None
+    updated_by_admin_id: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class AdminTenantPrivacyExportResponse(BaseModel):
     """Beta-scope tenant data export response."""
 

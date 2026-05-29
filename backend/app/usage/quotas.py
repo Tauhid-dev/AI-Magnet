@@ -9,8 +9,10 @@ from math import ceil
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.billing import SUBSCRIPTION_ACCESS_ALLOWED_STATUSES
 from app.core.config import Settings, get_settings
 from app.db.base import utc_now
+from app.models.billing import TenantSubscription
 from app.models.conversation import Conversation
 from app.models.knowledge import KnowledgeDocument, WebsiteCrawlPage
 from app.models.usage import UsageLog
@@ -43,6 +45,19 @@ class QuotaSnapshot:
     metrics: list[QuotaMetric]
     warnings: list[str]
     blocked_reasons: list[str]
+
+
+@dataclass(frozen=True)
+class QuotaLimits:
+    """Effective tenant limits from paid-beta entitlements or defaults."""
+
+    chat_conversations_per_month: int
+    ai_responses_per_month: int
+    tokens_per_month: int
+    monthly_budget_cents: float
+    documents_total: int
+    storage_mb: int
+    pages_crawled_per_month: int
 
 
 class QuotaLimitExceeded(RuntimeError):
@@ -90,6 +105,7 @@ class QuotaService:
     def snapshot(self, tenant_id: str, now: datetime | None = None) -> QuotaSnapshot:
         """Return a quota snapshot for one tenant without reading other tenant data."""
         period_start, period_end = month_bounds(now)
+        limits = self._effective_limits(tenant_id)
         monthly_events = self._monthly_events(tenant_id, period_start, period_end)
         documents_total = self._documents_total(tenant_id)
         storage_bytes = self._storage_bytes(tenant_id)
@@ -101,7 +117,7 @@ class QuotaService:
                 key="chat_conversations",
                 label="Chat conversations",
                 used=self._conversation_count(tenant_id, period_start, period_end),
-                limit=self.settings.tenant_quota_chat_conversations_per_month,
+                limit=limits.chat_conversations_per_month,
                 unit="conversations/month",
             ),
             self._metric(
@@ -112,42 +128,42 @@ class QuotaService:
                     UsageEventType.ASSISTANT_RESPONSE_GENERATED,
                 )
                 + self._event_count(monthly_events, UsageEventType.AGENT_SANDBOX_TESTED),
-                limit=self.settings.tenant_quota_ai_responses_per_month,
+                limit=limits.ai_responses_per_month,
                 unit="responses/month",
             ),
             self._metric(
                 key="estimated_tokens",
                 label="Estimated AI tokens",
                 used=total_tokens,
-                limit=self.settings.tenant_quota_tokens_per_month,
+                limit=limits.tokens_per_month,
                 unit="tokens/month",
             ),
             self._metric(
                 key="estimated_cost_cents",
                 label="Estimated AI cost",
                 used=estimated_cost,
-                limit=self.settings.tenant_budget_monthly_cents,
+                limit=limits.monthly_budget_cents,
                 unit="cents/month",
             ),
             self._metric(
                 key="documents_total",
                 label="Knowledge documents",
                 used=documents_total,
-                limit=self.settings.tenant_quota_documents_total,
+                limit=limits.documents_total,
                 unit="documents",
             ),
             self._metric(
                 key="storage_mb",
                 label="Knowledge storage",
                 used=round(storage_bytes / 1024 / 1024, 4),
-                limit=self.settings.tenant_quota_storage_mb,
+                limit=limits.storage_mb,
                 unit="MB",
             ),
             self._metric(
                 key="pages_crawled",
                 label="Pages crawled",
                 used=pages_crawled,
-                limit=self.settings.tenant_quota_pages_crawled_per_month,
+                limit=limits.pages_crawled_per_month,
                 unit="pages/month",
             ),
             self._metric(
@@ -160,7 +176,10 @@ class QuotaService:
             ),
         ]
         warnings = [metric.label for metric in metrics if metric.warning]
-        blocked_reasons = [metric.label for metric in metrics if metric.blocked]
+        blocked_reasons = [
+            *[metric.label for metric in metrics if metric.blocked],
+            *self.subscription_blockers(tenant_id),
+        ]
         return QuotaSnapshot(
             tenant_id=tenant_id,
             period_start=period_start,
@@ -190,8 +209,9 @@ class QuotaService:
             for metric in snapshot.metrics
             if metric.blocked and metric.key in {"documents_total", "storage_mb"}
         ]
+        blockers.extend(self.subscription_blockers(tenant_id))
         if additional_storage_bytes > 0:
-            storage_limit_bytes = self.settings.tenant_quota_storage_mb * 1024 * 1024
+            storage_limit_bytes = self._effective_limits(tenant_id).storage_mb * 1024 * 1024
             if self._storage_bytes(tenant_id) + additional_storage_bytes > storage_limit_bytes:
                 blockers.append("Knowledge storage")
         return sorted(set(blockers))
@@ -215,13 +235,55 @@ class QuotaService:
             attributes={"operation": operation, "blocked_reasons": blocked_reasons},
         )
 
+    def subscription_blockers(self, tenant_id: str) -> list[str]:
+        """Return subscription state blockers for manually paid beta tenants."""
+        subscription = self._subscription(tenant_id)
+        if subscription is None:
+            return []
+        if (
+            subscription.status == "trialing"
+            and subscription.trial_ends_at is not None
+            and subscription.trial_ends_at < utc_now()
+        ):
+            return ["Subscription trial expired"]
+        if subscription.status in SUBSCRIPTION_ACCESS_ALLOWED_STATUSES:
+            return []
+        return [f"Subscription {subscription.status.replace('_', ' ')}"]
+
     def _blocking_reasons(self, tenant_id: str, keys: set[str]) -> list[str]:
         snapshot = self.snapshot(tenant_id)
         return [
             metric.label
             for metric in snapshot.metrics
             if metric.key in keys and metric.blocked
-        ]
+        ] + self.subscription_blockers(tenant_id)
+
+    def _effective_limits(self, tenant_id: str) -> QuotaLimits:
+        subscription = self._subscription(tenant_id)
+        if subscription is not None:
+            return QuotaLimits(
+                chat_conversations_per_month=subscription.chat_conversations_limit,
+                ai_responses_per_month=subscription.ai_responses_limit,
+                tokens_per_month=subscription.tokens_limit,
+                monthly_budget_cents=subscription.monthly_budget_cents,
+                documents_total=subscription.documents_limit,
+                storage_mb=subscription.storage_mb_limit,
+                pages_crawled_per_month=subscription.pages_crawled_limit,
+            )
+        return QuotaLimits(
+            chat_conversations_per_month=self.settings.tenant_quota_chat_conversations_per_month,
+            ai_responses_per_month=self.settings.tenant_quota_ai_responses_per_month,
+            tokens_per_month=self.settings.tenant_quota_tokens_per_month,
+            monthly_budget_cents=self.settings.tenant_budget_monthly_cents,
+            documents_total=self.settings.tenant_quota_documents_total,
+            storage_mb=self.settings.tenant_quota_storage_mb,
+            pages_crawled_per_month=self.settings.tenant_quota_pages_crawled_per_month,
+        )
+
+    def _subscription(self, tenant_id: str) -> TenantSubscription | None:
+        return self.session.scalars(
+            select(TenantSubscription).where(TenantSubscription.tenant_id == tenant_id)
+        ).first()
 
     def _metric(
         self,

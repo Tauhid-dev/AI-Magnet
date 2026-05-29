@@ -1,6 +1,7 @@
 """ORM model exports."""
 
 from app.models.admin import AdminUser
+from app.models.billing import TenantSubscription
 from app.models.conversation import Conversation, Message
 from app.models.knowledge import DocumentChunk, KnowledgeDocument, WebsiteCrawlPage, WebsiteSource
 from app.models.job import BackgroundJob, WorkerHeartbeat
@@ -25,6 +26,7 @@ __all__ = [
     "Message",
     "NotificationDelivery",
     "Tenant",
+    "TenantSubscription",
     "UsageLog",
     "WidgetConfig",
     "WebsiteCrawlPage",
