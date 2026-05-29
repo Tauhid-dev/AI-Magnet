@@ -20,6 +20,9 @@ def seed_local_development_data(session: Session) -> None:
     This helper is intentionally not called automatically. Future phases can wire it
     into explicit local setup commands without seeding production data.
     """
+    if os.getenv("APP_ENV", "local").strip().lower() in {"prod", "production"}:
+        raise RuntimeError("Local development seed data must not run in production")
+
     if session.scalars(select(AdminUser.id)).first() is None:
         session.add(
             AdminUser(

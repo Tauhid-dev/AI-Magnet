@@ -47,9 +47,9 @@ This PR-00 run inspected current code and config enough to classify the audit bl
 | Finding | Audit status | Current verification | PR phase |
 |---|---|---|---|
 | Business auth is email-only | Critical open | Resolved in PR-01: business login now requires password verification, failed-login lockout, session version, logout revocation, and tests | PR-01 |
-| Admin auth is email-only | Critical open | Resolved in PR-01: admin login now requires password verification and supports required TOTP MFA, lockout, session revocation, and tests | PR-01 |
+| Admin auth is email-only | Critical open | Resolved in PR-01 and tightened in PR-12A: admin login requires password verification, active production `super_admin` accounts require configured TOTP MFA, lockout/session revocation exist, and tests cover the production guarantee | PR-01/PR-12A |
 | Secure browser session strategy missing | High open | Resolved across PR-01/PR-02: frontend no longer stores bearer tokens, browser sessions use HttpOnly cookies, unsafe cookie-auth writes require CSRF confirmation, and CSP is set | PR-01/PR-02 |
-| Rate limiting missing | Critical open | Mitigated in PR-02: app-level rate limits cover public/login/widget/admin surfaces; distributed/proxy enforcement remains PR-04/PR-05 | PR-02 |
+| Rate limiting missing | Critical open | Resolved in repository across PR-02/PR-12A: app-level rate limits cover public/login/widget/admin/write surfaces, and production mode requires Redis-backed coordination with fail-closed readiness behaviour | PR-02/PR-12A |
 | Widget origin controls incomplete | High open | Mitigated in PR-02: normalized allowed-origin enforcement and key lifecycle controls were added; production env enforcement remains PR-04 validation | PR-02 |
 | Tenant DB integrity incomplete | High open | Resolved in PR-03: composite same-tenant constraints and attack tests cover high-risk parent/child links | PR-03 |
 | Privacy export/delete/offboarding missing | High open | Resolved in PR-03 for beta-scope admin workflows: export, offboarding, retention, and confirmed deletion APIs/UI were added | PR-03 |

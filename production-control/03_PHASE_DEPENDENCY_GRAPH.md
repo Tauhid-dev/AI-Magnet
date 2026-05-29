@@ -16,7 +16,8 @@ flowchart TB
     PR09["PR-09<br/>Onboarding and Widget UX<br/>verified"]
     PR10["PR-10<br/>Monitoring, Metering, Quotas<br/>verified"]
     PR11["PR-11<br/>Billing and Paid Beta Controls<br/>verified"]
-    PR12["PR-12<br/>Final Audit and Launch Gate<br/>verified<br/>public launch NO-GO pending owner/live evidence"]
+    PR12["PR-12<br/>Final Audit and Launch Gate<br/>verified"]
+    PR12A["PR-12A<br/>Security Corrections<br/>verified<br/>public launch NO-GO pending owner/live evidence"]
 
     GateA["Gate A<br/>Controlled Internal Demo<br/>GO WITH CONDITIONS"]
     GateB["Gate B<br/>Secure Private Internet Demo<br/>requires PR-01..PR-05"]
@@ -29,20 +30,20 @@ flowchart TB
     PR05 --> PR07
     PR06 --> PR08
     PR07 --> PR08
-    PR08 --> PR09 --> PR10 --> PR11 --> PR12
+    PR08 --> PR09 --> PR10 --> PR11 --> PR12 --> PR12A
 
     PR00 --> GateA
     PR05 --> GateB
     PR10 --> GateC
     PR11 --> GateD
-    PR12 --> GateE
+    PR12A --> GateE
 
     classDef verified fill:#dcfce7,stroke:#15803d,color:#052e16
     classDef blocker fill:#fee2e2,stroke:#b91c1c,color:#450a0a
     classDef notStarted fill:#f1f5f9,stroke:#64748b,color:#0f172a
     classDef gate fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11,PR12 verified
+    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11,PR12,PR12A verified
     class GateA,GateB,GateC,GateD,GateE gate
 ```
 
@@ -50,4 +51,4 @@ flowchart TB
 
 PR-01 through PR-05 cover the minimum repository-controlled security and infrastructure requirements before any private internet demo with real risk exposure: production auth, abuse controls, tenant/privacy integrity, TLS/private networking/backups/secrets/scans, and a real worker. PR-06 and PR-07 add safe ingestion paths, PR-08 adds grounded scalable retrieval, PR-09 adds customer setup UX, PR-10 adds operational visibility and quotas, and PR-11 adds manual paid-beta entitlements.
 
-PR-12 is verified as a repository-controlled launch-gate package, but Gate E remains NO-GO because public production requires owner-approved live evidence for TLS, firewall, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, controlled crawl/document smoke, alerting, quota/abuse smoke, and explicit owner approval.
+PR-12 is verified as a repository-controlled launch-gate package. PR-12A adds independent-review security corrections for mandatory production super-admin MFA and Redis-backed application rate limiting. Gate E remains NO-GO because public production requires owner-approved live evidence for TLS, firewall, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, controlled crawl/document smoke, alerting, quota/abuse smoke, and explicit owner approval.

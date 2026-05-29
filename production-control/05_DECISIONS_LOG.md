@@ -237,3 +237,15 @@ Append-only ADR-lite log for production remediation.
   - Deploy or run live VPS commands during PR-12 automatically: rejected because the user did not grant explicit deployment permission.
   - Add new product features during PR-12: rejected because PR-12 is the final validation and launch-gate phase.
 - Follow-up impact: The next safe command is an owner-approved staging/VPS validation or launch-candidate review, not another automatic production phase.
+
+## DEC-PR-20260529-022: PR-12A Corrects Repository Security Gates Before Staging
+
+- Date: 2026-05-29
+- Decision: Add PR-12A as a corrective repository security phase after independent review. Production super-admin login/session validation now requires configured TOTP MFA for every active `super_admin`, and production application rate limiting now requires Redis-backed coordination instead of per-process memory.
+- Reason: PR-12 correctly kept public production NO-GO, but its repository launch-gate package still allowed two issues that should be corrected before staging validation: optional production admin MFA and non-durable app-level limits.
+- Affected files/phases: PR-12A, `backend/app/admin/auth.py`, `backend/app/core/rate_limit.py`, `backend/app/core/config.py`, `backend/app/api/health.py`, `backend/tests/admin/test_admin_api.py`, `backend/tests/security/test_rate_limit_backend.py`, docs and production-control artifacts.
+- Alternatives rejected:
+  - Leave MFA optional and rely on policy: rejected because production enforcement must be code-backed.
+  - Rely on Nginx-only limits: rejected because endpoint-specific tenant/account/widget scopes need application enforcement too.
+  - Continue with in-memory app limits in production: rejected because they reset on restart and do not coordinate across app instances.
+- Follow-up impact: Staging/VPS validation must prove Redis rate limiting and production super-admin MFA readiness before any public launch gate can change.

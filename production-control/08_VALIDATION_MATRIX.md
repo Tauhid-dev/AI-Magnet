@@ -28,6 +28,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Monitoring/metering/quotas/cost controls | PR-10 | required | required | optional | required if UI | required | required | manual alert/limit checks | pass | quota/metering/readiness tests, admin/portal UI checks, operations runbook |
 | Billing/entitlements/paid-beta controls | PR-11 | required | required | required | required | required | required | manual paid-beta review | pass | manual entitlement model/API/UI tests, quota enforcement tests, migration smoke, and paid-beta gate record |
 | Final production launch audit | PR-12 | required | required | required | required | required | required | required | partial | repository final validation package exists; local repository checks pass when recorded below; owner-approved VPS/staging evidence and launch approval remain required |
+| Final repository security corrections before staging | PR-12A | required | required | optional | optional | required | required | staging MFA/Redis smoke | pass | mandatory production admin MFA tests, Redis rate-limiter tests, readiness/config checks, full validation suite |
 
 ## PR-00 Validation
 
@@ -235,3 +236,19 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Dependency and static security scans | pass | `pip-audit` found no known Python vulnerabilities; Bandit passed; secret pattern scan had no matches; `npm audit --audit-level=high` passed with moderate transitive PostCSS advisory noted |
 | Production-control status and visuals | pass | `python3 -m json.tool production-control/status/production-status.json`; SVG parse check; `git diff --check` |
 | Live VPS/staging validation, restore drill, load/abuse, and owner approval | not_run | Documented in `docs/production-launch/release-evidence-checklist.md`; not executed without explicit owner approval |
+
+## PR-12A Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Production super-admin without MFA is blocked | pass | `backend/tests/admin/test_admin_api.py` focused PR-12A tests |
+| Production super-admin with missing/invalid MFA is blocked and valid MFA succeeds | pass | `backend/tests/admin/test_admin_api.py` focused PR-12A tests |
+| Local/test admin MFA behaviour is explicitly non-production | pass | `backend/tests/admin/test_admin_api.py` local-dev MFA test |
+| Redis-backed limiter selection, rejection headers, shared count, and fail-closed Redis outage | pass | `backend/tests/security/test_rate_limit_backend.py` |
+| Readiness/config visibility for admin MFA and rate-limit backend | pass | `backend/app/api/health.py`, `backend/app/core/config.py`, focused/full tests |
+| Full backend test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 106 passed |
+| Backend compile/lint | pass | `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations`; `backend/.venv/bin/python -m ruff check backend/app backend/tests` |
+| Alembic migration smoke | pass | SQLite upgrade head and downgrade to `20260529_0011` using `/private/tmp/ai_magnet_pr12a_alembic.db` |
+| Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
+| Compose/security/status checks | pass | Dev/prod Compose config, production data-service port check, script syntax, Bandit, pip-audit, secret pattern scan, npm audit high-threshold, status JSON parse, SVG parse, and `git diff --check` |
+| Live VPS/staging MFA and Redis rate-limit smoke | not_run | Required before launch-gate change; not executed without explicit owner approval |

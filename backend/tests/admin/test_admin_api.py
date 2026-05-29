@@ -5,7 +5,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
-from app.core.config import get_settings
+from app.admin.auth import AdminPortalAuthService
+from app.core.config import Settings, get_settings
 from app.core.passwords import hash_password
 from app.core.totp import generate_totp_code
 from app.db.base import Base, utc_now
@@ -53,7 +54,13 @@ def create_client(session, monkeypatch):
     return TestClient(app)
 
 
-def seed_admin(session, email: str = "admin@example.test"):
+def seed_admin(
+    session,
+    email: str = "admin@example.test",
+    *,
+    mfa_required: bool = False,
+    mfa_secret: str | None = None,
+):
     admin = AdminUser(
         email=email,
         full_name="Platform Admin",
@@ -61,7 +68,8 @@ def seed_admin(session, email: str = "admin@example.test"):
         status="active",
         password_hash=hash_password("correct-admin-password"),
         password_updated_at=utc_now(),
-        mfa_required=False,
+        mfa_required=mfa_required,
+        mfa_secret=mfa_secret,
     )
     session.add(admin)
     session.flush()
@@ -161,6 +169,93 @@ def test_admin_login_rejects_email_only_and_supports_totp_mfa(monkeypatch):
         assert email_only_response.status_code == 422
         assert missing_mfa_response.status_code == 401
         assert mfa_response.status_code == 200
+
+
+def test_production_super_admin_without_mfa_cannot_login():
+    with create_test_session() as session:
+        admin = seed_admin(session, mfa_required=False, mfa_secret=None)
+        session.commit()
+        settings = Settings(
+            environment="production",
+            admin_portal_session_secret="a" * 48,
+        )
+
+        result = AdminPortalAuthService(session, settings).login(
+            email=admin.email,
+            password="correct-admin-password",
+        )
+
+        assert result is None
+
+
+def test_production_super_admin_requires_configured_valid_mfa():
+    with create_test_session() as session:
+        admin = seed_admin(
+            session,
+            mfa_required=True,
+            mfa_secret="JBSWY3DPEHPK3PXP",
+        )
+        session.commit()
+        settings = Settings(
+            environment="production",
+            admin_portal_session_secret="a" * 48,
+        )
+        service = AdminPortalAuthService(session, settings)
+        valid_code = generate_totp_code(admin.mfa_secret, int(time.time() // 30))
+
+        missing_mfa = service.login(
+            email=admin.email,
+            password="correct-admin-password",
+        )
+        invalid_mfa = service.login(
+            email=admin.email,
+            password="correct-admin-password",
+            mfa_code="000000",
+        )
+        valid_mfa = service.login(
+            email=admin.email,
+            password="correct-admin-password",
+            mfa_code=valid_code,
+        )
+
+        assert missing_mfa is None
+        assert invalid_mfa is None
+        assert valid_mfa is not None
+
+
+def test_production_super_admin_missing_mfa_secret_cannot_login():
+    with create_test_session() as session:
+        admin = seed_admin(session, mfa_required=True, mfa_secret=None)
+        session.commit()
+        settings = Settings(
+            environment="production",
+            admin_portal_session_secret="a" * 48,
+        )
+
+        result = AdminPortalAuthService(session, settings).login(
+            email=admin.email,
+            password="correct-admin-password",
+            mfa_code="123456",
+        )
+
+        assert result is None
+
+
+def test_local_admin_without_mfa_remains_allowed_for_local_dev():
+    with create_test_session() as session:
+        admin = seed_admin(session, mfa_required=False, mfa_secret=None)
+        session.commit()
+        settings = Settings(
+            environment="local",
+            admin_portal_session_secret="a" * 48,
+        )
+
+        result = AdminPortalAuthService(session, settings).login(
+            email=admin.email,
+            password="correct-admin-password",
+        )
+
+        assert result is not None
 
 
 def test_admin_logout_revokes_existing_token(monkeypatch):

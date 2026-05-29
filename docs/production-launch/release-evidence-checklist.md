@@ -1,7 +1,7 @@
 # Release Evidence Checklist
 
 Date: 2026-05-29  
-Phase: PR-12
+Phase: PR-12 with PR-12A correction package
 
 This checklist is the evidence ledger to use before changing any launch gate status. Checkboxes should be completed with dates, branch/commit, operator, and links to logs or screenshots where practical.
 
@@ -33,6 +33,8 @@ External evidence still required:
 - [ ] VPS firewall exposes only approved public ports.
 - [ ] HTTPS certificate issuance and renewal path is tested.
 - [ ] `/health` and `/ready` pass on the target host.
+- [ ] Production super-admin MFA smoke confirms login is rejected without configured/valid MFA and accepted with valid TOTP.
+- [ ] Redis-backed application rate-limit smoke confirms shared limits, retry headers, and fail-closed Redis outage behaviour.
 - [ ] Worker heartbeat and Redis connectivity are verified.
 - [ ] Encrypted backup and restore drill are completed.
 - [ ] PostgreSQL/pgvector migration smoke passes.
@@ -77,7 +79,7 @@ Commercial and external evidence still required:
 - [ ] Owner approves plan prices, GST/tax handling, invoice process, refund terms, and support SLA.
 - [ ] Owner confirms manual invoicing is acceptable for first paid beta.
 - [ ] Remote CI passes on the paid-beta target branch.
-- [ ] VPS/staging smoke covers auth, entitlements, quotas, backup/restore, worker/Redis, pgvector RAG, and `/ready`.
+- [ ] VPS/staging smoke covers auth, production super-admin MFA, Redis-backed app rate limiting, entitlements, quotas, backup/restore, worker/Redis, pgvector RAG, and `/ready`.
 - [ ] Support escalation, incident process, and customer-facing disclosures are ready.
 
 ## Gate E: Public Production Launch
@@ -86,10 +88,12 @@ Status: NO-GO.
 
 Required before changing to GO:
 
-- [ ] PR-12 final validation branch is merged after review.
-- [ ] All repository-controlled PR-12 validation commands pass.
+- [ ] PR-12A final correction branch is merged after review.
+- [ ] All repository-controlled PR-12A validation commands pass.
 - [ ] Remote CI passes on the production launch candidate.
 - [ ] Staging/VPS validation run passes.
+- [ ] Production super-admin MFA smoke passes on the target environment.
+- [ ] Redis-backed application rate-limit smoke passes on the target environment.
 - [ ] Restore drill evidence is recorded and accepted.
 - [ ] No unresolved critical production blocker remains.
 - [ ] Owner explicitly approves public production launch.

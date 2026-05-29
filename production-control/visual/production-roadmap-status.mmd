@@ -12,12 +12,13 @@ flowchart TB
     PR10["PR-10<br/>Monitoring, Metering, Quotas<br/>verified"]
     PR11["PR-11<br/>Billing and Paid Beta<br/>verified"]
     PR12["PR-12<br/>Final Audit and Launch Gate<br/>verified<br/>public launch NO-GO"]
+    PR12A["PR-12A<br/>Security Corrections<br/>verified<br/>MFA + Redis limiter"]
 
     GateA["Gate A: Controlled Internal Demo<br/>GO WITH CONDITIONS<br/>synthetic/sample data only"]
     GateB["Gate B: Secure Private Internet Demo<br/>REPO READY WITH CONDITIONS<br/>VPS/CI/owner validation pending"]
     GateC["Gate C: Real Customer Pilot<br/>REPO READY WITH CONDITIONS<br/>VPS/alerts/quota smoke pending"]
     GateD["Gate D: Paid Beta<br/>REPO READY WITH CONDITIONS<br/>owner + VPS/CI validation pending"]
-    GateE["Gate E: Public Production Launch<br/>NO-GO<br/>owner-approved live evidence required"]
+    GateE["Gate E: Public Production Launch<br/>NO-GO<br/>owner-approved live evidence required<br/>target MFA + Redis smoke pending"]
     LegendVerified["Status: verified/complete"]
     LegendProgress["Status: in progress"]
     LegendBlocked["Status: blocked"]
@@ -28,12 +29,12 @@ flowchart TB
     PR05 --> PR07
     PR06 --> PR08
     PR07 --> PR08
-    PR08 --> PR09 --> PR10 --> PR11 --> PR12
+    PR08 --> PR09 --> PR10 --> PR11 --> PR12 --> PR12A
     PR00 --> GateA
     PR05 --> GateB
     PR10 --> GateC
     PR11 --> GateD
-    PR12 --> GateE
+    PR12A --> GateE
 
     classDef verified fill:#dcfce7,stroke:#15803d,color:#052e16
     classDef inProgress fill:#dbeafe,stroke:#1d4ed8,color:#172554
@@ -44,7 +45,7 @@ flowchart TB
     classDef gateOk fill:#e0f2fe,stroke:#0369a1,color:#082f49
     classDef gateNo fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11,PR12 verified
+    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11,PR12,PR12A verified
     class GateA gateOk
     class GateB,GateC,GateD,GateE gateNo
     class LegendVerified verified

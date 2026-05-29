@@ -17,4 +17,6 @@ class ReadinessResponse(HealthResponse):
 
     database: str
     configuration: str
+    rate_limiting: str
+    admin_security: str
     checks: dict[str, str]

@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "POST-PR-12",
-    "last_completed_phase": "PR-12",
+    "active_phase": "POST-PR-12A",
+    "last_completed_phase": "PR-12A",
     "next_permitted_phase": "owner_approved_staging_vps_validation_or_launch_candidate_review",
-    "production_go_no_go": "PR-12 repository final validation package is verified; public production remains NO-GO until owner-approved live evidence and explicit launch approval are recorded",
-    "overall_status": "pr12_final_validation_verified_public_launch_no_go_pending_owner_live_evidence"
+    "production_go_no_go": "PR-12A repository security corrections are verified; public production remains NO-GO until owner-approved live evidence and explicit launch approval are recorded",
+    "overall_status": "pr12a_security_corrections_verified_public_launch_no_go_pending_owner_live_evidence"
   },
   "launch_gates": [
     {
@@ -43,6 +43,8 @@
             "remaining_conditions": [
                 "Remote CI evidence for the current production remediation branch",
                 "Owner-approved VPS smoke for TLS/firewall exposure",
+                "Production super-admin MFA smoke on the target environment",
+                "Redis-backed app rate-limit smoke on the target environment",
                 "Worker health and Redis reachability smoke",
                 "Backup/restore and PostgreSQL/pgvector smoke evidence",
                 "Controlled real-site crawl smoke if private demo includes live website ingestion",
@@ -102,7 +104,7 @@
       ],
       "remaining_conditions": [
         "Owner approval for pricing, GST/tax handling, refund terms, and support process",
-        "Remote CI evidence for the final PR-12 branch",
+        "Remote CI evidence for the final PR-12A branch",
         "VPS/staging smoke for auth, manual entitlement changes, quotas, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, and /ready checks",
         "Confirmation that manual invoicing is acceptable for the first paid beta; Stripe remains deferred"
       ],
@@ -115,11 +117,14 @@
       "title": "Public Production Launch",
       "status": "no_go",
       "requires_verified_phases": [
-        "PR-12"
+        "PR-12",
+        "PR-12A"
       ],
       "remaining_conditions": [
         "Remote CI evidence for the launch candidate",
         "Owner-approved staging/VPS validation run",
+        "Production super-admin MFA smoke on the target environment",
+        "Redis-backed app rate-limit smoke on the target environment",
         "TLS issuance and renewal evidence",
         "External firewall proof that PostgreSQL and Redis are not public",
         "Scheduled encrypted backup and restore drill evidence",
@@ -457,6 +462,30 @@
       ],
       "branch": "production/pr-12-final-production-validation-launch-gate",
       "commit": "pending"
+    },
+    {
+      "phase_id": "PR-12A",
+      "title": "Final Repository Security Corrections Before Staging Validation",
+      "status": "verified",
+      "completion_percent": 100,
+      "dependencies": [
+        "PR-12"
+      ],
+      "priority": "p0",
+      "criticality": "security_correction_gate",
+      "validation_status": "pass_repository_external_conditions_pending",
+      "last_updated": "2026-05-29",
+      "evidence_links": [
+        "production-control/phases/PR-12A_FINAL_REPOSITORY_SECURITY_CORRECTIONS_BEFORE_STAGING_VALIDATION.md",
+        "backend/app/admin/auth.py",
+        "backend/app/core/rate_limit.py",
+        "backend/tests/admin/test_admin_api.py",
+        "backend/tests/security/test_rate_limit_backend.py",
+        "docs/production-launch/final-production-validation-report.md",
+        "docs/production-launch/final-go-no-go-statement.md"
+      ],
+      "branch": "production/pr-12a-security-corrections-before-staging",
+      "commit": "pending"
     }
   ],
   "conditional_or_deferred": [
@@ -483,6 +512,7 @@
   ],
   "critical_blockers": [
     "Public production launch is blocked until owner-approved live VPS/staging validation evidence and explicit owner approval are recorded",
+    "Production super-admin MFA and Redis-backed app rate limiting require target-environment smoke before launch-gate change",
     "First controlled real-site crawl smoke remains pending before pilot use of website ingestion",
     "First controlled document-upload smoke remains pending before pilot use of customer documents",
     "First VPS validation of TLS, firewall, backup/restore, worker/Redis smoke, PostgreSQL/pgvector RAG smoke, /ready readiness, alert/log destination, and quota-limit smoke remains pending"
@@ -498,7 +528,7 @@
     },
     {
       "item": "Final owner launch approval and live evidence acceptance",
-      "phase": "PR-12 / Gate E"
+      "phase": "PR-12A / Gate E"
     }
   ]
 }

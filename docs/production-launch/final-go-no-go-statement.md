@@ -1,13 +1,15 @@
 # Final GO/NO-GO Statement
 
 Date: 2026-05-29  
-Phase: PR-12
+Phase: PR-12 with PR-12A correction package
 
 ## Recommendation
 
 Public Production Launch: NO-GO.
 
-The repository is materially improved and PR-01 through PR-11 are verified in repository-controlled implementation and tests, but PR-12 cannot honestly mark public production GO without owner-approved external launch evidence.
+The repository is materially improved and PR-01 through PR-12A are verified in repository-controlled implementation and tests, but the launch gate cannot honestly mark public production GO without owner-approved external launch evidence.
+
+PR-12A was added after independent review and fixes two repository-level issues before staging validation: production `super_admin` login now requires configured TOTP MFA, and production application rate limiting now requires Redis-backed coordination with fail-closed behaviour.
 
 ## Approved States
 
@@ -26,6 +28,8 @@ Public launch requires all of the following:
 
 - remote CI passes on the launch candidate
 - staging/VPS deployment smoke passes
+- production super-admin MFA smoke passes on the target environment
+- Redis-backed application rate-limit smoke passes on the target environment
 - TLS certificate issuance and renewal are proven
 - external firewall scan confirms PostgreSQL and Redis are not public
 - encrypted backup schedule is active

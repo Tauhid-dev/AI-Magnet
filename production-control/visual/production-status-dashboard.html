@@ -118,8 +118,8 @@
     <section class="grid summary">
       <div class="card">
         <h2>Current State</h2>
-        <div class="metric">PR-12 verified</div>
-        <p>The repository launch-gate package is complete. Public production remains NO-GO until owner-approved live validation evidence and explicit launch approval are recorded.</p>
+        <div class="metric">PR-12A verified</div>
+        <p>The repository launch-gate package includes the independent-review security corrections. Public production remains NO-GO until owner-approved live validation evidence and explicit launch approval are recorded.</p>
       </div>
       <div class="card">
         <h2>Next Permitted Action</h2>
@@ -128,9 +128,9 @@
       </div>
       <div class="card">
         <h2>Progress</h2>
-        <div class="metric">13 / 13 phases</div>
+        <div class="metric">14 / 14 phases</div>
         <div class="progress"><span style="width: 100%;"></span></div>
-        <p>PR-00 through PR-12 are verified as repository-controlled phases.</p>
+        <p>PR-00 through PR-12A are verified as repository-controlled phases.</p>
       </div>
       <div class="card">
         <h2>Launch Gate</h2>
@@ -143,6 +143,8 @@
       <h2>Critical Blockers</h2>
       <div class="blockers">
         <div class="blocker">Owner-approved live validation evidence remains pending</div>
+        <div class="blocker">Production super-admin MFA smoke on the target environment remains pending</div>
+        <div class="blocker">Redis-backed application rate-limit smoke on the target environment remains pending</div>
         <div class="blocker">First controlled real-site crawl smoke remains pending</div>
         <div class="blocker">First controlled document-upload smoke remains pending</div>
         <div class="blocker">First VPS TLS/firewall validation remains pending</div>
@@ -168,6 +170,7 @@
         <div class="card phase verified"><h3>PR-10: Monitoring and Quotas</h3><p>Status: verified. Ops visibility, metering, quotas, readiness, and cost controls are implemented.</p></div>
         <div class="card phase verified"><h3>PR-11: Paid Beta Controls</h3><p>Status: verified. Manual subscriptions, plan entitlements, admin controls, portal billing status, and server-side quota enforcement are implemented.</p></div>
         <div class="card phase verified"><h3>PR-12: Final Launch Gate</h3><p>Status: verified. Final evidence package exists; public production remains NO-GO pending owner-approved live validation.</p></div>
+        <div class="card phase verified"><h3>PR-12A: Security Corrections</h3><p>Status: verified. Mandatory production super-admin TOTP MFA and Redis-backed production application rate limiting are implemented.</p></div>
       </div>
     </section>
 
@@ -177,10 +180,10 @@
         <thead><tr><th>Gate</th><th>Status</th><th>Requirement</th></tr></thead>
         <tbody>
           <tr><td>A: Controlled Internal Demo</td><td>GO WITH CONDITIONS</td><td>Synthetic/sample data only.</td></tr>
-          <tr><td>B: Secure Private Internet Demo</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-05 are verified; VPS smoke, remote CI evidence, and owner approval still required.</td></tr>
+          <tr><td>B: Secure Private Internet Demo</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-05 plus PR-12A security corrections are verified; VPS smoke, target MFA/rate-limit smoke, remote CI evidence, and owner approval still required.</td></tr>
           <tr><td>C: Real Customer Pilot</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-10 are verified; VPS readiness, alerting, quota-limit, backup/restore, worker/Redis, crawl/document, RAG smoke, and owner approval still required.</td></tr>
           <tr><td>D: Paid Beta</td><td>REPOSITORY READY WITH CONDITIONS</td><td>PR-01 through PR-11 are verified; owner pricing/tax/refund approval, support readiness, remote CI, VPS/staging smoke, and explicit paid-beta approval still required.</td></tr>
-          <tr><td>E: Public Production Launch</td><td>NO-GO</td><td>Requires owner-approved live evidence, remote CI, restore drill, target-host smoke, and explicit production approval.</td></tr>
+          <tr><td>E: Public Production Launch</td><td>NO-GO</td><td>Requires owner-approved live evidence, remote CI, restore drill, target-host MFA/rate-limit smoke, and explicit production approval.</td></tr>
         </tbody>
       </table>
     </section>

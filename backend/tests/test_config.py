@@ -39,6 +39,7 @@ def test_production_validation_requires_operational_secrets(monkeypatch):
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
     monkeypatch.setenv("ENABLE_API_DOCS", "true")
     monkeypatch.setenv("AUTH_COOKIE_SECURE", "false")
+    monkeypatch.setenv("RATE_LIMIT_BACKEND", "memory")
     monkeypatch.setenv(
         "DATABASE_URL",
         "postgresql+psycopg://ai_tradie:ai_tradie@postgres:5432/ai_tradie",
@@ -58,6 +59,7 @@ def test_production_validation_requires_operational_secrets(monkeypatch):
     assert "CORS_ALLOWED_ORIGINS must use https origins in production" in issues
     assert "ENABLE_API_DOCS must be false in production" in issues
     assert "APP_LOG_FORMAT must be json in production" in issues
+    assert "RATE_LIMIT_BACKEND must be redis in production" in issues
     assert "DATABASE_URL must not use default or placeholder credentials" in issues
     assert "REDIS_URL must use the private Docker/service hostname in production" in issues
     assert "AI_API_KEY must be set for the OpenAI-compatible provider" in issues
@@ -77,6 +79,7 @@ def test_production_validation_accepts_hardened_compose_settings(monkeypatch):
     monkeypatch.setenv("ADMIN_PORTAL_SESSION_SECRET", "a" * 48)
     monkeypatch.setenv("AUTH_COOKIE_SECURE", "true")
     monkeypatch.setenv("RATE_LIMIT_ENABLED", "true")
+    monkeypatch.setenv("RATE_LIMIT_BACKEND", "redis")
     monkeypatch.setenv("WIDGET_REQUIRE_ALLOWED_ORIGINS", "true")
     monkeypatch.setenv(
         "DATABASE_URL",
