@@ -29,7 +29,7 @@
   <rect class="bg" width="1600" height="1150" />
   <text class="title" x="60" y="55">AI-Magnet Production Readiness Roadmap</text>
   <text class="subtitle" x="60" y="86">Baseline: 2026-05-23 production readiness 35/100. Internal Demo: GO WITH CONDITIONS. Paid Beta: CONDITIONAL. Public Production: NO-GO.</text>
-  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Current next permitted phase: PR-12.</text>
+  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Next permitted action: owner-approved staging/VPS validation or launch-candidate review.</text>
 
   <rect class="legend" x="60" y="135" width="1480" height="64" rx="8" />
   <rect x="86" y="156" width="22" height="22" fill="#dcfce7" stroke="#15803d" />
@@ -141,10 +141,12 @@
   <rect x="618" y="795" width="70" height="22" rx="5" fill="#15803d" />
   <text class="badge" x="631" y="811">verified</text>
 
-  <rect class="critical" x="950" y="710" width="260" height="105" rx="10" />
+  <rect class="verified" x="950" y="710" width="260" height="105" rx="10" />
   <text class="card-title" x="968" y="740">PR-12</text>
   <text class="card-text" x="968" y="765">Final audit and launch gate</text>
-  <text class="card-text" x="968" y="788">Owner approval required</text>
+  <text class="card-text" x="968" y="788">Public launch remains NO-GO</text>
+  <rect x="968" y="795" width="70" height="22" rx="5" fill="#15803d" />
+  <text class="badge" x="981" y="811">verified</text>
 
   <path class="arrow" d="M1385 560 V762 H840" />
   <path class="arrow" d="M840 762 H950" />
@@ -173,10 +175,10 @@
   <rect class="gate-no" x="1220" y="900" width="300" height="82" rx="10" />
   <text class="card-title" x="1238" y="928">Gate E</text>
   <text class="card-text" x="1238" y="952">Public production launch: NO-GO</text>
-  <text class="card-text" x="1238" y="973">Requires PR-12 + owner approval</text>
+  <text class="card-text" x="1238" y="973">Requires live evidence + owner approval</text>
 
-  <text class="blocker" x="60" y="1045">Current blockers: gated OCR runtime, controlled crawl/document-upload smoke, PR-12 final audit,</text>
+  <text class="blocker" x="60" y="1045">Current blockers: owner-approved live evidence, gated OCR runtime, controlled crawl/document-upload smoke,</text>
   <text class="blocker" x="60" y="1074">VPS TLS/firewall validation, backup/restore, worker/Redis, readiness, alerting, quota-limit and pgvector RAG smoke.</text>
-  <text class="small" x="60" y="1103">High blockers ahead: owner paid-beta approval, remote CI/VPS smoke, final launch audit.</text>
-  <text class="small" x="60" y="1132">Generated deterministically as a static SVG and updated through PR-11. Keep it consistent with production-control/status/production-status.json.</text>
+  <text class="small" x="60" y="1103">High blockers ahead: owner paid-beta approval, remote CI, VPS/staging smoke, and explicit launch approval.</text>
+  <text class="small" x="60" y="1132">Generated deterministically as a static SVG and updated through PR-12. Keep it consistent with production-control/status/production-status.json.</text>
 </svg>

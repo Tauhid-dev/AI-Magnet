@@ -76,9 +76,19 @@ Remaining conditions before paid beta may begin:
 
 Current status: NO-GO.
 
+PR-12 repository launch-gate package is verified, but public launch remains blocked.
+
 Requires:
 
-- PR-12 final production validation and independent re-audit.
-- All required test, migration, security, staging/VPS, backup/restore, and rollback evidence.
+- Remote CI evidence for the final launch candidate.
+- Owner-approved staging/VPS validation using `docs/production-launch/vps-staging-validation-runbook.md`.
+- TLS certificate issuance and renewal evidence.
+- External firewall proof that PostgreSQL and Redis are not public.
+- Encrypted backup schedule plus tested restore procedure evidence.
+- Production-equivalent PostgreSQL/pgvector migration and RAG smoke.
+- Worker/Redis queue smoke.
+- Controlled website crawl and document upload smoke.
+- Log/alert destination verification.
+- Quota-limit and abuse-control smoke.
 - Explicit owner approval.
 - No unresolved critical production blocker.

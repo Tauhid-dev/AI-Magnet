@@ -474,3 +474,49 @@ Append-only production phase run history.
   - Live VPS TLS/firewall, backup/restore, worker/Redis, controlled crawl/document upload, production-equivalent PostgreSQL/pgvector RAG, `/ready`, log/alert destination, and quota-limit smoke evidence remain release-gate work.
 - Next phase permitted: PR-12.
 - Commit hash: pending until commit.
+
+## 2026-05-29 - PR-12: Final Production Validation, VPS Deployment Runbook and Launch Gate
+
+- Instruction received: `Implement production phase PR-12`.
+- Phase selected: PR-12.
+- Branch: `production/pr-12-final-production-validation-launch-gate`.
+- Files changed:
+  - Final launch evidence pack: `docs/production-launch/README.md`, `docs/production-launch/final-production-validation-report.md`, `docs/production-launch/release-evidence-checklist.md`, `docs/production-launch/vps-staging-validation-runbook.md`, `docs/production-launch/rollback-and-restore-runbook.md`, `docs/production-launch/final-go-no-go-statement.md`.
+  - Release readiness: `docs/release-readiness.md`.
+  - Production-control memory/status: `production-control/02_MASTER_PRODUCTION_ROADMAP.md`, `production-control/03_PHASE_DEPENDENCY_GRAPH.md`, `production-control/04_CURRENT_STATUS.md`, `production-control/05_DECISIONS_LOG.md`, `production-control/07_RISK_REGISTER.md`, `production-control/08_VALIDATION_MATRIX.md`, `production-control/09_RELEASE_GATES.md`, `production-control/phases/PR-12_FINAL_PRODUCTION_VALIDATION_AND_LAUNCH_GATE.md`, `production-control/status/production-status.json`.
+  - Visual status artifacts: `production-control/visual/README.md`, `production-control/visual/production-roadmap-status.mmd`, `production-control/visual/production-roadmap-status.svg`, `production-control/visual/production-status-dashboard.html`.
+- Implementation summary:
+  - Re-audited PR-00 through PR-11 repository evidence against the 2026-05-23 production-readiness baseline.
+  - Created the PR-12 final validation package with a launch report, release evidence checklist, VPS/staging validation runbook, rollback/restore runbook, and final GO/NO-GO statement.
+  - Updated production-control state to mark PR-12 repository launch-gate work verified while keeping Gate E public production launch NO-GO.
+  - Recorded residual launch conditions for remote CI, VPS/staging smoke, TLS/firewall, backup/restore, PostgreSQL/pgvector RAG, worker/Redis, controlled crawl/document smoke, alerting, quota/abuse smoke, owner commercial approval, and explicit owner launch approval.
+  - Did not deploy, migrate a live database, change DNS/TLS, activate payments, or onboard real customers.
+- Validations run/result:
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 97 tests.
+  - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
+  - `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr12_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr12_alembic.db backend/.venv/bin/python -m alembic -c backend/alembic.ini downgrade 20260529_0011` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - `docker compose config` - pass.
+  - `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` - pass.
+  - Production Compose JSON check for `postgres` and `redis` published ports - pass, no published ports.
+  - `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` - pass.
+  - `backend/.venv/bin/python -m bandit -q -r backend/app` - pass.
+  - `backend/.venv/bin/pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt` - pass, no known Python vulnerabilities.
+  - Secret pattern scan - pass, no matches.
+  - `npm audit --audit-level=high` - pass at high threshold; npm reported moderate transitive PostCSS advisories through Next.js.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
+- Known gaps:
+  - Public production launch remains NO-GO until owner-approved live evidence and explicit launch approval are recorded.
+  - Remote CI evidence for the PR-12 branch remains pending until push/CI completes.
+  - Live VPS TLS/firewall, backup/restore, worker/Redis, controlled crawl/document upload, production-equivalent PostgreSQL/pgvector RAG, `/ready`, log/alert destination, quota-limit, and abuse smoke evidence remains pending.
+  - Paid beta operation still needs owner approval for pricing, GST/tax handling, refunds, support process, and manual invoicing acceptance.
+  - Scanned-document OCR runtime remains gated and should not be claimed as available.
+- Next phase permitted: no automatic PR phase remains. Next safe action is owner-approved staging/VPS validation or launch-candidate review.
+- Commit hash: pending until commit.

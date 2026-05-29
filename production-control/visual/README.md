@@ -42,7 +42,7 @@ The current baseline must preserve:
 - Internal MVP Demo: GO WITH CONDITIONS.
 - 2026-05-23 audited production readiness: 35/100.
 
-Current launch posture after PR-11:
+Current launch posture after PR-12:
 
 - Paid Beta: REPOSITORY READY WITH CONDITIONS.
-- Public Production: NO-GO until PR-12 and explicit owner approval.
+- Public Production: NO-GO until owner-approved live evidence and explicit owner approval.

@@ -225,3 +225,15 @@ Append-only ADR-lite log for production remediation.
   - Leave billing as documentation only: rejected because paid beta must have server-side entitlement and quota controls before any charged use.
   - Trust frontend plan state: rejected because entitlements must be enforced by backend services and tenant-scoped database state.
 - Follow-up impact: PR-12 must re-audit paid-beta gates, confirm owner approval, validate live/staging smoke evidence, and decide whether manual entitlements are sufficient for launch or Stripe should become a required pre-launch phase.
+
+## DEC-PR-20260529-021: PR-12 Is A Launch Gate, Not A Live Deployment
+
+- Date: 2026-05-29
+- Decision: Complete PR-12 by creating an evidence-backed final validation package, release checklist, VPS/staging validation runbook, rollback/restore runbook, and final GO/NO-GO statement. Public production launch remains NO-GO until owner-approved live evidence and explicit launch approval are recorded.
+- Reason: The production phase protocol forbids live deployment, DNS/TLS changes, production migrations, payment activation, or real customer onboarding without separate explicit permission. Repository-controlled checks can verify code and configuration, but they cannot substitute for target-host TLS, firewall, backup/restore, pgvector, worker, quota, alerting, and customer-workflow smoke evidence.
+- Affected files/phases: PR-12, `docs/production-launch/*`, `production-control/*`, production visual status artifacts.
+- Alternatives rejected:
+  - Mark public production GO after repository tests only: rejected because external operational evidence and owner approval are mandatory release gates.
+  - Deploy or run live VPS commands during PR-12 automatically: rejected because the user did not grant explicit deployment permission.
+  - Add new product features during PR-12: rejected because PR-12 is the final validation and launch-gate phase.
+- Follow-up impact: The next safe command is an owner-approved staging/VPS validation or launch-candidate review, not another automatic production phase.

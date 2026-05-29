@@ -20,7 +20,7 @@ The original MVP Phase 0-10 roadmap remains historical/build evidence. This PR-0
 | PR-09 | Customer onboarding, agent testing, widget installation UX | PR-08 | Onboarding; knowledge setup UI; agent sandbox; widget domains/keys/branding; e2e UX | Test tenant can self-serve setup to controlled widget install | verified | `production/pr-09-customer-onboarding-agent-widget-ux` | pending | `phases/PR-09_CUSTOMER_ONBOARDING_AGENT_TESTING_AND_WIDGET_INSTALLATION_EXPERIENCE.md` |
 | PR-10 | Monitoring, analytics, metering, quotas, cost protection | PR-09 | Structured logs; metrics; alerts; usage/cost metering; quotas; runbooks | Operator can observe failures and enforce cost/usage limits | verified | `production/pr-10-monitoring-metering-quotas-cost-protection` | pending | `phases/PR-10_MONITORING_ANALYTICS_METERING_QUOTAS_AND_COST_PROTECTION.md` |
 | PR-11 | Billing, compliance controls, paid-beta readiness | PR-10 | Entitlements/plans; manual paid-beta controls; privacy/support disclosures; paid-beta review | Manual paid beta controls are enforceable and predecessor repo gates pass | verified | `production/pr-11-billing-compliance-paid-beta` | pending | `phases/PR-11_BILLING_COMPLIANCE_CONTROLS_AND_PAID_BETA_READINESS.md`, `docs/paid-beta-readiness.md` |
-| PR-12 | Final production validation and launch gate | PR-11 | Independent re-audit; full validation; staging/VPS runbook; final go/no-go | Production GO only with evidence and explicit owner approval | not_started | TBD | TBD | `phases/PR-12_FINAL_PRODUCTION_VALIDATION_AND_LAUNCH_GATE.md` |
+| PR-12 | Final production validation and launch gate | PR-11 | Independent re-audit; full validation package; staging/VPS runbook; final go/no-go | Production GO only with external evidence and explicit owner approval | verified | `production/pr-12-final-production-validation-launch-gate` | pending | `phases/PR-12_FINAL_PRODUCTION_VALIDATION_AND_LAUNCH_GATE.md`, `docs/production-launch/` |
 
 ## Launch Gates
 
@@ -28,7 +28,7 @@ The original MVP Phase 0-10 roadmap remains historical/build evidence. This PR-0
 - Gate B: Secure Private Internet Demo - requires validated PR-01 through PR-05.
 - Gate C: Real Customer Pilot - requires validated PR-01 through PR-10.
 - Gate D: Paid Beta - requires validated PR-01 through PR-11.
-- Gate E: Public Production Launch - requires successful PR-12 final audit and explicit owner approval.
+- Gate E: Public Production Launch - PR-12 repository launch gate is verified, but public launch remains NO-GO until owner-approved live evidence and explicit owner approval are recorded.
 
 ## Phase Status Rules
 
