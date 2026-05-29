@@ -1,6 +1,6 @@
 # PR-12: Final Production Validation, VPS Deployment Runbook and Launch Gate
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -40,15 +40,15 @@ Production launch must be evidence-backed, not inferred from phase completion. T
 
 ## Detailed Tasks
 
-- [ ] Re-audit all PR phases against evidence.
-- [ ] Run complete validation suite.
-- [ ] Validate production-equivalent Postgres/pgvector migration and vector smoke checks.
-- [ ] Validate restore drill evidence.
-- [ ] Validate browser/e2e and abuse/load checks.
-- [ ] Validate staging/VPS runbook without live deployment unless permitted.
-- [ ] Update risk register with residual risks.
-- [ ] Update final launch go/no-go.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Re-audit all PR phases against evidence.
+- [x] Run repository-controlled validation suite.
+- [x] Document production-equivalent Postgres/pgvector migration and vector smoke checks.
+- [x] Document restore drill evidence requirements.
+- [x] Document browser/e2e and abuse/load checks required for target-host validation.
+- [x] Validate staging/VPS runbook without live deployment.
+- [x] Update risk register with residual risks.
+- [x] Update final launch go/no-go.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -70,12 +70,22 @@ Deployment runbook must include rollback procedure, migration rollback policy, a
 
 ## Evidence
 
-To be filled during PR-12.
+- Final validation report: `docs/production-launch/final-production-validation-report.md`
+- Release evidence checklist: `docs/production-launch/release-evidence-checklist.md`
+- VPS/staging validation runbook: `docs/production-launch/vps-staging-validation-runbook.md`
+- Rollback and restore runbook: `docs/production-launch/rollback-and-restore-runbook.md`
+- Final GO/NO-GO statement: `docs/production-launch/final-go-no-go-statement.md`
+- Updated release readiness: `docs/release-readiness.md`
+- Updated risk register: `production-control/07_RISK_REGISTER.md`
+- Updated validation matrix: `production-control/08_VALIDATION_MATRIX.md`
+- Updated status JSON and visual artifacts: `production-control/status/production-status.json`, `production-control/visual/`
 
 ## Blockers
 
-Requires PR-11 verified and explicit owner approval for any live production action.
+PR-11 is verified. Live production action remains blocked until the owner explicitly approves the action and target.
+
+Public production launch remains NO-GO until owner-approved external evidence is recorded for remote CI, staging/VPS smoke, TLS renewal, firewall exposure, backup/restore, PostgreSQL/pgvector RAG, worker/Redis, controlled crawl/document upload, logging/alerting, quota/abuse smoke, and explicit launch approval.
 
 ## Completion Criteria
 
-Evidence-backed launch recommendation exists. Mark production GO only when every required release gate passes; otherwise retain NO-GO with precise remaining work.
+Evidence-backed launch recommendation exists. Production launch remains NO-GO because external live evidence and owner approval are not yet recorded.

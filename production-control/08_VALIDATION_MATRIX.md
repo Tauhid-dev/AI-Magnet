@@ -27,7 +27,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | pass | backend API tests, frontend static/type/lint/build, authenticated browser smoke |
 | Monitoring/metering/quotas/cost controls | PR-10 | required | required | optional | required if UI | required | required | manual alert/limit checks | pass | quota/metering/readiness tests, admin/portal UI checks, operations runbook |
 | Billing/entitlements/paid-beta controls | PR-11 | required | required | required | required | required | required | manual paid-beta review | pass | manual entitlement model/API/UI tests, quota enforcement tests, migration smoke, and paid-beta gate record |
-| Final production launch audit | PR-12 | required | required | required | required | required | required | required | not_run | final audit report and owner approval |
+| Final production launch audit | PR-12 | required | required | required | required | required | required | required | partial | repository final validation package exists; local repository checks pass when recorded below; owner-approved VPS/staging evidence and launch approval remain required |
 
 ## PR-00 Validation
 
@@ -218,3 +218,20 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
 | Dependency and static security scans | pass | `pip-audit` found no known Python vulnerabilities; Bandit passed; `npm audit --audit-level=high` passed high threshold with moderate transitive PostCSS advisory noted |
 | Paid-beta live operations review | partial | Repository controls are verified; owner approval, pricing/tax/refund confirmation, remote CI, VPS/staging smoke, and support readiness remain Gate D conditions |
+
+## PR-12 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Final validation report and launch-gate pack | pass | `docs/production-launch/final-production-validation-report.md`; `docs/production-launch/final-go-no-go-statement.md`; `docs/production-launch/release-evidence-checklist.md` |
+| VPS/staging validation and rollback/restore runbooks | pass | `docs/production-launch/vps-staging-validation-runbook.md`; `docs/production-launch/rollback-and-restore-runbook.md` |
+| Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 97 passed |
+| Backend compile/lint | pass | `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations`; `backend/.venv/bin/python -m ruff check backend/app backend/tests` |
+| Migration upgrade/downgrade smoke | pass | SQLite upgrade head and downgrade to `20260529_0011` |
+| Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
+| Compose static config | pass | `docker compose config`; `docker compose --env-file .env.production.example -f docker-compose.prod.yml config` |
+| Production data-service port check | pass | Production Compose JSON check confirmed `postgres` and `redis` have no published host ports |
+| Backup/restore/pgvector script syntax | pass | `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` |
+| Dependency and static security scans | pass | `pip-audit` found no known Python vulnerabilities; Bandit passed; secret pattern scan had no matches; `npm audit --audit-level=high` passed with moderate transitive PostCSS advisory noted |
+| Production-control status and visuals | pass | `python3 -m json.tool production-control/status/production-status.json`; SVG parse check; `git diff --check` |
+| Live VPS/staging validation, restore drill, load/abuse, and owner approval | not_run | Documented in `docs/production-launch/release-evidence-checklist.md`; not executed without explicit owner approval |

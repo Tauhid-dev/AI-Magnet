@@ -11,13 +11,13 @@ flowchart TB
     PR09["PR-09<br/>Onboarding and Widget UX<br/>verified"]
     PR10["PR-10<br/>Monitoring, Metering, Quotas<br/>verified"]
     PR11["PR-11<br/>Billing and Paid Beta<br/>verified"]
-    PR12["PR-12<br/>Final Audit and Launch Gate<br/>next: not started<br/>CRITICAL"]
+    PR12["PR-12<br/>Final Audit and Launch Gate<br/>verified<br/>public launch NO-GO"]
 
     GateA["Gate A: Controlled Internal Demo<br/>GO WITH CONDITIONS<br/>synthetic/sample data only"]
     GateB["Gate B: Secure Private Internet Demo<br/>REPO READY WITH CONDITIONS<br/>VPS/CI/owner validation pending"]
     GateC["Gate C: Real Customer Pilot<br/>REPO READY WITH CONDITIONS<br/>VPS/alerts/quota smoke pending"]
     GateD["Gate D: Paid Beta<br/>REPO READY WITH CONDITIONS<br/>owner + VPS/CI validation pending"]
-    GateE["Gate E: Public Production Launch<br/>NO-GO until PR-12 plus owner approval"]
+    GateE["Gate E: Public Production Launch<br/>NO-GO<br/>owner-approved live evidence required"]
     LegendVerified["Status: verified/complete"]
     LegendProgress["Status: in progress"]
     LegendBlocked["Status: blocked"]
@@ -44,8 +44,7 @@ flowchart TB
     classDef gateOk fill:#e0f2fe,stroke:#0369a1,color:#082f49
     classDef gateNo fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11 verified
-    class PR12 critical
+    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11,PR12 verified
     class GateA gateOk
     class GateB,GateC,GateD,GateE gateNo
     class LegendVerified verified
