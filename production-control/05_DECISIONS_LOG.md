@@ -201,3 +201,15 @@ Append-only ADR-lite log for production remediation.
   - Persist sandbox tests as conversations: rejected because sandbox testing should not pollute customer chat history, lead workflows, or analytics meant for real visitors.
   - Require local storage metadata for portal access: rejected because the secure source of truth is the HttpOnly cookie-backed server session.
 - Follow-up impact: PR-10 should meter sandbox tests, widget setup changes, and setup completion as part of quota/cost/operations visibility. PR-12 should re-check whether authenticated-owner website approval remains sufficient for public launch.
+
+## DEC-PR-20260529-019: PR-10 Uses Existing Usage Logs For Beta Quotas
+
+- Date: 2026-05-29
+- Decision: Implement PR-10 quota, token, and cost metering from existing tenant-scoped `usage_logs`, current conversation/document/crawl rows, and configurable environment limits rather than adding a new rollup table in this phase.
+- Reason: The repository already records tenant-scoped usage events and PR-10 needed enforceable beta controls without adding migration complexity or a premature billing schema before PR-11. The design keeps the response/API shape compatible with a future rollup table if usage volume requires it.
+- Affected files/phases: PR-10, `backend/app/usage/quotas.py`, `backend/app/analytics/service.py`, `backend/app/api/chat.py`, `backend/app/api/business_portal.py`, `frontend/app/admin/usage/page.tsx`, `frontend/app/portal/analytics/page.tsx`, `docs/operations-monitoring.md`.
+- Alternatives rejected:
+  - Add a dedicated usage-rollup table now: deferred because the current pilot scale can compute monthly quota snapshots from existing rows and PR-11 may still change entitlement dimensions.
+  - Rely only on external provider billing dashboards: rejected because tenant-level budget controls must be enforceable inside the SaaS workflow before customer pilot use.
+  - Leave quotas as documentation only: rejected because chat, AI, document, storage, and crawl entrypoints now need graceful limit enforcement.
+- Follow-up impact: PR-11 can map plans/entitlements onto the PR-10 quota keys, and PR-12 should decide whether to require persistent rollups or external observability integration before public launch.

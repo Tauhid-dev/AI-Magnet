@@ -565,6 +565,13 @@ def get_usage_overview(
         ai_responses_total=overview.ai_responses_total,
         lead_notifications_sent=overview.lead_notifications_sent,
         admin_audit_events_total=overview.admin_audit_events_total,
+        estimated_tokens_total=overview.estimated_tokens_total,
+        estimated_cost_cents_total=overview.estimated_cost_cents_total,
+        pages_crawled_total=overview.pages_crawled_total,
+        storage_mb_total=overview.storage_mb_total,
+        rate_limit_events_total=overview.rate_limit_events_total,
+        quota_warning_tenants=overview.quota_warning_tenants,
+        quota_blocked_tenants=overview.quota_blocked_tenants,
         usage_event_counts=[admin_breakdown_response(item) for item in overview.usage_event_counts],
         lead_status_counts=[admin_breakdown_response(item) for item in overview.lead_status_counts],
         document_status_counts=[
@@ -581,6 +588,10 @@ def get_usage_overview(
                 conversations_total=item.conversations_total,
                 messages_total=item.messages_total,
                 usage_events_total=item.usage_events_total,
+                estimated_tokens=item.estimated_tokens,
+                estimated_cost_cents=item.estimated_cost_cents,
+                quota_warnings=item.quota_warnings,
+                quota_blockers=item.quota_blockers,
             )
             for item in overview.tenant_usage
         ],

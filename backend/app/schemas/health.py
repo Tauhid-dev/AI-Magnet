@@ -10,3 +10,11 @@ class HealthResponse(BaseModel):
     service: str
     environment: str
     version: str
+
+
+class ReadinessResponse(HealthResponse):
+    """Readiness response for load balancers and release smoke tests."""
+
+    database: str
+    configuration: str
+    checks: dict[str, str]

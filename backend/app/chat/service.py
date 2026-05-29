@@ -18,7 +18,8 @@ from app.providers.ai.base import ChatCompletionProvider, ChatMessage
 from app.rag.retrieval import RagRetrievalService, RetrievalCitation, RetrievalResult
 from app.rag.safety import build_safe_rag_context, estimate_tokens
 from app.schemas.chat import LeadFields
-from app.usage import UsageEventType, UsageService
+from app.usage import QuotaLimitExceeded, QuotaService, UsageEventType, UsageService
+from app.usage.quotas import estimate_ai_cost_cents
 from app.widget.service import WidgetResolution
 
 
@@ -45,6 +46,7 @@ class ConversationReplyResult:
     rag_safety_flags: list[str]
     estimated_prompt_tokens: int
     estimated_response_tokens: int
+    estimated_cost_cents: float
     lead_capture: LeadCaptureResult
 
 
@@ -61,6 +63,7 @@ class AnswerDraft:
     response_chars: int
     estimated_prompt_tokens: int
     estimated_response_tokens: int
+    estimated_cost_cents: float
 
 
 class ChatService:
@@ -82,6 +85,7 @@ class ChatService:
         self.notifications = NotificationService(session, self.settings)
         self.jobs = BackgroundJobService(session, self.settings)
         self.usage = UsageService(session)
+        self.quotas = QuotaService(session, self.settings)
 
     def start_conversation(
         self,
@@ -89,6 +93,15 @@ class ChatService:
         visitor_label: str | None = None,
     ) -> ConversationStartResult:
         """Create a conversation owned by the widget tenant."""
+        blockers = self.quotas.chat_start_blockers(widget_resolution.tenant_id)
+        if blockers:
+            self.quotas.record_quota_block(
+                tenant_id=widget_resolution.tenant_id,
+                operation="chat_start",
+                blocked_reasons=blockers,
+            )
+            self.session.commit()
+            raise QuotaLimitExceeded("chat_start", blockers)
         conversation = Conversation(
             tenant_id=widget_resolution.tenant_id,
             visitor_label=visitor_label,
@@ -122,6 +135,15 @@ class ChatService:
         )
         if conversation is None:
             return None
+        blockers = self.quotas.ai_response_blockers(widget_resolution.tenant_id)
+        if blockers:
+            self.quotas.record_quota_block(
+                tenant_id=widget_resolution.tenant_id,
+                operation="chat_message",
+                blocked_reasons=blockers,
+            )
+            self.session.commit()
+            raise QuotaLimitExceeded("chat_message", blockers)
 
         visitor_message = Message(
             tenant_id=widget_resolution.tenant_id,
@@ -212,6 +234,7 @@ class ChatService:
                 "estimated_total_tokens": (
                     answer.estimated_prompt_tokens + answer.estimated_response_tokens
                 ),
+                "estimated_cost_cents": answer.estimated_cost_cents,
             },
         )
         self.session.commit()
@@ -227,6 +250,7 @@ class ChatService:
             rag_safety_flags=answer.rag_safety_flags,
             estimated_prompt_tokens=answer.estimated_prompt_tokens,
             estimated_response_tokens=answer.estimated_response_tokens,
+            estimated_cost_cents=answer.estimated_cost_cents,
             lead_capture=lead_capture,
         )
 
@@ -265,6 +289,11 @@ class ChatService:
                 response_chars=len(text),
                 estimated_prompt_tokens=0,
                 estimated_response_tokens=estimate_tokens(text),
+                estimated_cost_cents=estimate_ai_cost_cents(
+                    0,
+                    estimate_tokens(text),
+                    self.settings,
+                ),
             )
         prompt = (
             "You are an AI receptionist for an Australian local business. "
@@ -285,6 +314,7 @@ class ChatService:
         estimated_prompt_tokens = estimate_tokens(
             "".join(message.content for message in messages)
         )
+        estimated_response_tokens = estimate_tokens(text)
         return AnswerDraft(
             text=text,
             citations=rag_context.citations,
@@ -294,7 +324,12 @@ class ChatService:
             prompt_chars=prompt_chars,
             response_chars=len(text),
             estimated_prompt_tokens=estimated_prompt_tokens,
-            estimated_response_tokens=estimate_tokens(text),
+            estimated_response_tokens=estimated_response_tokens,
+            estimated_cost_cents=estimate_ai_cost_cents(
+                estimated_prompt_tokens,
+                estimated_response_tokens,
+                self.settings,
+            ),
         )
 
     def _recent_history(self, conversation_id: str, tenant_id: str) -> list[ChatMessage]:

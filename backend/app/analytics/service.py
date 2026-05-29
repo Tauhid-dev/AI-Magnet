@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import Settings, get_settings
 from app.models.conversation import Conversation, Message
 from app.models.knowledge import KnowledgeDocument
 from app.models.lead import Lead
@@ -16,6 +17,7 @@ from app.models.notification import NotificationDelivery
 from app.models.tenant import Tenant
 from app.models.usage import AuditLog, UsageLog
 from app.models.widget import WidgetConfig
+from app.usage.quotas import QuotaService, QuotaSnapshot
 from app.usage.taxonomy import UsageEventType
 
 
@@ -60,6 +62,7 @@ class TenantAnalyticsSnapshot:
     document_status_counts: list[AnalyticsBreakdown]
     usage_event_counts: list[AnalyticsBreakdown]
     recent_usage: list[AnalyticsUsageEvent]
+    quota_status: QuotaSnapshot
 
 
 @dataclass(frozen=True)
@@ -75,6 +78,10 @@ class AdminTenantUsageSummary:
     conversations_total: int
     messages_total: int
     usage_events_total: int
+    estimated_tokens: int
+    estimated_cost_cents: float
+    quota_warnings: list[str]
+    quota_blockers: list[str]
 
 
 @dataclass(frozen=True)
@@ -93,6 +100,13 @@ class PlatformAnalyticsSnapshot:
     ai_responses_total: int
     lead_notifications_sent: int
     admin_audit_events_total: int
+    estimated_tokens_total: int
+    estimated_cost_cents_total: float
+    pages_crawled_total: int
+    storage_mb_total: float
+    rate_limit_events_total: int
+    quota_warning_tenants: int
+    quota_blocked_tenants: int
     usage_event_counts: list[AnalyticsBreakdown]
     lead_status_counts: list[AnalyticsBreakdown]
     document_status_counts: list[AnalyticsBreakdown]
@@ -102,8 +116,10 @@ class PlatformAnalyticsSnapshot:
 class AnalyticsService:
     """Build analytics snapshots without crossing tenant boundaries."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, settings: Settings | None = None) -> None:
         self.session = session
+        self.settings = settings or get_settings()
+        self.quotas = QuotaService(session, self.settings)
 
     def tenant_snapshot(self, tenant_id: str) -> TenantAnalyticsSnapshot:
         """Return analytics for one tenant only."""
@@ -160,10 +176,12 @@ class AnalyticsService:
             ),
             usage_event_counts=self._tenant_breakdown(UsageLog, tenant_id, UsageLog.event_type),
             recent_usage=self._recent_usage(tenant_id),
+            quota_status=self.quotas.snapshot(tenant_id),
         )
 
     def platform_snapshot(self, tenant_limit: int = 20) -> PlatformAnalyticsSnapshot:
         """Return platform-wide aggregate analytics for super admins."""
+        tenant_usage = self._tenant_usage_summaries(tenant_limit)
         return PlatformAnalyticsSnapshot(
             tenants_total=self._count(Tenant),
             active_tenants=self._count(Tenant, Tenant.status == "active"),
@@ -186,10 +204,30 @@ class AnalyticsService:
                 NotificationDelivery.status == "sent",
             ),
             admin_audit_events_total=self._count(AuditLog),
+            estimated_tokens_total=sum(item.estimated_tokens for item in tenant_usage),
+            estimated_cost_cents_total=round(
+                sum(item.estimated_cost_cents for item in tenant_usage),
+                6,
+            ),
+            pages_crawled_total=int(
+                sum(self._metric_used(item.tenant_id, "pages_crawled") for item in tenant_usage)
+            ),
+            storage_mb_total=round(
+                sum(self._metric_used(item.tenant_id, "storage_mb") for item in tenant_usage),
+                4,
+            ),
+            rate_limit_events_total=int(
+                sum(
+                    self._metric_used(item.tenant_id, "rate_limit_events")
+                    for item in tenant_usage
+                )
+            ),
+            quota_warning_tenants=sum(1 for item in tenant_usage if item.quota_warnings),
+            quota_blocked_tenants=sum(1 for item in tenant_usage if item.quota_blockers),
             usage_event_counts=self._breakdown(UsageLog, UsageLog.event_type),
             lead_status_counts=self._breakdown(Lead, Lead.status),
             document_status_counts=self._breakdown(KnowledgeDocument, KnowledgeDocument.status),
-            tenant_usage=self._tenant_usage_summaries(tenant_limit),
+            tenant_usage=tenant_usage,
         )
 
     def _active_widget(self, tenant_id: str) -> WidgetConfig | None:
@@ -224,20 +262,41 @@ class AnalyticsService:
         tenants = list(
             self.session.scalars(select(Tenant).order_by(Tenant.created_at.desc()).limit(limit))
         )
-        return [
-            AdminTenantUsageSummary(
-                tenant_id=tenant.id,
-                tenant_name=tenant.name,
-                tenant_slug=tenant.slug,
-                tenant_status=tenant.status,
-                documents_total=self._tenant_count(KnowledgeDocument, tenant.id),
-                leads_total=self._tenant_count(Lead, tenant.id),
-                conversations_total=self._tenant_count(Conversation, tenant.id),
-                messages_total=self._tenant_count(Message, tenant.id),
-                usage_events_total=self._tenant_count(UsageLog, tenant.id),
+        summaries: list[AdminTenantUsageSummary] = []
+        for tenant in tenants:
+            quota_status = self.quotas.snapshot(tenant.id)
+            summaries.append(
+                AdminTenantUsageSummary(
+                    tenant_id=tenant.id,
+                    tenant_name=tenant.name,
+                    tenant_slug=tenant.slug,
+                    tenant_status=tenant.status,
+                    documents_total=self._tenant_count(KnowledgeDocument, tenant.id),
+                    leads_total=self._tenant_count(Lead, tenant.id),
+                    conversations_total=self._tenant_count(Conversation, tenant.id),
+                    messages_total=self._tenant_count(Message, tenant.id),
+                    usage_events_total=self._tenant_count(UsageLog, tenant.id),
+                    estimated_tokens=int(
+                        self._metric_used_from_snapshot(quota_status, "estimated_tokens")
+                    ),
+                    estimated_cost_cents=self._metric_used_from_snapshot(
+                        quota_status,
+                        "estimated_cost_cents",
+                    ),
+                    quota_warnings=quota_status.warnings,
+                    quota_blockers=quota_status.blocked_reasons,
+                )
             )
-            for tenant in tenants
-        ]
+        return summaries
+
+    def _metric_used(self, tenant_id: str, key: str) -> float:
+        return self._metric_used_from_snapshot(self.quotas.snapshot(tenant_id), key)
+
+    def _metric_used_from_snapshot(self, snapshot: QuotaSnapshot, key: str) -> float:
+        for metric in snapshot.metrics:
+            if metric.key == key:
+                return metric.used
+        return 0.0
 
     def _breakdown(self, model: type, column) -> list[AnalyticsBreakdown]:
         statement = (

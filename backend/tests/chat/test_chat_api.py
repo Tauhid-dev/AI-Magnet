@@ -9,7 +9,7 @@ from app.api.chat import (
 )
 from app.db.base import Base
 from app.db.session import get_db_session
-from app.models import Lead, Message, UsageLog
+from app.models import Conversation, Lead, Message, UsageLog
 from app.providers.ai.base import ChatMessage
 from app.providers.ai.deterministic import DeterministicEmbeddingProvider
 from app.rag.ingestion import RagIngestionService
@@ -319,3 +319,44 @@ def test_conversation_message_rejects_cross_tenant_widget_key():
             )
         )
         assert messages == []
+
+
+def test_chat_start_returns_quota_limit_when_tenant_conversation_quota_is_exceeded(
+    monkeypatch,
+):
+    with create_test_session() as session:
+        widget_key = "wm_live_quota_widget_a"
+        tenant, _widget = seed_tenant_with_widget(
+            session,
+            "Tenant A Plumbing",
+            "tenant-a",
+            widget_key,
+        )
+        session.add(
+            Conversation(
+                tenant_id=tenant.id,
+                visitor_label="Existing visitor",
+                status="open",
+                source="website_widget",
+            )
+        )
+        session.commit()
+        monkeypatch.setenv("TENANT_QUOTA_CHAT_CONVERSATIONS_PER_MONTH", "1")
+        client = create_client(
+            session,
+            DeterministicEmbeddingProvider(16),
+            RecordingChatProvider(),
+        )
+
+        response = client.post(
+            "/chat/conversations",
+            json={"widget_key": widget_key, "visitor_label": "New visitor"},
+        )
+
+        assert response.status_code == 429
+        payload = response.json()
+        assert "Chat conversations" in payload["detail"]["blocked_reasons"]
+        quota_event = session.scalars(
+            select(UsageLog).where(UsageLog.event_type == "quota_limit_exceeded")
+        ).one()
+        assert quota_event.attributes["operation"] == "chat_start"

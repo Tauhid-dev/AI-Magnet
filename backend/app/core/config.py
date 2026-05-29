@@ -199,6 +199,14 @@ class Settings:
     ai_embedding_dimensions: int = field(
         default_factory=lambda: int(os.getenv("AI_EMBEDDING_DIMENSIONS", "1536"))
     )
+    ai_prompt_cost_cents_per_1k_tokens: float = field(
+        default_factory=lambda: float(os.getenv("AI_PROMPT_COST_CENTS_PER_1K_TOKENS", "0.04"))
+    )
+    ai_completion_cost_cents_per_1k_tokens: float = field(
+        default_factory=lambda: float(
+            os.getenv("AI_COMPLETION_COST_CENTS_PER_1K_TOKENS", "0.16")
+        )
+    )
 
     rag_chunk_size: int = field(
         default_factory=lambda: int(os.getenv("RAG_CHUNK_SIZE", "700"))
@@ -261,6 +269,35 @@ class Settings:
     )
     document_malware_scan_mode: str = field(
         default_factory=lambda: os.getenv("DOCUMENT_MALWARE_SCAN_MODE", "basic")
+    )
+    tenant_quota_chat_conversations_per_month: int = field(
+        default_factory=lambda: int(
+            os.getenv("TENANT_QUOTA_CHAT_CONVERSATIONS_PER_MONTH", "1000")
+        )
+    )
+    tenant_quota_ai_responses_per_month: int = field(
+        default_factory=lambda: int(os.getenv("TENANT_QUOTA_AI_RESPONSES_PER_MONTH", "5000"))
+    )
+    tenant_quota_tokens_per_month: int = field(
+        default_factory=lambda: int(os.getenv("TENANT_QUOTA_TOKENS_PER_MONTH", "500000"))
+    )
+    tenant_budget_monthly_cents: float = field(
+        default_factory=lambda: float(os.getenv("TENANT_BUDGET_MONTHLY_CENTS", "5000"))
+    )
+    tenant_quota_documents_total: int = field(
+        default_factory=lambda: int(os.getenv("TENANT_QUOTA_DOCUMENTS_TOTAL", "100"))
+    )
+    tenant_quota_storage_mb: int = field(
+        default_factory=lambda: int(os.getenv("TENANT_QUOTA_STORAGE_MB", "512"))
+    )
+    tenant_quota_pages_crawled_per_month: int = field(
+        default_factory=lambda: int(os.getenv("TENANT_QUOTA_PAGES_CRAWLED_PER_MONTH", "1000"))
+    )
+    quota_warning_threshold_percent: float = field(
+        default_factory=lambda: float(os.getenv("QUOTA_WARNING_THRESHOLD_PERCENT", "80"))
+    )
+    error_reporting_dsn: str | None = field(
+        default_factory=lambda: os.getenv("ERROR_REPORTING_DSN") or None
     )
 
     email_provider: str = field(
@@ -388,6 +425,26 @@ class Settings:
             issues.append("DOCUMENT_MALWARE_SCAN_MODE must not be disabled in production")
         if self.ai_provider == "openai-compatible" and is_placeholder(self.ai_api_key):
             issues.append("AI_API_KEY must be set for the OpenAI-compatible provider")
+        if self.ai_prompt_cost_cents_per_1k_tokens < 0:
+            issues.append("AI_PROMPT_COST_CENTS_PER_1K_TOKENS must be zero or greater")
+        if self.ai_completion_cost_cents_per_1k_tokens < 0:
+            issues.append("AI_COMPLETION_COST_CENTS_PER_1K_TOKENS must be zero or greater")
+        if self.tenant_quota_chat_conversations_per_month <= 0:
+            issues.append("TENANT_QUOTA_CHAT_CONVERSATIONS_PER_MONTH must be greater than 0")
+        if self.tenant_quota_ai_responses_per_month <= 0:
+            issues.append("TENANT_QUOTA_AI_RESPONSES_PER_MONTH must be greater than 0")
+        if self.tenant_quota_tokens_per_month <= 0:
+            issues.append("TENANT_QUOTA_TOKENS_PER_MONTH must be greater than 0")
+        if self.tenant_budget_monthly_cents <= 0:
+            issues.append("TENANT_BUDGET_MONTHLY_CENTS must be greater than 0")
+        if self.tenant_quota_documents_total <= 0:
+            issues.append("TENANT_QUOTA_DOCUMENTS_TOTAL must be greater than 0")
+        if self.tenant_quota_storage_mb <= 0:
+            issues.append("TENANT_QUOTA_STORAGE_MB must be greater than 0")
+        if self.tenant_quota_pages_crawled_per_month <= 0:
+            issues.append("TENANT_QUOTA_PAGES_CRAWLED_PER_MONTH must be greater than 0")
+        if not 1 <= self.quota_warning_threshold_percent <= 100:
+            issues.append("QUOTA_WARNING_THRESHOLD_PERCENT must be between 1 and 100")
         if self.email_provider != "smtp":
             issues.append("EMAIL_PROVIDER must be smtp in production")
         if is_placeholder(self.smtp_host):

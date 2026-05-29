@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "PR-10",
-    "last_completed_phase": "PR-09",
-    "next_permitted_phase": "PR-10",
-    "production_go_no_go": "Gate B repository-ready with conditions; real customer, paid beta, and public production remain NO-GO",
-    "overall_status": "pr09_onboarding_widget_ux_verified_next_pr10"
+    "active_phase": "PR-11",
+    "last_completed_phase": "PR-10",
+    "next_permitted_phase": "PR-11",
+    "production_go_no_go": "Gate C repository-ready with conditions; paid beta and public production remain NO-GO",
+    "overall_status": "pr10_monitoring_metering_quotas_verified_next_pr11"
   },
   "launch_gates": [
     {
@@ -55,7 +55,7 @@
     {
       "gate_id": "C",
       "title": "Real Customer Pilot",
-      "status": "no_go",
+      "status": "repository_ready_with_conditions",
       "requires_verified_phases": [
         "PR-01",
         "PR-02",
@@ -67,6 +67,17 @@
         "PR-08",
         "PR-09",
         "PR-10"
+      ],
+      "remaining_conditions": [
+        "Remote CI evidence for the current PR-10 branch",
+        "Owner-approved VPS/staging smoke before any real customer data",
+        "Live /ready readiness check against production-equivalent PostgreSQL",
+        "Logging/alert destination configured and verified",
+        "Controlled quota-limit smoke test",
+        "Backup/restore drill evidence",
+        "Worker/Redis health smoke",
+        "Controlled real-site crawl and document-upload smoke",
+        "Production-equivalent PostgreSQL/pgvector RAG smoke"
       ],
       "evidence_links": [
         "production-control/09_RELEASE_GATES.md"
@@ -351,20 +362,27 @@
     {
       "phase_id": "PR-10",
       "title": "Monitoring, Analytics, Metering, Quotas and Cost Protection",
-      "status": "not_started",
-      "completion_percent": 0,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-09"
       ],
       "priority": "p1",
       "criticality": "pilot_operations_blocker",
-      "validation_status": "not_run",
-      "last_updated": "2026-05-28",
+      "validation_status": "pass",
+      "last_updated": "2026-05-29",
       "evidence_links": [
-        "production-control/phases/PR-10_MONITORING_ANALYTICS_METERING_QUOTAS_AND_COST_PROTECTION.md"
+        "production-control/phases/PR-10_MONITORING_ANALYTICS_METERING_QUOTAS_AND_COST_PROTECTION.md",
+        "backend/app/usage/quotas.py",
+        "backend/app/analytics/service.py",
+        "backend/app/api/health.py",
+        "backend/tests/usage/test_quota_service.py",
+        "frontend/app/admin/usage/page.tsx",
+        "frontend/app/portal/analytics/page.tsx",
+        "docs/operations-monitoring.md"
       ],
-      "branch": null,
-      "commit": null
+      "branch": "production/pr-10-monitoring-metering-quotas-cost-protection",
+      "commit": "pending"
     },
     {
       "phase_id": "PR-11",
@@ -426,17 +444,16 @@
     }
   ],
     "critical_blockers": [
-        "Full monitoring, metering, quotas, and cost controls remain pending in PR-10",
         "Billing/entitlement controls remain pending in PR-11",
         "Scanned-document OCR runtime remains gated and unimplemented",
         "First controlled real-site crawl smoke remains pending before pilot use of website ingestion",
         "First controlled document-upload smoke remains pending before pilot use of customer documents",
-        "First VPS validation of TLS, firewall, backup/restore, worker/Redis smoke, and PostgreSQL/pgvector RAG smoke remains pending"
+        "First VPS validation of TLS, firewall, backup/restore, worker/Redis smoke, PostgreSQL/pgvector RAG smoke, /ready readiness, alert/log destination, and quota-limit smoke remains pending"
     ],
   "high_production_requirements": [
     {
-            "item": "Full monitoring, metrics, alerts, quotas, cost controls, and log review",
-            "phase": "PR-10"
+            "item": "Billing, entitlements, paid-beta controls, and commercial compliance review",
+            "phase": "PR-11"
         }
   ]
 }

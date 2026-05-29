@@ -1,6 +1,6 @@
 # Release Gates
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 ## Gate A: Controlled Internal Demo
 
@@ -35,13 +35,24 @@ Requires verified:
 
 ## Gate C: Real Customer Pilot
 
-Current status: NO-GO.
+Current status: REPOSITORY READY WITH CONDITIONS.
 
 Requires verified:
 
 - PR-01 through PR-10.
 - Real customer data handling, secure document ingestion, RAG safety, operational monitoring, quotas, incident response, and controlled crawl evidence.
 - Owner approval for the specific customer pilot terms and data handling.
+
+Remaining conditions before a real customer pilot may begin:
+
+- Remote CI evidence for the current PR-10 branch.
+- VPS/staging `/ready` smoke against production-equivalent PostgreSQL/pgvector.
+- Logging/alert destination configured and verified.
+- Controlled quota-limit smoke test.
+- Backup/restore drill evidence.
+- Worker/Redis health smoke.
+- Controlled real-site crawl and document-upload smoke.
+- Owner approval for the exact customer, data set, and pilot terms.
 
 ## Gate D: Paid Beta
 
