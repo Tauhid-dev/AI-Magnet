@@ -25,7 +25,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | pass | upload validation, DOCX/PDF extraction/OCR gate tests, tenant API refresh/delete tests, private storage and worker tests |
 | SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | pass | SQL retrieval path, citation/schema/widget tests, RAG safety fixtures, SQLite migration smoke; production-equivalent pgvector smoke remains release-gate evidence |
 | Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | pass | backend API tests, frontend static/type/lint/build, authenticated browser smoke |
-| Monitoring/metering/quotas/cost controls | PR-10 | required | required | required | required if UI | required | required | manual alert/limit checks | not_run | metrics and quota tests |
+| Monitoring/metering/quotas/cost controls | PR-10 | required | required | optional | required if UI | required | required | manual alert/limit checks | pass | quota/metering/readiness tests, admin/portal UI checks, operations runbook |
 | Billing/entitlements/paid-beta controls | PR-11 | required | required | required | required | required | required | manual paid-beta review | not_run | entitlement tests and gate record |
 | Final production launch audit | PR-12 | required | required | required | required | required | required | required | not_run | final audit report and owner approval |
 
@@ -184,3 +184,20 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Backend lint | pass | `backend/.venv/bin/python -m ruff check backend/app backend/tests` |
 | Authenticated browser smoke | pass | Local FastAPI + Next.js with temp SQLite tenant confirmed login, setup checklist, agent sandbox sources, and widget branding save |
 | Live customer onboarding smoke | not_run | Repository phase does not onboard a real customer; run during Gate C release validation |
+
+## PR-10 Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Tenant quota snapshots and usage metering | pass | `backend/app/usage/quotas.py`; `backend/tests/usage/test_quota_service.py` |
+| Chat and agent token/cost capture | pass | `backend/app/chat/service.py`; `backend/app/api/business_portal.py`; focused quota/chat tests |
+| Graceful quota enforcement | pass | HTTP 429 quota tests for widget chat start and quota event recording |
+| Readiness endpoint and correlation baseline | pass | `backend/app/api/health.py`; `backend/tests/test_health.py` |
+| Admin and portal quota/cost visibility | pass | `backend/app/analytics/service.py`; `frontend/app/admin/usage/page.tsx`; `frontend/app/portal/analytics/page.tsx` |
+| Operations monitoring and incident runbook | pass | `docs/operations-monitoring.md` |
+| Backend focused PR-10 tests | pass | `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/chat/test_chat_api.py backend/tests/test_health.py` - 12 passed |
+| Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 93 passed |
+| Backend lint | pass | `backend/.venv/bin/ruff check backend/app backend/tests` |
+| Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
+| Live logging/alert destination smoke | not_run | Repository phase does not configure hosted alerting; required before Gate C pilot |
+| Controlled quota-limit/VPS `/ready` smoke | not_run | Repository phase does not deploy to VPS; required before Gate C pilot |

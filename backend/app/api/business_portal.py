@@ -29,7 +29,7 @@ from app.rag.document_storage import LocalDocumentStorage
 from app.rag.document_validation import DocumentValidationError, validate_document_upload
 from app.rag.ingestion import RagIngestionService
 from app.rag.retrieval import RagRetrievalService, RetrievalCitation
-from app.rag.safety import build_safe_rag_context
+from app.rag.safety import build_safe_rag_context, estimate_tokens
 from app.rag.web_security import UnsafeUrlError, validate_public_http_url
 from app.schemas.business_portal import (
     PortalAgentTestRequest,
@@ -50,6 +50,8 @@ from app.schemas.business_portal import (
     PortalLeadStatusUpdateRequest,
     PortalMessageResponse,
     PortalJobResponse,
+    PortalQuotaMetricResponse,
+    PortalQuotaStatusResponse,
     PortalWebsiteCrawlPageResponse,
     PortalWebsiteSourceCreateRequest,
     PortalWebsiteSourceResponse,
@@ -59,7 +61,8 @@ from app.schemas.business_portal import (
     PortalUsageEventResponse,
     PortalWidgetResponse,
 )
-from app.usage import UsageEventSource, UsageEventType, UsageService
+from app.usage import QuotaService, UsageEventSource, UsageEventType, UsageService
+from app.usage.quotas import estimate_ai_cost_cents, retry_after_for_month
 from app.widget.service import WidgetService
 from app.rag.website_ingestion import WebsiteIngestionService
 
@@ -188,6 +191,31 @@ def citation_response(citation: RetrievalCitation) -> PortalCitationResponse:
         source_type=citation.source_type,
         source_title=citation.source_title,
         source_url=citation.source_url,
+    )
+
+
+def raise_quota_limit(
+    *,
+    session: Session,
+    settings: Settings,
+    tenant_id: str,
+    operation: str,
+    blocked_reasons: list[str],
+) -> None:
+    """Record and raise a tenant quota limit response."""
+    QuotaService(session, settings).record_quota_block(
+        tenant_id=tenant_id,
+        operation=operation,
+        blocked_reasons=blocked_reasons,
+    )
+    session.commit()
+    raise HTTPException(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        detail={
+            "message": "Tenant usage limit reached.",
+            "blocked_reasons": blocked_reasons,
+        },
+        headers={"Retry-After": str(retry_after_for_month())},
     )
 
 
@@ -345,6 +373,18 @@ def create_document(
         identifiers=[portal_session.tenant_id, portal_session.user_id],
         limit=settings.rate_limit_portal_write_per_minute,
     )
+    blockers = QuotaService(session, settings).document_blockers(
+        portal_session.tenant_id,
+        additional_storage_bytes=len(payload.content.encode("utf-8")),
+    )
+    if blockers:
+        raise_quota_limit(
+            session=session,
+            settings=settings,
+            tenant_id=portal_session.tenant_id,
+            operation="document_create",
+            blocked_reasons=blockers,
+        )
     document = RagIngestionService(
         session=session,
         embedding_provider=None,
@@ -391,6 +431,18 @@ async def upload_document_file(
         )
     except DocumentValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    blockers = QuotaService(session, settings).document_blockers(
+        portal_session.tenant_id,
+        additional_storage_bytes=validated.size_bytes,
+    )
+    if blockers:
+        raise_quota_limit(
+            session=session,
+            settings=settings,
+            tenant_id=portal_session.tenant_id,
+            operation="document_upload",
+            blocked_reasons=blockers,
+        )
 
     storage = LocalDocumentStorage(settings)
     document: KnowledgeDocument | None = None
@@ -531,6 +583,15 @@ def create_website_source(
         identifiers=[portal_session.tenant_id, portal_session.user_id],
         limit=settings.rate_limit_portal_write_per_minute,
     )
+    blockers = QuotaService(session, settings).website_crawl_blockers(portal_session.tenant_id)
+    if blockers:
+        raise_quota_limit(
+            session=session,
+            settings=settings,
+            tenant_id=portal_session.tenant_id,
+            operation="website_source_create",
+            blocked_reasons=blockers,
+        )
     service = WebsiteIngestionService(session, settings=settings)
     try:
         source = service.create_source(
@@ -567,6 +628,15 @@ def refresh_website_source(
         identifiers=[portal_session.tenant_id, portal_session.user_id],
         limit=settings.rate_limit_portal_write_per_minute,
     )
+    blockers = QuotaService(session, settings).website_crawl_blockers(portal_session.tenant_id)
+    if blockers:
+        raise_quota_limit(
+            session=session,
+            settings=settings,
+            tenant_id=portal_session.tenant_id,
+            operation="website_source_refresh",
+            blocked_reasons=blockers,
+        )
     service = WebsiteIngestionService(session, settings=settings)
     source = service.get_source(portal_session.tenant_id, source_id)
     if source is None:
@@ -771,6 +841,15 @@ def test_agent(
         identifiers=[portal_session.tenant_id, portal_session.user_id],
         limit=settings.rate_limit_portal_write_per_minute,
     )
+    blockers = QuotaService(session, settings).ai_response_blockers(portal_session.tenant_id)
+    if blockers:
+        raise_quota_limit(
+            session=session,
+            settings=settings,
+            tenant_id=portal_session.tenant_id,
+            operation="agent_test",
+            blocked_reasons=blockers,
+        )
     retrieval_service = RagRetrievalService(
         session=session,
         embedding_provider=get_embedding_provider(settings),
@@ -790,6 +869,8 @@ def test_agent(
         answer_status = "no_answer"
         assistant_message = settings.rag_no_answer_message
         citations: list[RetrievalCitation] = []
+        prompt_tokens = 0
+        response_tokens = estimate_tokens(assistant_message)
     else:
         answer_status = "answered"
         citations = rag_context.citations
@@ -809,6 +890,9 @@ def test_agent(
                 ChatMessage(role="user", content=payload.message),
             ]
         )
+        prompt_tokens = estimate_tokens(prompt + payload.message)
+        response_tokens = estimate_tokens(assistant_message)
+    estimated_cost_cents = estimate_ai_cost_cents(prompt_tokens, response_tokens, settings)
     UsageService(session).record_event(
         tenant_id=portal_session.tenant_id,
         event_type=UsageEventType.AGENT_SANDBOX_TESTED,
@@ -819,6 +903,10 @@ def test_agent(
             "citation_count": len(citations),
             "retrieval_top_score": rag_context.top_score,
             "rag_safety_flags": rag_context.safety_flags,
+            "estimated_prompt_tokens": prompt_tokens,
+            "estimated_response_tokens": response_tokens,
+            "estimated_total_tokens": prompt_tokens + response_tokens,
+            "estimated_cost_cents": estimated_cost_cents,
         },
     )
     session.commit()
@@ -1100,6 +1188,26 @@ def get_analytics(
             )
             for event in analytics.recent_usage
         ],
+        quota_status=PortalQuotaStatusResponse(
+            period_start=analytics.quota_status.period_start,
+            period_end=analytics.quota_status.period_end,
+            warning_threshold_percent=analytics.quota_status.warning_threshold_percent,
+            metrics=[
+                PortalQuotaMetricResponse(
+                    key=metric.key,
+                    label=metric.label,
+                    used=metric.used,
+                    limit=metric.limit,
+                    unit=metric.unit,
+                    percent_used=metric.percent_used,
+                    warning=metric.warning,
+                    blocked=metric.blocked,
+                )
+                for metric in analytics.quota_status.metrics
+            ],
+            warnings=analytics.quota_status.warnings,
+            blocked_reasons=analytics.quota_status.blocked_reasons,
+        ),
     )
 
 

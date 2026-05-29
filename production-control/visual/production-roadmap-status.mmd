@@ -9,13 +9,13 @@ flowchart TB
     PR07["PR-07<br/>Document/PDF/DOCX Ingestion<br/>verified"]
     PR08["PR-08<br/>SQL pgvector, Citations, Safety<br/>verified"]
     PR09["PR-09<br/>Onboarding and Widget UX<br/>verified"]
-    PR10["PR-10<br/>Monitoring, Metering, Quotas<br/>next: not started<br/>HIGH"]
-    PR11["PR-11<br/>Billing and Paid Beta<br/>not started"]
+    PR10["PR-10<br/>Monitoring, Metering, Quotas<br/>verified"]
+    PR11["PR-11<br/>Billing and Paid Beta<br/>next: not started<br/>HIGH"]
     PR12["PR-12<br/>Final Audit and Launch Gate<br/>not started"]
 
     GateA["Gate A: Controlled Internal Demo<br/>GO WITH CONDITIONS<br/>synthetic/sample data only"]
     GateB["Gate B: Secure Private Internet Demo<br/>REPO READY WITH CONDITIONS<br/>VPS/CI/owner validation pending"]
-    GateC["Gate C: Real Customer Pilot<br/>NO-GO until PR-01..PR-10 verified"]
+    GateC["Gate C: Real Customer Pilot<br/>REPO READY WITH CONDITIONS<br/>VPS/alerts/quota smoke pending"]
     GateD["Gate D: Paid Beta<br/>NO-GO until PR-01..PR-11 verified"]
     GateE["Gate E: Public Production Launch<br/>NO-GO until PR-12 plus owner approval"]
     LegendVerified["Status: verified/complete"]
@@ -44,9 +44,9 @@ flowchart TB
     classDef gateOk fill:#e0f2fe,stroke:#0369a1,color:#082f49
     classDef gateNo fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09 verified
-    class PR10 high
-    class PR11,PR12 pending
+    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10 verified
+    class PR11 high
+    class PR12 pending
     class GateA gateOk
     class GateB,GateC,GateD,GateE gateNo
     class LegendVerified verified

@@ -207,7 +207,7 @@ class AdminService:
         )
 
     def usage_overview(self):
-        return AnalyticsService(self.session).platform_snapshot()
+        return AnalyticsService(self.session, self.settings).platform_snapshot()
 
     def recent_leads(self, tenant_id: str, limit: int = 10) -> list[Lead]:
         statement = (

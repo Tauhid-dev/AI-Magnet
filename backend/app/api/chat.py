@@ -20,6 +20,8 @@ from app.schemas.chat import (
     ConversationStartResponse,
     LeadCaptureState,
 )
+from app.usage import QuotaLimitExceeded
+from app.usage.quotas import retry_after_for_month
 from app.widget.service import WidgetService
 
 
@@ -93,10 +95,20 @@ def start_conversation(
         identifiers=[resolution.tenant_id, resolution.widget.id],
         limit=settings.rate_limit_chat_start_per_minute,
     )
-    result = chat_service.start_conversation(
-        widget_resolution=resolution,
-        visitor_label=payload.visitor_label,
-    )
+    try:
+        result = chat_service.start_conversation(
+            widget_resolution=resolution,
+            visitor_label=payload.visitor_label,
+        )
+    except QuotaLimitExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "message": "Tenant usage limit reached. Please contact the business.",
+                "blocked_reasons": exc.blocked_reasons,
+            },
+            headers={"Retry-After": str(retry_after_for_month())},
+        ) from exc
     return ConversationStartResponse(
         conversation_id=result.conversation.id,
         status=result.conversation.status,
@@ -137,12 +149,22 @@ def post_conversation_message(
         identifiers=[resolution.tenant_id, resolution.widget.id],
         limit=settings.rate_limit_chat_message_per_minute,
     )
-    result = chat_service.handle_visitor_message(
-        widget_resolution=resolution,
-        conversation_id=conversation_id,
-        message=payload.message,
-        lead_fields=payload.lead,
-    )
+    try:
+        result = chat_service.handle_visitor_message(
+            widget_resolution=resolution,
+            conversation_id=conversation_id,
+            message=payload.message,
+            lead_fields=payload.lead,
+        )
+    except QuotaLimitExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "message": "Tenant usage limit reached. Please contact the business.",
+                "blocked_reasons": exc.blocked_reasons,
+            },
+            headers={"Retry-After": str(retry_after_for_month())},
+        ) from exc
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

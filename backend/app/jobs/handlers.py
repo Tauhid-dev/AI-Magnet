@@ -186,7 +186,26 @@ def handle_website_crawl(
             embedding_provider=get_embedding_provider(settings),
         ).process_source(tenant_id=tenant_id, source_id=source_id)
     except ValueError as exc:
+        UsageService(session).record_event(
+            tenant_id=tenant_id,
+            event_type=UsageEventType.WEBSITE_CRAWL_FAILED,
+            event_source=UsageEventSource.RAG_INGESTION,
+            attributes={"source_id": source_id, "error_type": exc.__class__.__name__},
+        )
         raise PermanentJobError(str(exc)) from exc
+    UsageService(session).record_event(
+        tenant_id=tenant_id,
+        event_type=UsageEventType.WEBSITE_CRAWL_COMPLETED,
+        event_source=UsageEventSource.RAG_INGESTION,
+        attributes={
+            "source_id": result.source_id,
+            "status": result.status,
+            "pages_discovered": result.pages_discovered,
+            "pages_ingested": result.pages_ingested,
+            "pages_failed": result.pages_failed,
+            "pages_skipped": result.pages_skipped,
+        },
+    )
     return {
         "source_id": result.source_id,
         "status": result.status,

@@ -23,6 +23,10 @@ class UsageEventType:
     LEAD_STATUS_UPDATED = "lead_status_updated"
     BUSINESS_PROFILE_UPDATED = "business_profile_updated"
     AGENT_SANDBOX_TESTED = "agent_sandbox_tested"
+    WEBSITE_CRAWL_COMPLETED = "website_crawl_completed"
+    WEBSITE_CRAWL_FAILED = "website_crawl_failed"
+    QUOTA_LIMIT_EXCEEDED = "quota_limit_exceeded"
+    RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
 
 
 class UsageEventSource:
@@ -32,6 +36,7 @@ class UsageEventSource:
     BUSINESS_PORTAL = "business_portal"
     RAG_INGESTION = "rag_ingestion"
     NOTIFICATION_WORKFLOW = "notification_workflow"
+    OPERATIONS = "operations"
 
 
 TENANT_USAGE_EVENTS = frozenset(
@@ -53,6 +58,10 @@ TENANT_USAGE_EVENTS = frozenset(
         UsageEventType.LEAD_STATUS_UPDATED,
         UsageEventType.BUSINESS_PROFILE_UPDATED,
         UsageEventType.AGENT_SANDBOX_TESTED,
+        UsageEventType.WEBSITE_CRAWL_COMPLETED,
+        UsageEventType.WEBSITE_CRAWL_FAILED,
+        UsageEventType.QUOTA_LIMIT_EXCEEDED,
+        UsageEventType.RATE_LIMIT_EXCEEDED,
     }
 )
 

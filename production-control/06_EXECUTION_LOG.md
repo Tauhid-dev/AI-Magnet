@@ -124,6 +124,9 @@ Append-only production phase run history.
   - `python3 -m json.tool production-control/status/production-status.json` - pass.
   - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
   - `git diff --check` - pass.
+  - `python3 -m json.tool production-control/status/production-status.json` - pass.
+  - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+  - `git diff --check` - pass.
 - Known gaps:
   - Gate B remains NO-GO until PR-04 and PR-05 are also verified.
   - PR-04 must still deliver production TLS/HSTS, private PostgreSQL/Redis topology, secret validation, backups/restore, CI scans, production PostgreSQL/pgvector validation, and minimum operational logging/correlation IDs.
@@ -393,4 +396,39 @@ Append-only production phase run history.
   - OCR runtime remains gated; scanned PDFs are not claimed as OCR-processed.
   - Live VPS TLS/firewall, backup/restore, worker/Redis, controlled crawl/document upload, and production-equivalent PostgreSQL/pgvector smoke evidence remain release-gate work.
 - Next phase permitted: PR-10.
+- Commit hash: pending until commit.
+
+## 2026-05-29 - PR-10: Monitoring, Analytics, Metering, Quotas and Cost Protection
+
+- Instruction received: `Implement production phase PR-10`.
+- Phase selected: PR-10.
+- Branch: `production/pr-10-monitoring-metering-quotas-cost-protection`.
+- Files changed:
+  - Backend usage/analytics/operations: `backend/app/usage/quotas.py`, `backend/app/usage/taxonomy.py`, `backend/app/analytics/service.py`, `backend/app/api/health.py`, `backend/app/core/config.py`.
+  - Backend enforcement/API: `backend/app/chat/service.py`, `backend/app/api/chat.py`, `backend/app/api/business_portal.py`, `backend/app/api/admin.py`, `backend/app/jobs/handlers.py`, backend schemas.
+  - Frontend visibility: `frontend/app/admin/usage/page.tsx`, `frontend/app/portal/analytics/page.tsx`, `frontend/lib/api/types.ts`.
+  - Tests/docs/config: `backend/tests/usage/test_quota_service.py`, `backend/tests/chat/test_chat_api.py`, `backend/tests/test_health.py`, `.env.example`, `.env.production.example`, `docs/operations-monitoring.md`.
+  - Production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Added tenant quota snapshots for monthly conversations, AI responses, estimated tokens/cost, documents, storage, crawled pages, and rate-limit/quota events.
+  - Added configurable quota/cost environment settings and production validation for quota/cost bounds.
+  - Added graceful 429 quota enforcement for chat starts, AI responses, agent sandbox tests, document creation/upload, and website crawl queueing.
+  - Added estimated token/cost capture for widget chat responses and portal agent sandbox tests.
+  - Added website crawl completion/failure usage events and quota-limit usage events without raw customer content.
+  - Added `/ready` readiness checks and an optional `ERROR_REPORTING_DSN` integration seam.
+  - Added admin and business portal quota/cost visibility plus an operations monitoring and incident response runbook.
+- Validations run/result:
+  - `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/chat/test_chat_api.py backend/tests/test_health.py` - pass, 12 tests.
+  - `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 93 tests.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+- Known gaps:
+  - Hosted log/alert destination setup is not wired in repository code and remains release-gate operations work.
+  - Live VPS `/ready` smoke, controlled quota-limit smoke, backup/restore drill, worker/Redis smoke, controlled crawl/document upload smoke, and PostgreSQL/pgvector RAG smoke remain required before Gate C pilot use.
+  - Billing/entitlement controls remain PR-11.
+  - OCR runtime remains gated; scanned PDFs are not claimed as OCR-processed.
+- Next phase permitted: PR-11.
 - Commit hash: pending until commit.

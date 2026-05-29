@@ -152,6 +152,13 @@ class AdminUsageOverviewResponse(BaseModel):
     ai_responses_total: int
     lead_notifications_sent: int
     admin_audit_events_total: int
+    estimated_tokens_total: int
+    estimated_cost_cents_total: float
+    pages_crawled_total: int
+    storage_mb_total: float
+    rate_limit_events_total: int
+    quota_warning_tenants: int
+    quota_blocked_tenants: int
     usage_event_counts: list["AdminAnalyticsBreakdownResponse"]
     lead_status_counts: list["AdminAnalyticsBreakdownResponse"]
     document_status_counts: list["AdminAnalyticsBreakdownResponse"]
@@ -177,6 +184,10 @@ class AdminTenantUsageSummaryResponse(BaseModel):
     conversations_total: int
     messages_total: int
     usage_events_total: int
+    estimated_tokens: int
+    estimated_cost_cents: float
+    quota_warnings: list[str]
+    quota_blockers: list[str]
 
 
 class AdminHealthResponse(BaseModel):

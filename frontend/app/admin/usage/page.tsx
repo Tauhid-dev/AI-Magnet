@@ -56,6 +56,21 @@ export default function AdminUsagePage() {
           value={usage?.usage_events_total ?? "-"}
           detail={`${usage?.admin_audit_events_total ?? "-"} audit events`}
         />
+        <MetricCard
+          label="AI cost"
+          value={usage ? `$${(usage.estimated_cost_cents_total / 100).toFixed(2)}` : "-"}
+          detail={`${usage?.estimated_tokens_total ?? "-"} est. tokens`}
+        />
+        <MetricCard
+          label="Quota alerts"
+          value={usage?.quota_warning_tenants ?? "-"}
+          detail={`${usage?.quota_blocked_tenants ?? "-"} blocked tenants`}
+        />
+        <MetricCard
+          label="Crawl/storage"
+          value={usage?.pages_crawled_total ?? "-"}
+          detail={`${usage?.storage_mb_total ?? "-"} MB stored`}
+        />
       </section>
       <section className="mt-6 grid gap-4 lg:grid-cols-3">
         <BreakdownPanel title="Usage events" items={usage?.usage_event_counts || []} />
@@ -72,6 +87,9 @@ export default function AdminUsagePage() {
               <th className="px-4 py-3">Chats</th>
               <th className="px-4 py-3">Messages</th>
               <th className="px-4 py-3">Usage events</th>
+              <th className="px-4 py-3">Tokens</th>
+              <th className="px-4 py-3">Cost</th>
+              <th className="px-4 py-3">Quota</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
@@ -86,11 +104,22 @@ export default function AdminUsagePage() {
                 <td className="px-4 py-3">{tenant.conversations_total}</td>
                 <td className="px-4 py-3">{tenant.messages_total}</td>
                 <td className="px-4 py-3">{tenant.usage_events_total}</td>
+                <td className="px-4 py-3">{tenant.estimated_tokens}</td>
+                <td className="px-4 py-3">${(tenant.estimated_cost_cents / 100).toFixed(2)}</td>
+                <td className="px-4 py-3">
+                  {tenant.quota_blockers.length > 0 ? (
+                    <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">Blocked</span>
+                  ) : tenant.quota_warnings.length > 0 ? (
+                    <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">Warning</span>
+                  ) : (
+                    <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">OK</span>
+                  )}
+                </td>
               </tr>
             ))}
             {usage?.tenant_usage.length === 0 ? (
               <tr>
-                <td className="px-4 py-5 text-muted" colSpan={6}>No tenant usage yet.</td>
+                <td className="px-4 py-5 text-muted" colSpan={9}>No tenant usage yet.</td>
               </tr>
             ) : null}
           </tbody>

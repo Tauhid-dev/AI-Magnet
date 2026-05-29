@@ -261,6 +261,30 @@ class PortalUsageEventResponse(BaseModel):
     created_at: datetime
 
 
+class PortalQuotaMetricResponse(BaseModel):
+    """Tenant quota/cost metric visible in the business portal."""
+
+    key: str
+    label: str
+    used: float
+    limit: float
+    unit: str
+    percent_used: float
+    warning: bool
+    blocked: bool
+
+
+class PortalQuotaStatusResponse(BaseModel):
+    """Current tenant quota and cost status."""
+
+    period_start: datetime
+    period_end: datetime
+    warning_threshold_percent: float
+    metrics: list[PortalQuotaMetricResponse]
+    warnings: list[str]
+    blocked_reasons: list[str]
+
+
 class PortalJobResponse(BaseModel):
     """Tenant-visible background job status without raw payload data."""
 
@@ -300,3 +324,4 @@ class PortalAnalyticsResponse(BaseModel):
     document_status_counts: list[PortalAnalyticsBreakdownResponse]
     usage_event_counts: list[PortalAnalyticsBreakdownResponse]
     recent_usage: list[PortalUsageEventResponse]
+    quota_status: PortalQuotaStatusResponse

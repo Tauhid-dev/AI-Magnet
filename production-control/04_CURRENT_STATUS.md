@@ -8,19 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-PR-10: Monitoring, Analytics, Metering, Quotas and Cost Protection.
+PR-11: Billing, Compliance Controls and Paid Beta Readiness.
 
-Status: not_started. PR-01 through PR-09 are verified and PR-10 is the next permitted phase.
+Status: not_started. PR-01 through PR-10 are verified and PR-11 is the next permitted phase.
 
 ## Last Completed Phase
 
-PR-09.
+PR-10.
 
 ## Next Permitted Phase
 
-`Implement production phase PR-10`
+`Implement production phase PR-11`
 
-Do not start PR-11 or later unless explicitly requested. PR-10 depends on PR-09 and is now the next ordered production remediation phase.
+Do not start PR-12 unless explicitly requested. PR-11 depends on PR-10 and is now the next ordered production remediation phase.
 
 ## Production Go/No-Go
 
@@ -28,7 +28,7 @@ Do not start PR-11 or later unless explicitly requested. PR-10 depends on PR-09 
 |---|---|
 | Gate A: Controlled Internal Demo, synthetic/sample data only | GO WITH CONDITIONS |
 | Gate B: Secure Private Internet Demo | REPOSITORY READY WITH CONDITIONS after PR-05; live VPS smoke, remote CI evidence, and owner approval still required |
-| Gate C: Real Customer Pilot | NO-GO until PR-10 verified and release-gate smoke evidence is collected |
+| Gate C: Real Customer Pilot | REPOSITORY READY WITH CONDITIONS after PR-10; live VPS/staging smoke, alerting/log destination setup, controlled quota-limit smoke, backup/restore, worker/Redis, crawl/document/RAG smoke, and owner approval still required |
 | Gate D: Paid Beta | NO-GO until PR-01 through PR-11 verified |
 | Gate E: Public Production Launch | NO-GO until PR-12 final audit and explicit owner approval |
 
@@ -45,32 +45,30 @@ Do not start PR-11 or later unless explicitly requested. PR-10 depends on PR-09 
 - PR-07 implemented authenticated multipart document upload for text, Markdown, PDF, and DOCX; private tenant file storage; upload validation; deterministic basic malware screening; PDF/DOCX extraction; OCR-required gating for scanned PDFs; file-backed worker jobs without raw payloads; refresh/delete controls; portal file upload UX; and validation tests.
 - PR-08 implemented PostgreSQL/pgvector SQL retrieval with tenant/status filters, retrieval indexes, bounded top-K/threshold behavior, no-answer fallback, source citations through the chat API and widget, prompt-injection safety flags for retrieved content and visitor prompts, and RAG evaluation fixtures.
 - PR-09 implemented business profile setup, setup checklist/readiness UX, tenant knowledge/job status views, source-grounded agent sandbox with citations, widget title branding/copy controls, safer cookie-session hydration, leads/conversations loading/error states, and validation/browser smoke coverage.
+- PR-10 implemented tenant usage metering, configurable quota/cost limits, graceful quota blocking, `/ready` readiness checks, estimated token/cost capture for chat and sandbox tests, admin/portal quota visibility, website crawl completion/failure usage events, and an operations monitoring/incident runbook.
 
 ## Unresolved Critical Risks
 
-- No unresolved critical repository-controlled PR-09 blockers remain. Live VPS validation of TLS, firewall, backups, restore, worker health, Redis reachability, controlled real-site crawl smoke, controlled document-upload smoke, and production-equivalent PostgreSQL/pgvector RAG smoke is still required before broader operation.
+- No unresolved critical repository-controlled PR-10 blockers remain. Live VPS validation of TLS, firewall, backups, restore, worker health, Redis reachability, controlled real-site crawl smoke, controlled document-upload smoke, production-equivalent PostgreSQL/pgvector RAG smoke, log/alert destination setup, and quota-limit smoke is still required before broader operation.
 
 ## Unresolved High Risks
 
-- Monitoring, metering, quotas, and cost protection are incomplete.
 - Billing/entitlement controls for paid beta are missing.
 - Scanned-document OCR runtime remains gated and not implemented.
-- First remote CI run for the pushed PR-09 branch will be required.
-- First VPS certificate issuance/renewal, backup/restore drill, worker/Redis smoke, controlled real-site crawl and document-upload smoke, and live PostgreSQL/pgvector RAG smoke run are pending release-gate validation.
+- First remote CI run for the pushed PR-10 branch will be required.
+- First VPS certificate issuance/renewal, backup/restore drill, worker/Redis smoke, controlled real-site crawl and document-upload smoke, live PostgreSQL/pgvector RAG smoke, `/ready` smoke, log/alert destination verification, and controlled quota-limit smoke run are pending release-gate validation.
 
 ## Last Validation Commands
 
-Latest PR-09 validation commands:
+Latest PR-10 validation commands:
 
-- `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
-- `backend/.venv/bin/python -m pytest backend/tests/business/test_business_portal_api.py` - pass, 12 tests.
-- `backend/.venv/bin/python -m pytest backend/tests` - pass, 89 tests.
-- `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr09_browser.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+- `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/chat/test_chat_api.py backend/tests/test_health.py` - pass, 12 tests.
+- `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
+- `backend/.venv/bin/python -m pytest backend/tests` - pass, 93 tests.
 - `npm run lint` - pass.
 - `npm run typecheck` - pass.
 - `npm test` - pass.
 - `npm run build` - pass.
-- Browser smoke: local FastAPI + Next.js with temp SQLite tenant confirmed login, setup checklist, agent sandbox response with sources, and widget branding save.
 - `python3 -m json.tool production-control/status/production-status.json` - pass.
 - `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
 - `git diff --check` - pass.

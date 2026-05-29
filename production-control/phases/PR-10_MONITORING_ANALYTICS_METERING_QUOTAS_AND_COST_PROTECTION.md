@@ -1,6 +1,6 @@
 # PR-10: Monitoring, Analytics, Metering, Quotas and Cost Protection
 
-Status: not_started
+Status: verified
 
 ## Purpose
 
@@ -45,15 +45,15 @@ Current usage analytics are MVP transactional counts. The platform lacks full mo
 
 ## Detailed Tasks
 
-- [ ] Inspect current logs, health, usage taxonomy, and analytics.
-- [ ] Add correlation/request IDs.
-- [ ] Add PII-safe structured logging.
-- [ ] Add metrics/alerting integration seam.
-- [ ] Add token/cost usage capture.
-- [ ] Add quotas and graceful limit enforcement.
-- [ ] Add admin visibility for ops/cost/rate-limit events.
-- [ ] Add incident and restore runbook validation.
-- [ ] Update status/risk/validation/visual artifacts.
+- [x] Inspect current logs, health, usage taxonomy, and analytics.
+- [x] Confirm existing request/correlation ID middleware and JSON log support.
+- [x] Keep logs PII-safe by recording quota/rate/cost metadata without raw messages or documents.
+- [x] Add metrics/alerting integration seam through readiness checks, `ERROR_REPORTING_DSN`, and operations runbook.
+- [x] Add token/cost usage capture for widget chat and agent sandbox tests.
+- [x] Add quotas and graceful limit enforcement for chat, AI responses, documents/storage, and website crawl pages.
+- [x] Add admin visibility for ops/cost/rate-limit/quota indicators.
+- [x] Add incident and restore runbook validation notes.
+- [x] Update status/risk/validation/visual artifacts.
 
 ## Tests And Validation Required
 
@@ -73,11 +73,32 @@ May require usage/cost/quota tables. Provide migrations and quota default behavi
 
 ## Evidence
 
-To be filled during PR-10.
+- `backend/app/usage/quotas.py` computes tenant quota snapshots from tenant-scoped usage, document, conversation, and crawl data.
+- `backend/app/chat/service.py` records estimated AI tokens/cost and blocks exhausted tenant chat/AI quotas gracefully.
+- `backend/app/api/business_portal.py` enforces knowledge/document/crawl/agent-test quotas and records `quota_limit_exceeded` events.
+- `backend/app/api/health.py` exposes `/ready` for database/configuration readiness checks.
+- `backend/app/analytics/service.py`, `backend/app/api/admin.py`, and `backend/app/api/business_portal.py` expose quota/cost/usage metrics to admin and portal clients.
+- `frontend/app/admin/usage/page.tsx` shows platform estimated tokens, cost, crawl/storage totals, and tenant quota state.
+- `frontend/app/portal/analytics/page.tsx` shows tenant quota gauges and blocked/warning status.
+- `docs/operations-monitoring.md` documents metering, quota controls, alerting expectations, and incident response.
+- `backend/tests/usage/test_quota_service.py`, `backend/tests/chat/test_chat_api.py`, and `backend/tests/test_health.py` cover quota snapshots, quota blocking, and readiness checks.
+
+Validation:
+
+- `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/chat/test_chat_api.py backend/tests/test_health.py` - pass, 12 tests.
+- `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
+- `backend/.venv/bin/python -m pytest backend/tests` - pass, 93 tests.
+- `npm run lint` - pass.
+- `npm run typecheck` - pass.
+- `npm test` - pass.
+- `npm run build` - pass.
+- `python3 -m json.tool production-control/status/production-status.json` - pass.
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+- `git diff --check` - pass.
 
 ## Blockers
 
-Requires real customer workflow from PR-09.
+No repository-controlled PR-10 blockers remain. Live logging/alert destination setup, VPS `/ready` smoke, quota-limit smoke, and operational incident/restore drills remain release-gate evidence before real customer pilot use.
 
 ## Completion Criteria
 

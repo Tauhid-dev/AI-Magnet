@@ -179,6 +179,26 @@ export type AnalyticsBreakdown = {
   count: number;
 };
 
+export type QuotaMetric = {
+  key: string;
+  label: string;
+  used: number;
+  limit: number;
+  unit: string;
+  percent_used: number;
+  warning: boolean;
+  blocked: boolean;
+};
+
+export type QuotaStatus = {
+  period_start: string;
+  period_end: string;
+  warning_threshold_percent: number;
+  metrics: QuotaMetric[];
+  warnings: string[];
+  blocked_reasons: string[];
+};
+
 export type PortalAnalytics = {
   documents_total: number;
   documents_ingested: number;
@@ -204,6 +224,7 @@ export type PortalAnalytics = {
     attributes: Record<string, unknown>;
     created_at: string;
   }>;
+  quota_status: QuotaStatus;
 };
 
 export type AdminSession = {
@@ -278,6 +299,13 @@ export type AdminUsageOverview = {
   ai_responses_total: number;
   lead_notifications_sent: number;
   admin_audit_events_total: number;
+  estimated_tokens_total: number;
+  estimated_cost_cents_total: number;
+  pages_crawled_total: number;
+  storage_mb_total: number;
+  rate_limit_events_total: number;
+  quota_warning_tenants: number;
+  quota_blocked_tenants: number;
   usage_event_counts: AnalyticsBreakdown[];
   lead_status_counts: AnalyticsBreakdown[];
   document_status_counts: AnalyticsBreakdown[];
@@ -291,6 +319,10 @@ export type AdminUsageOverview = {
     conversations_total: number;
     messages_total: number;
     usage_events_total: number;
+    estimated_tokens: number;
+    estimated_cost_cents: number;
+    quota_warnings: string[];
+    quota_blockers: string[];
   }>;
 };
 
