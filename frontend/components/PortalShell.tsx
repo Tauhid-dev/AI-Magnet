@@ -9,7 +9,9 @@ import { clearSession, getStoredSession, getToken } from "../lib/auth/session";
 
 const navItems = [
   { href: "/portal", label: "Overview" },
+  { href: "/portal/onboarding", label: "Setup" },
   { href: "/portal/documents", label: "Knowledge" },
+  { href: "/portal/agent", label: "Agent test" },
   { href: "/portal/leads", label: "Leads" },
   { href: "/portal/conversations", label: "Conversations" },
   { href: "/portal/widget", label: "Widget" },
@@ -22,13 +24,32 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<BusinessSession | null>(null);
 
   useEffect(() => {
-    const token = getToken();
-    const storedSession = getStoredSession();
-    if (!token || !storedSession) {
-      router.replace("/login");
-      return;
+    let cancelled = false;
+
+    async function hydrateSession() {
+      const token = getToken();
+      const storedSession = getStoredSession();
+      if (storedSession) {
+        setSession(storedSession);
+        return;
+      }
+      try {
+        const serverSession = await portalApi.session(token);
+        if (!cancelled) {
+          setSession(serverSession);
+        }
+      } catch {
+        if (!cancelled) {
+          clearSession();
+          router.replace("/login");
+        }
+      }
     }
-    setSession(storedSession);
+
+    hydrateSession();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   if (!session) {

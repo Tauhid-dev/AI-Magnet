@@ -189,3 +189,15 @@ Append-only ADR-lite log for production remediation.
   - Always call the LLM with "no context": rejected because it encourages plausible unsupported answers.
   - Hardcode the fallback copy in the service: rejected because launch copy should be configurable by environment.
 - Follow-up impact: PR-09 may tune the displayed no-answer copy in the agent test/widget UX; PR-10 can meter saved no-context provider calls.
+
+## DEC-PR-20260529-018: Portal Setup Flow Uses Existing Hardened Tenant APIs
+
+- Date: 2026-05-29
+- Decision: Implement PR-09 as an incremental business-portal setup flow over the existing hardened APIs: profile update, knowledge/job status, source-grounded agent sandbox, and widget branding/key controls. The agent sandbox does not create conversations or leads, and portal session hydration can fall back to the HttpOnly cookie session when local storage metadata is unavailable.
+- Reason: PR-09 should turn the verified PR-01 through PR-08 capabilities into a beta-ready customer workflow without introducing a parallel onboarding service, a second chat path, or mock/demo-only frontend state.
+- Affected files/phases: PR-09, `backend/app/api/business_portal.py`, `backend/app/business/service.py`, `backend/app/widget/service.py`, `frontend/app/portal/onboarding/page.tsx`, `frontend/app/portal/agent/page.tsx`, `frontend/app/portal/widget/page.tsx`, `frontend/components/PortalShell.tsx`, `frontend/lib/auth/session.ts`.
+- Alternatives rejected:
+  - Create a separate onboarding backend module: rejected because the existing tenant-scoped portal APIs already own the same data and authorization boundaries.
+  - Persist sandbox tests as conversations: rejected because sandbox testing should not pollute customer chat history, lead workflows, or analytics meant for real visitors.
+  - Require local storage metadata for portal access: rejected because the secure source of truth is the HttpOnly cookie-backed server session.
+- Follow-up impact: PR-10 should meter sandbox tests, widget setup changes, and setup completion as part of quota/cost/operations visibility. PR-12 should re-check whether authenticated-owner website approval remains sufficient for public launch.

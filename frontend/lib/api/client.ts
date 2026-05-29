@@ -12,7 +12,9 @@ import type {
   BackgroundJob,
   BusinessSession,
   LoginResponse,
+  PortalAgentTestResponse,
   PortalAnalytics,
+  PortalBusinessProfile,
   PortalConversation,
   PortalConversationDetail,
   PortalDocument,
@@ -97,6 +99,24 @@ export const portalApi = {
   },
   session(token?: string | null) {
     return request<BusinessSession>("/business-portal/session", { token });
+  },
+  profile(token?: string | null) {
+    return request<PortalBusinessProfile>("/business-portal/profile", { token });
+  },
+  updateProfile(
+    token: string | null,
+    payload: {
+      business_name: string;
+      business_email?: string | null;
+      business_phone?: string | null;
+      website_url?: string | null;
+    }
+  ) {
+    return request<PortalBusinessProfile>("/business-portal/profile", {
+      token,
+      method: "PATCH",
+      body: payload
+    });
   },
   documents(token?: string | null) {
     return request<PortalDocument[]>("/business-portal/documents", { token });
@@ -186,6 +206,13 @@ export const portalApi = {
       { token }
     );
   },
+  testAgent(token: string | null, message: string) {
+    return request<PortalAgentTestResponse>("/business-portal/agent/test", {
+      token,
+      method: "POST",
+      body: { message }
+    });
+  },
   widget(token?: string | null) {
     return request<PortalWidget>("/business-portal/widget", { token });
   },
@@ -201,6 +228,13 @@ export const portalApi = {
       token,
       method: "PATCH",
       body: { allowed_origins: allowedOrigins }
+    });
+  },
+  updateWidgetBranding(token: string | null, widgetId: string, widgetTitle: string) {
+    return request<PortalWidget>(`/business-portal/widget/${widgetId}/branding`, {
+      token,
+      method: "PATCH",
+      body: { widget_title: widgetTitle }
     });
   },
   rotateWidgetKey(token: string | null, widgetId: string, allowedOrigins?: string[]) {

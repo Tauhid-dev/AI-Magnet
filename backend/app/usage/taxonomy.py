@@ -19,7 +19,10 @@ class UsageEventType:
     WIDGET_KEY_DISABLED = "widget_key_disabled"
     WIDGET_KEY_REVOKED = "widget_key_revoked"
     WIDGET_ORIGINS_UPDATED = "widget_origins_updated"
+    WIDGET_BRANDING_UPDATED = "widget_branding_updated"
     LEAD_STATUS_UPDATED = "lead_status_updated"
+    BUSINESS_PROFILE_UPDATED = "business_profile_updated"
+    AGENT_SANDBOX_TESTED = "agent_sandbox_tested"
 
 
 class UsageEventSource:
@@ -46,7 +49,10 @@ TENANT_USAGE_EVENTS = frozenset(
         UsageEventType.WIDGET_KEY_DISABLED,
         UsageEventType.WIDGET_KEY_REVOKED,
         UsageEventType.WIDGET_ORIGINS_UPDATED,
+        UsageEventType.WIDGET_BRANDING_UPDATED,
         UsageEventType.LEAD_STATUS_UPDATED,
+        UsageEventType.BUSINESS_PROFILE_UPDATED,
+        UsageEventType.AGENT_SANDBOX_TESTED,
     }
 )
 

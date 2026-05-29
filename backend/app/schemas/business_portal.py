@@ -35,6 +35,30 @@ class BusinessPortalLoginResponse(BaseModel):
     session: BusinessPortalSessionResponse
 
 
+class PortalBusinessProfileResponse(BaseModel):
+    """Tenant and primary business profile for onboarding."""
+
+    tenant_id: str
+    tenant_name: str
+    tenant_slug: str
+    tenant_status: str
+    business_id: str | None = None
+    business_name: str | None = None
+    business_email: str | None = None
+    business_phone: str | None = None
+    website_url: str | None = None
+    updated_at: datetime | None = None
+
+
+class PortalBusinessProfileUpdateRequest(BaseModel):
+    """Business profile update payload."""
+
+    business_name: str = Field(min_length=1, max_length=255)
+    business_email: str | None = Field(default=None, max_length=255)
+    business_phone: str | None = Field(default=None, max_length=80)
+    website_url: str | None = Field(default=None, max_length=500)
+
+
 class PortalDocumentResponse(BaseModel):
     """Knowledge document row for the business portal."""
 
@@ -160,6 +184,37 @@ class PortalConversationDetailResponse(PortalConversationResponse):
     messages: list[PortalMessageResponse]
 
 
+class PortalCitationResponse(BaseModel):
+    """Source citation metadata returned from agent tests."""
+
+    citation_id: str
+    document_id: str
+    chunk_id: str
+    chunk_index: int
+    score: float
+    filename: str
+    source_type: str
+    source_title: str | None = None
+    source_url: str | None = None
+
+
+class PortalAgentTestRequest(BaseModel):
+    """Sandbox prompt for testing the tenant RAG agent."""
+
+    message: str = Field(min_length=1, max_length=4000)
+
+
+class PortalAgentTestResponse(BaseModel):
+    """Sandbox answer with source-grounded RAG metadata."""
+
+    assistant_message: str
+    answer_status: str
+    retrieved_chunk_count: int
+    citations: list[PortalCitationResponse] = Field(default_factory=list)
+    retrieval_top_score: float | None = None
+    rag_safety_flags: list[str] = Field(default_factory=list)
+
+
 class PortalWidgetResponse(BaseModel):
     """Business portal widget setup response."""
 
@@ -169,6 +224,7 @@ class PortalWidgetResponse(BaseModel):
     widget_key: str | None = None
     embed_code: str | None
     allowed_origins: list[str]
+    widget_title: str | None = None
 
 
 class PortalWidgetKeyCreateRequest(BaseModel):
@@ -181,6 +237,12 @@ class PortalWidgetOriginsUpdateRequest(BaseModel):
     """Widget allowed origin update request."""
 
     allowed_origins: list[str] = Field(default_factory=list)
+
+
+class PortalWidgetBrandingUpdateRequest(BaseModel):
+    """Beta-scope widget branding settings."""
+
+    widget_title: str = Field(min_length=1, max_length=120)
 
 
 class PortalAnalyticsBreakdownResponse(BaseModel):

@@ -13,6 +13,19 @@ export type LoginResponse = {
   session: BusinessSession;
 };
 
+export type PortalBusinessProfile = {
+  tenant_id: string;
+  tenant_name: string;
+  tenant_slug: string;
+  tenant_status: string;
+  business_id: string | null;
+  business_name: string | null;
+  business_email: string | null;
+  business_phone: string | null;
+  website_url: string | null;
+  updated_at: string | null;
+};
+
 export type PortalDocument = {
   id: string;
   filename: string;
@@ -137,6 +150,28 @@ export type PortalWidget = {
   widget_key: string | null;
   embed_code: string | null;
   allowed_origins: string[];
+  widget_title: string | null;
+};
+
+export type PortalCitation = {
+  citation_id: string;
+  document_id: string;
+  chunk_id: string;
+  chunk_index: number;
+  score: number;
+  filename: string;
+  source_type: string;
+  source_title: string | null;
+  source_url: string | null;
+};
+
+export type PortalAgentTestResponse = {
+  assistant_message: string;
+  answer_status: string;
+  retrieved_chunk_count: number;
+  citations: PortalCitation[];
+  retrieval_top_score: number | null;
+  rag_safety_flags: string[];
 };
 
 export type AnalyticsBreakdown = {

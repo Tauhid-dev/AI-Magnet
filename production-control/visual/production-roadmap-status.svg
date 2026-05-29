@@ -29,7 +29,7 @@
   <rect class="bg" width="1600" height="1150" />
   <text class="title" x="60" y="55">AI-Magnet Production Readiness Roadmap</text>
   <text class="subtitle" x="60" y="86">Baseline: 2026-05-23 production readiness 35/100. Internal MVP Demo: GO WITH CONDITIONS. Public/Paid/Production: NO-GO.</text>
-  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Current next permitted phase: PR-09.</text>
+  <text class="small" x="60" y="112">Source: production-control/status/production-status.json. Current next permitted phase: PR-10.</text>
 
   <rect class="legend" x="60" y="135" width="1480" height="64" rx="8" />
   <rect x="86" y="156" width="22" height="22" fill="#dcfce7" stroke="#15803d" />
@@ -111,15 +111,17 @@
   <rect x="668" y="540" width="70" height="22" rx="5" fill="#15803d" />
   <text class="badge" x="681" y="556">verified</text>
 
-  <rect class="high" x="970" y="455" width="220" height="105" rx="10" />
+  <rect class="verified" x="970" y="455" width="220" height="105" rx="10" />
   <text class="card-title" x="988" y="485">PR-09</text>
   <text class="card-text" x="988" y="510">Onboarding</text>
-  <text class="card-text" x="988" y="533">Next: agent and widget UX</text>
+  <text class="card-text" x="988" y="533">Setup, agent, widget UX</text>
+  <rect x="988" y="540" width="70" height="22" rx="5" fill="#15803d" />
+  <text class="badge" x="1001" y="556">verified</text>
 
-  <rect class="pending" x="1270" y="455" width="230" height="105" rx="10" />
+  <rect class="high" x="1270" y="455" width="230" height="105" rx="10" />
   <text class="card-title" x="1288" y="485">PR-10</text>
   <text class="card-text" x="1288" y="510">Monitoring, metering</text>
-  <text class="card-text" x="1288" y="533">Quotas and cost controls</text>
+  <text class="card-text" x="1288" y="533">Next: quotas/cost controls</text>
 
   <path class="arrow" d="M1270 345 V482 H270" />
   <path class="arrow" d="M270 482 H330" />
@@ -169,8 +171,8 @@
   <text class="card-text" x="1238" y="952">Public production launch: NO-GO</text>
   <text class="card-text" x="1238" y="973">Requires PR-12 + owner approval</text>
 
-  <text class="blocker" x="60" y="1045">Current blockers: PR-09 onboarding/agent/widget UX, PR-10 monitoring/metering/quotas, gated OCR runtime,</text>
-  <text class="blocker" x="60" y="1074">controlled crawl/document-upload smoke, VPS TLS/firewall validation, backup/restore, worker/Redis and pgvector RAG smoke.</text>
-  <text class="small" x="60" y="1103">High blockers ahead: onboarding UX, monitoring, quotas, paid-beta controls, final launch audit.</text>
-  <text class="small" x="60" y="1132">Generated deterministically as a static SVG and updated through PR-08. Keep it consistent with production-control/status/production-status.json.</text>
+  <text class="blocker" x="60" y="1045">Current blockers: PR-10 monitoring/metering/quotas, gated OCR runtime, controlled crawl/document-upload smoke,</text>
+  <text class="blocker" x="60" y="1074">VPS TLS/firewall validation, backup/restore, worker/Redis and pgvector RAG smoke.</text>
+  <text class="small" x="60" y="1103">High blockers ahead: monitoring, quotas, paid-beta controls, final launch audit.</text>
+  <text class="small" x="60" y="1132">Generated deterministically as a static SVG and updated through PR-09. Keep it consistent with production-control/status/production-status.json.</text>
 </svg>

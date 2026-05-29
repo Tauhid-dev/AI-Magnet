@@ -6,15 +6,15 @@ const COOKIE_SESSION_TOKEN = "__cookie_session__";
 const SESSION_KEY = "ai-magnet-business-session";
 
 export function saveSession(_token: string, session: BusinessSession) {
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  getLocalStorage()?.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
 export function getToken() {
-  return window.localStorage.getItem(SESSION_KEY) ? COOKIE_SESSION_TOKEN : null;
+  return COOKIE_SESSION_TOKEN;
 }
 
 export function getStoredSession(): BusinessSession | null {
-  const raw = window.localStorage.getItem(SESSION_KEY);
+  const raw = getLocalStorage()?.getItem(SESSION_KEY);
   if (!raw) {
     return null;
   }
@@ -26,5 +26,16 @@ export function getStoredSession(): BusinessSession | null {
 }
 
 export function clearSession() {
-  window.localStorage.removeItem(SESSION_KEY);
+  getLocalStorage()?.removeItem(SESSION_KEY);
+}
+
+function getLocalStorage(): Storage | null {
+  if (typeof window === "undefined" || !("localStorage" in window)) {
+    return null;
+  }
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }

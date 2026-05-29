@@ -23,12 +23,26 @@ assert.doesNotMatch(apiClient, /AI_API_KEY/);
 const portalShell = read("components/PortalShell.tsx");
 assert.match(portalShell, /getToken/);
 assert.match(portalShell, /tenant_name/);
+assert.match(portalShell, /\/portal\/onboarding/);
+assert.match(portalShell, /\/portal\/agent/);
 
 const widgetPage = read("app/portal/widget/page.tsx");
 assert.match(widgetPage, /createWidgetKey/);
+assert.match(widgetPage, /updateWidgetBranding/);
+assert.match(widgetPage, /navigator\.clipboard/);
 
 const documentsPage = read("app/portal/documents/page.tsx");
 assert.match(documentsPage, /uploadDocument/);
+assert.match(documentsPage, /portalApi\.jobs/);
+
+const onboardingPage = read("app/portal/onboarding/page.tsx");
+assert.match(onboardingPage, /updateProfile/);
+assert.match(onboardingPage, /Launch checklist/);
+assert.match(onboardingPage, /agent_sandbox_tested/);
+
+const agentTestPage = read("app/portal/agent/page.tsx");
+assert.match(agentTestPage, /testAgent/);
+assert.match(agentTestPage, /Sources/);
 
 const adminShell = read("components/AdminShell.tsx");
 assert.match(adminShell, /getAdminToken/);

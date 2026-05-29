@@ -357,3 +357,40 @@ Append-only production phase run history.
   - OCR runtime remains gated; scanned PDFs are not claimed as OCR-processed.
 - Next phase permitted: PR-09.
 - Commit hash: pending until commit.
+
+## 2026-05-29 - PR-09: Customer Onboarding, Agent Testing and Widget Installation Experience
+
+- Instruction received: `Implement production phase PR-09`.
+- Phase selected: PR-09.
+- Branch: `production/pr-09-customer-onboarding-agent-widget-ux`.
+- Files changed:
+  - Backend portal workflow: `backend/app/api/business_portal.py`, `backend/app/business/service.py`, `backend/app/schemas/business_portal.py`, `backend/app/usage/taxonomy.py`, `backend/app/widget/service.py`.
+  - Backend tests: `backend/tests/business/test_business_portal_api.py`.
+  - Frontend portal UX: `frontend/app/portal/onboarding/page.tsx`, `frontend/app/portal/agent/page.tsx`, `frontend/app/portal/documents/page.tsx`, `frontend/app/portal/widget/page.tsx`, `frontend/app/portal/leads/page.tsx`, `frontend/app/portal/conversations/page.tsx`, `frontend/components/PortalShell.tsx`, `frontend/lib/auth/session.ts`.
+  - Frontend API/static checks: `frontend/lib/api/client.ts`, `frontend/lib/api/types.ts`, `frontend/tests/static-check.mjs`.
+  - Production-control status/risk/validation/visual artifacts.
+- Implementation summary:
+  - Added tenant business profile read/update APIs with safe public website URL validation and usage events.
+  - Added a tenant-scoped agent sandbox endpoint that uses PR-08 retrieval/safety/citations without creating conversations or leads.
+  - Added widget title branding API support and branded/copyable embed code in the business portal.
+  - Added a setup dashboard with business profile, readiness checklist, knowledge counts, active indexing jobs, and widget readiness.
+  - Added an agent test page that displays answer status, retrieval score, safety flags, and source citations.
+  - Improved knowledge job visibility and added loading/error/empty states for leads and conversations.
+  - Hardened portal session hydration so a valid HttpOnly cookie-backed session can recover even when local storage metadata is unavailable.
+- Validations run/result:
+  - `backend/.venv/bin/python -m ruff check backend/app backend/tests` - pass.
+  - `backend/.venv/bin/python -m pytest backend/tests/business/test_business_portal_api.py` - pass, 12 tests.
+  - `backend/.venv/bin/python -m pytest backend/tests` - pass, 89 tests.
+  - `DATABASE_URL=sqlite:////private/tmp/ai_magnet_pr09_browser.db backend/.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run build` - pass.
+  - Authenticated browser smoke with local FastAPI + Next.js + temp SQLite tenant - pass: login, setup checklist, agent sandbox with sources, and widget branding save.
+- Known gaps:
+  - PR-10 monitoring, metering, quotas, cost controls, and operational alerting are still missing.
+  - Billing/entitlement controls remain PR-11.
+  - OCR runtime remains gated; scanned PDFs are not claimed as OCR-processed.
+  - Live VPS TLS/firewall, backup/restore, worker/Redis, controlled crawl/document upload, and production-equivalent PostgreSQL/pgvector smoke evidence remain release-gate work.
+- Next phase permitted: PR-10.
+- Commit hash: pending until commit.
