@@ -78,7 +78,7 @@ Schema changes may be needed for onboarding/profile/branding. Provide migrations
 
 ## Blockers
 
-No repository-controlled High blocker remains after PR-13A. Live backend-integrated customer/admin/widget smoke on the target VPS/staging environment remains PR-14 external release-gate evidence.
+No repository-controlled High blocker remains after PR-13A. Live backend-integrated customer/admin/widget smoke on the target VPS/staging environment remains PR-14B external release-gate evidence.
 
 ## Completion Criteria
 

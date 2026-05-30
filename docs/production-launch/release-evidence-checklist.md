@@ -1,6 +1,6 @@
 # Release Evidence Checklist
 
-PR-13A update, 2026-05-30: the repository High findings from PR-13 are closed in `production/pr-13a-consolidated-remediation`. Use this checklist for PR-14 owner-approved external VPS/staging evidence before any real customer pilot, paid beta, or public production launch.
+PR-14A update, 2026-05-30: the repository High findings from PR-13 are closed, and PR-14A adds a manual GitHub Actions staging deployment/evidence framework using the GitHub `staging` Environment. Use this checklist for PR-14B owner-approved external VPS/staging evidence before any real customer pilot, paid beta, or public production launch.
 
 Date: 2026-05-29  
 Phase: PR-12 with PR-12A correction package
@@ -30,8 +30,11 @@ Repository prerequisites:
 
 External evidence still required:
 
-- [ ] Remote CI passes on the final target branch.
+- [ ] Remote CI passes on the final PR-14A framework branch and later target branch.
 - [ ] Owner approves private demo scope and data policy.
+- [ ] GitHub Environment `staging` is configured with required variables/secrets and required reviewer approval.
+- [ ] `Staging deployment validation` workflow runs with `confirm_synthetic_data_only=true`.
+- [ ] Uploaded staging evidence artifact is reviewed and retained.
 - [ ] VPS firewall exposes only approved public ports.
 - [ ] HTTPS certificate issuance and renewal path is tested.
 - [ ] `/health` and `/ready` pass on the target host.
@@ -96,7 +99,7 @@ Required before changing to GO:
 - [ ] PR-13A final repository remediation branch is merged after review.
 - [ ] All repository-controlled PR-13A validation commands pass.
 - [ ] Remote CI passes on the production launch candidate.
-- [ ] Staging/VPS validation run passes.
+- [ ] PR-14B staging/VPS validation run passes using the PR-14A GitHub Actions workflow.
 - [ ] Production super-admin MFA smoke passes on the target environment.
 - [ ] Redis-backed application rate-limit smoke passes on the target environment.
 - [ ] Restore drill evidence is recorded and accepted.

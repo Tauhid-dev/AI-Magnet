@@ -1,0 +1,245 @@
+name: Staging deployment validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "Branch or commit to deploy. Empty uses STAGING_BRANCH, then the workflow ref."
+        required: false
+        default: ""
+      confirm_synthetic_data_only:
+        description: "I confirm this staging run uses synthetic/test data only."
+        required: true
+        type: boolean
+        default: false
+      run_restore_drill:
+        description: "Run staging restore drill if a backup is created."
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  preflight:
+    name: Preflight repository checks
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_ref: ${{ steps.resolve-ref.outputs.deploy_ref }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Resolve deploy ref
+        id: resolve-ref
+        shell: bash
+        env:
+          INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
+          STAGING_BRANCH: ${{ vars.STAGING_BRANCH }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          deploy_ref="${INPUT_DEPLOY_REF:-${STAGING_BRANCH:-$GITHUB_REF_NAME}}"
+          if [[ -z "$deploy_ref" ]]; then
+            echo "Could not resolve a deploy ref." >&2
+            exit 1
+          fi
+          echo "deploy_ref=$deploy_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Confirm synthetic data only
+        if: ${{ !inputs.confirm_synthetic_data_only }}
+        run: |
+          echo "This workflow is blocked until confirm_synthetic_only is true." >&2
+          exit 1
+
+      - name: Validate staging scripts
+        run: bash -n scripts/staging/*.sh
+
+  deploy-staging:
+    name: Deploy staging
+    runs-on: ubuntu-latest
+    needs: preflight
+    environment: staging
+    env:
+      STAGING_HOST: ${{ vars.STAGING_HOST }}
+      STAGING_SSH_USER: ${{ vars.STAGING_SSH_USER }}
+      STAGING_DOMAIN: ${{ vars.STAGING_DOMAIN }}
+      STAGING_APP_DIR: ${{ vars.STAGING_APP_DIR }}
+      STAGING_COMPOSE_FILE: ${{ vars.STAGING_COMPOSE_FILE }}
+      STAGING_BRANCH: ${{ needs.preflight.outputs.deploy_ref }}
+      STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+      STAGING_SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+      STAGING_ENV_FILE: ${{ secrets.STAGING_ENV_FILE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Validate environment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in \
+            STAGING_HOST \
+            STAGING_SSH_USER \
+            STAGING_DOMAIN \
+            STAGING_APP_DIR \
+            STAGING_COMPOSE_FILE \
+            STAGING_BRANCH \
+            STAGING_SSH_PRIVATE_KEY \
+            STAGING_SSH_KNOWN_HOSTS \
+            STAGING_ENV_FILE
+          do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::$name is required in the GitHub staging environment."
+              missing=1
+            fi
+          done
+          if (( missing != 0 )); then
+            exit 1
+          fi
+          for safe_value in "$STAGING_HOST" "$STAGING_SSH_USER" "$STAGING_DOMAIN" "$STAGING_APP_DIR" "$STAGING_COMPOSE_FILE" "$STAGING_BRANCH"
+          do
+            if [[ "$safe_value" =~ [^A-Za-z0-9._/@:-] ]]; then
+              echo "::error::Staging variables may contain only letters, numbers, dot, underscore, slash, at, colon, or dash."
+              exit 1
+            fi
+          done
+          if [[ "$STAGING_APP_DIR" != /* ]]; then
+            echo "::error::STAGING_APP_DIR must be an absolute path."
+            exit 1
+          fi
+
+      - name: Install SSH credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$STAGING_SSH_PRIVATE_KEY" > "$HOME/.ssh/staging_key"
+          chmod 600 "$HOME/.ssh/staging_key"
+          printf '%s\n' "$STAGING_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Place staging env file on VPS
+        shell: bash
+        env:
+          STAGING_REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
+        run: |
+          set -euo pipefail
+          ssh_target="${STAGING_SSH_USER}@${STAGING_HOST}"
+          ssh_opts=(-i "$HOME/.ssh/staging_key" -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o StrictHostKeyChecking=yes)
+          printf '%s\n' "$STAGING_ENV_FILE" > "$RUNNER_TEMP/.env.staging"
+          chmod 600 "$RUNNER_TEMP/.env.staging"
+          ssh "${ssh_opts[@]}" "$ssh_target" "mkdir -p '$STAGING_APP_DIR' && chmod 700 '$STAGING_APP_DIR'"
+          scp -i "$HOME/.ssh/staging_key" -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o StrictHostKeyChecking=yes \
+            "$RUNNER_TEMP/.env.staging" "$ssh_target:$STAGING_APP_DIR/.env.staging.next"
+          ssh "${ssh_opts[@]}" "$ssh_target" "chmod 600 '$STAGING_APP_DIR/.env.staging.next' && mv '$STAGING_APP_DIR/.env.staging.next' '$STAGING_APP_DIR/.env.staging'"
+
+      - name: Deploy selected ref
+        shell: bash
+        env:
+          STAGING_REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
+        run: |
+          set -euo pipefail
+          ssh_target="${STAGING_SSH_USER}@${STAGING_HOST}"
+          ssh_opts=(-i "$HOME/.ssh/staging_key" -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o StrictHostKeyChecking=yes)
+          ssh "${ssh_opts[@]}" "$ssh_target" "
+            set -eu
+            if [ ! -d '$STAGING_APP_DIR/.git' ]; then
+              git clone '$STAGING_REPO_URL' '$STAGING_APP_DIR'
+            fi
+            cd '$STAGING_APP_DIR'
+            git fetch origin
+            STAGING_APP_DIR='$STAGING_APP_DIR' \
+            STAGING_BRANCH='$STAGING_BRANCH' \
+            STAGING_COMPOSE_FILE='$STAGING_COMPOSE_FILE' \
+            STAGING_REPO_URL='$STAGING_REPO_URL' \
+            ENV_FILE='.env.staging' \
+            scripts/staging/deploy-staging.sh
+          "
+
+  validate-staging:
+    name: Validate staging
+    runs-on: ubuntu-latest
+    needs:
+      - preflight
+      - deploy-staging
+    environment: staging
+    env:
+      STAGING_HOST: ${{ vars.STAGING_HOST }}
+      STAGING_SSH_USER: ${{ vars.STAGING_SSH_USER }}
+      STAGING_DOMAIN: ${{ vars.STAGING_DOMAIN }}
+      STAGING_APP_DIR: ${{ vars.STAGING_APP_DIR }}
+      STAGING_COMPOSE_FILE: ${{ vars.STAGING_COMPOSE_FILE }}
+      STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+      STAGING_SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+      RUN_RESTORE_DRILL: ${{ inputs.run_restore_drill }}
+    steps:
+      - name: Install SSH credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$STAGING_SSH_PRIVATE_KEY" > "$HOME/.ssh/staging_key"
+          chmod 600 "$HOME/.ssh/staging_key"
+          printf '%s\n' "$STAGING_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Run staging validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh_target="${STAGING_SSH_USER}@${STAGING_HOST}"
+          ssh_opts=(-i "$HOME/.ssh/staging_key" -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o StrictHostKeyChecking=yes)
+          ssh "${ssh_opts[@]}" "$ssh_target" \
+            "cd '$STAGING_APP_DIR' && STAGING_DOMAIN='$STAGING_DOMAIN' STAGING_COMPOSE_FILE='$STAGING_COMPOSE_FILE' ENV_FILE='.env.staging' RUN_RESTORE_DRILL='$RUN_RESTORE_DRILL' scripts/staging/validate-staging.sh"
+
+  capture-evidence:
+    name: Capture staging evidence
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-staging
+      - validate-staging
+    if: ${{ always() && needs.deploy-staging.result != 'skipped' }}
+    environment: staging
+    env:
+      STAGING_HOST: ${{ vars.STAGING_HOST }}
+      STAGING_SSH_USER: ${{ vars.STAGING_SSH_USER }}
+      STAGING_DOMAIN: ${{ vars.STAGING_DOMAIN }}
+      STAGING_APP_DIR: ${{ vars.STAGING_APP_DIR }}
+      STAGING_COMPOSE_FILE: ${{ vars.STAGING_COMPOSE_FILE }}
+      STAGING_SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+      STAGING_SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+    steps:
+      - name: Install SSH credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$STAGING_SSH_PRIVATE_KEY" > "$HOME/.ssh/staging_key"
+          chmod 600 "$HOME/.ssh/staging_key"
+          printf '%s\n' "$STAGING_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Collect remote evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh_target="${STAGING_SSH_USER}@${STAGING_HOST}"
+          ssh_opts=(-i "$HOME/.ssh/staging_key" -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o StrictHostKeyChecking=yes)
+          ssh "${ssh_opts[@]}" "$ssh_target" \
+            "cd '$STAGING_APP_DIR' && STAGING_DOMAIN='$STAGING_DOMAIN' STAGING_COMPOSE_FILE='$STAGING_COMPOSE_FILE' ENV_FILE='.env.staging' scripts/staging/capture-staging-evidence.sh || true"
+          ssh "${ssh_opts[@]}" "$ssh_target" \
+            "cd '$STAGING_APP_DIR' && tar -czf - staging-evidence 2>/dev/null" > "$RUNNER_TEMP/staging-evidence.tgz" || true
+
+      - name: Upload staging evidence
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: staging-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/staging-evidence.tgz
+          if-no-files-found: warn
+          retention-days: 30

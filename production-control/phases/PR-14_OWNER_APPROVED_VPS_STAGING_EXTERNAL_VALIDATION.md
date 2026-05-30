@@ -1,7 +1,9 @@
 # PR-14 - Owner-Approved VPS/Staging External Validation
 
-Status: not_started
+Status: split_into_pr14a_pr14b
 Production launch status: NO-GO until evidence and explicit owner approval are recorded.
+
+PR-14 is now tracked as an umbrella. PR-14A prepares the GitHub Actions staging framework, and PR-14B performs the owner-approved staging execution/evidence capture.
 
 ## Purpose
 
@@ -14,6 +16,7 @@ PR-13A closes the remaining repository-level High findings from PR-13, but repos
 ## Preconditions
 
 - PR-13A is merged or explicitly selected as the base.
+- PR-14A is merged before PR-14B execution.
 - Owner approves the staging/VPS target, data policy, allowed commands, and rollback expectations.
 - No real customer data is used unless the owner separately approves a real pilot gate.
 

@@ -93,7 +93,7 @@ PR-13 is merged into `master` at merge commit `32b74ee87a41c1a7d924763af85fb4aba
 
 ## Completion Criteria Result
 
-- AUD-HIGH-001: CLOSED at repository level; PR-14 external PostgreSQL smoke pending.
+- AUD-HIGH-001: CLOSED at repository level; PR-14B external PostgreSQL smoke pending.
 - AUD-HIGH-002: CLOSED at repository level; PR-14 live Redis/rate-limit smoke pending.
 - AUD-HIGH-003: CLOSED for reproducible mocked browser coverage; PR-14 live backend-integrated smoke pending.
 - Public production launch: NO-GO.

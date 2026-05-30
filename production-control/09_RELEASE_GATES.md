@@ -35,7 +35,7 @@ Requires verified:
 
 ## Gate C: Real Customer Pilot
 
-Current status: NO-GO pending PR-14 external evidence and owner approval.
+Current status: NO-GO pending PR-14B external evidence and owner approval.
 
 Requires verified:
 
@@ -45,7 +45,7 @@ Requires verified:
 
 Remaining conditions before a real customer pilot may begin:
 
-- Remote CI evidence for the latest production remediation branch.
+- Remote CI evidence for the latest production remediation branch and PR-14A framework branch.
 - VPS/staging `/ready` smoke against production-equivalent PostgreSQL/pgvector.
 - Production-equivalent PostgreSQL multi-worker job claim smoke.
 - Live Redis-backed rate-limit denial and abuse analytics smoke.
@@ -59,7 +59,7 @@ Remaining conditions before a real customer pilot may begin:
 
 ## Gate D: Paid Beta
 
-Current status: NO-GO pending PR-14 external evidence and owner commercial approval.
+Current status: NO-GO pending PR-14B external evidence and owner commercial approval.
 
 Requires verified:
 
@@ -79,7 +79,7 @@ Remaining conditions before paid beta may begin:
 
 Current status: NO-GO.
 
-PR-12A repository security corrections are verified, PR-13 audit is complete, and PR-13A closed the repository High findings from PR-13. Public launch remains blocked by external evidence and owner approval.
+PR-12A repository security corrections are verified, PR-13 audit is complete, PR-13A closed the repository High findings from PR-13, and PR-14A prepares the GitHub Actions staging evidence framework. Public launch remains blocked by PR-14B external evidence and owner approval.
 
 Requires:
 

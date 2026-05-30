@@ -3,13 +3,13 @@
 Date: 2026-05-29
 Phase: PR-12 with PR-12A correction package
 Post-merge audit note: PR-13 on 2026-05-30 superseded this as the latest repository readiness assessment.
-PR-13A update, 2026-05-30: the repository-level High findings from PR-13 are closed in `production/pr-13a-consolidated-remediation`; public production remains NO-GO pending PR-14 external evidence and explicit owner approval.
+PR-14A update, 2026-05-30: the repository-level High findings from PR-13 are closed, and PR-14A prepares the GitHub Actions staging deployment/evidence framework. Public production remains NO-GO pending PR-14B external evidence and explicit owner approval.
 
 ## Recommendation
 
 Public Production Launch: NO-GO.
 
-The repository is materially improved and PR-01 through PR-13A have evidence-backed repository implementations. PR-13A closed the PR-13 repository High findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and committed/reproducible browser E2E evidence. The launch gate still cannot honestly mark public production GO without owner-approved external launch evidence and explicit owner approval.
+The repository is materially improved and PR-01 through PR-13A have evidence-backed repository implementations. PR-14A adds the manual GitHub Actions staging deployment and evidence framework. The launch gate still cannot honestly mark public production GO without owner-approved PR-14B external launch evidence and explicit owner approval.
 
 PR-12A was added after independent review and fixes two repository-level issues before staging validation: production `super_admin` login now requires configured TOTP MFA, and production application rate limiting now requires Redis-backed coordination with fail-closed behaviour.
 
@@ -19,8 +19,8 @@ PR-12A was added after independent review and fixes two repository-level issues 
 |---|---|
 | Controlled internal demo | GO WITH CONDITIONS |
 | Secure private internet demo | REPOSITORY READY WITH CONDITIONS |
-| Real customer pilot | NO-GO pending PR-14 external evidence and owner approval |
-| Paid beta | NO-GO pending PR-14 external evidence and owner commercial approval |
+| Real customer pilot | NO-GO pending PR-14B external evidence and owner approval |
+| Paid beta | NO-GO pending PR-14B external evidence and owner commercial approval |
 | Public production launch | NO-GO |
 | Enterprise usage | NO-GO |
 

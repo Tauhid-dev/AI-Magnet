@@ -15,12 +15,14 @@ flowchart TB
     PR12A["PR-12A<br/>Security Corrections<br/>verified<br/>MFA + Redis limiter"]
     PR13["PR-13<br/>Post-Merge Audit<br/>verified with findings<br/>PR-13A completed"]
     PR13A["PR-13A<br/>Final Repository Remediation<br/>verified<br/>High findings closed"]
-    PR14["PR-14<br/>External VPS/Staging Validation<br/>not started<br/>owner approval required"]
+    PR14["PR-14<br/>External VPS/Staging Validation Umbrella<br/>split into PR-14A/PR-14B"]
+    PR14A["PR-14A<br/>GitHub Actions Staging Framework<br/>verified<br/>no live deployment"]
+    PR14B["PR-14B<br/>Owner-Approved Staging Execution<br/>not started<br/>secrets + approval required"]
 
     GateA["Gate A: Controlled Internal Demo<br/>GO WITH CONDITIONS<br/>synthetic/sample data only"]
-    GateB["Gate B: Secure Private Internet Demo<br/>CONDITIONAL<br/>VPS/owner validation pending<br/>PR #31 CI passed"]
-    GateC["Gate C: Real Customer Pilot<br/>NO-GO<br/>PR-14 external evidence pending"]
-    GateD["Gate D: Paid Beta<br/>NO-GO<br/>owner commercial approval + PR-14 pending"]
+    GateB["Gate B: Secure Private Internet Demo<br/>CONDITIONAL<br/>PR-14B VPS/owner validation pending"]
+    GateC["Gate C: Real Customer Pilot<br/>NO-GO<br/>PR-14B external evidence pending"]
+    GateD["Gate D: Paid Beta<br/>NO-GO<br/>owner commercial approval + PR-14B pending"]
     GateE["Gate E: Public Production Launch<br/>NO-GO<br/>live evidence + owner approval required"]
     LegendVerified["Status: verified/complete"]
     LegendProgress["Status: in progress"]
@@ -32,12 +34,12 @@ flowchart TB
     PR05 --> PR07
     PR06 --> PR08
     PR07 --> PR08
-    PR08 --> PR09 --> PR10 --> PR11 --> PR12 --> PR12A --> PR13 --> PR13A --> PR14
+    PR08 --> PR09 --> PR10 --> PR11 --> PR12 --> PR12A --> PR13 --> PR13A --> PR14 --> PR14A --> PR14B
     PR00 --> GateA
     PR05 --> GateB
-    PR14 --> GateC
-    PR14 --> GateD
-    PR14 --> GateE
+    PR14B --> GateC
+    PR14B --> GateD
+    PR14B --> GateE
 
     classDef verified fill:#dcfce7,stroke:#15803d,color:#052e16
     classDef inProgress fill:#dbeafe,stroke:#1d4ed8,color:#172554
@@ -48,9 +50,9 @@ flowchart TB
     classDef gateOk fill:#e0f2fe,stroke:#0369a1,color:#082f49
     classDef gateNo fill:#fef3c7,stroke:#b45309,color:#451a03
 
-    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11,PR12,PR12A,PR13A verified
+    class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11,PR12,PR12A,PR13A,PR14A verified
     class PR13 high
-    class PR14 pending
+    class PR14,PR14B pending
     class GateA gateOk
     class GateB,GateC,GateD,GateE gateNo
     class LegendVerified verified

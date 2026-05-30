@@ -80,7 +80,7 @@ Schema may be needed for job status. Provide downgrade and job-state compatibili
 
 ## Blockers
 
-PR-13 reopened one repository-controlled risk: job acquisition was not proven atomic/concurrency-safe for multiple worker processes. PR-13A closed the repository risk with atomic claim implementation and concurrent worker tests. Live PostgreSQL multi-worker smoke on the target VPS remains PR-14 external release-gate evidence before horizontal worker scaling is trusted.
+PR-13 reopened one repository-controlled risk: job acquisition was not proven atomic/concurrency-safe for multiple worker processes. PR-13A closed the repository risk with atomic claim implementation and concurrent worker tests. Live PostgreSQL multi-worker smoke on the target VPS remains PR-14B external release-gate evidence before horizontal worker scaling is trusted.
 
 ## Completion Criteria
 

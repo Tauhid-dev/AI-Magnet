@@ -10,10 +10,10 @@
   },
   "current": {
     "active_phase": null,
-    "last_completed_phase": "PR-13A",
-    "next_permitted_phase": "Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only",
-    "production_go_no_go": "Repository-level PR-13A remediation is complete; public production remains NO-GO until owner-approved external VPS/staging evidence and explicit launch approval are recorded",
-    "overall_status": "repository_high_findings_closed_external_launch_no_go"
+    "last_completed_phase": "PR-14A",
+    "next_permitted_phase": "Run PR-14B owner-approved staging execution using synthetic data only after GitHub Environment secrets and manual approval are configured",
+    "production_go_no_go": "Repository-level PR-14A staging framework is prepared; public production remains NO-GO until owner-approved PR-14B external VPS/staging evidence and explicit launch approval are recorded",
+    "overall_status": "repository_framework_ready_external_launch_no_go"
   },
   "launch_gates": [
     {
@@ -39,10 +39,11 @@
         "PR-03",
         "PR-04",
         "PR-05",
-        "PR-13A"
+        "PR-13A",
+        "PR-14A"
       ],
       "remaining_conditions": [
-        "Post-merge launch-candidate CI evidence after PR #31 merge",
+        "Post-merge launch-candidate CI evidence after PR-14A merge",
         "Owner-approved VPS smoke for TLS/firewall exposure",
         "Production super-admin MFA smoke on the target environment",
         "Redis-backed app rate-limit smoke on the target environment",
@@ -124,11 +125,11 @@
         "PR-12A",
         "PR-13",
         "PR-13A",
-        "PR-14"
+        "PR-14B"
       ],
       "remaining_conditions": [
         "Post-merge launch-candidate CI evidence",
-        "Owner-approved staging/VPS validation run",
+        "Owner-approved PR-14B staging/VPS validation run",
         "Production super-admin MFA smoke on the target environment",
         "Redis-backed app rate-limit smoke on the target environment",
         "TLS issuance and renewal evidence",
@@ -292,7 +293,7 @@
       ],
       "branch": "production/pr-13a-consolidated-remediation",
       "commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf + 51687cec8695e397c41bb0daa377370be4da214f",
-      "pr13_finding_status": "AUD-HIGH-001 closed by PR-13A; live PostgreSQL multi-worker smoke remains PR-14 external evidence"
+      "pr13_finding_status": "AUD-HIGH-001 closed by PR-13A; live PostgreSQL multi-worker smoke remains PR-14B external evidence"
     },
     {
       "phase_id": "PR-06",
@@ -402,7 +403,7 @@
       ],
       "branch": "production/pr-13a-consolidated-remediation",
       "commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf + 51687cec8695e397c41bb0daa377370be4da214f",
-      "pr13_finding_status": "AUD-HIGH-003 closed by PR-13A mocked browser E2E; live backend-integrated staging E2E remains PR-14 external evidence"
+      "pr13_finding_status": "AUD-HIGH-003 closed by PR-13A mocked browser E2E; live backend-integrated staging E2E remains PR-14B external evidence"
     },
     {
       "phase_id": "PR-10",
@@ -585,21 +586,65 @@
     },
     {
       "phase_id": "PR-14",
-      "title": "Owner-Approved VPS/Staging External Validation",
-      "status": "not_started",
+      "title": "Owner-Approved VPS/Staging External Validation Umbrella",
+      "status": "split_into_pr14a_pr14b",
       "completion_percent": 0,
       "dependencies": [
         "PR-13A"
       ],
       "priority": "p0",
       "criticality": "external_launch_gate",
-      "validation_status": "not_run_requires_owner_approval",
+      "validation_status": "split_pr14a_framework_pr14b_execution",
       "last_updated": "2026-05-30",
       "evidence_links": [
         "production-control/phases/PR-14_OWNER_APPROVED_VPS_STAGING_EXTERNAL_VALIDATION.md",
         "docs/production-launch/release-evidence-checklist.md",
         "docs/production-launch/vps-staging-validation-runbook.md",
         "docs/production-audit/post-pr12a-final-audit/external-launch-evidence-still-required.md"
+      ],
+      "branch": "split_across_pr14a_pr14b",
+      "commit": "pending"
+    },
+    {
+      "phase_id": "PR-14A",
+      "title": "GitHub Actions Staging Deployment and External Validation Framework",
+      "status": "verified",
+      "completion_percent": 100,
+      "dependencies": [
+        "PR-13A"
+      ],
+      "priority": "p0",
+      "criticality": "external_validation_framework",
+      "validation_status": "pass_repository_framework_only_external_execution_pending",
+      "last_updated": "2026-05-30",
+      "evidence_links": [
+        "production-control/phases/PR-14A_GITHUB_ACTIONS_STAGING_DEPLOYMENT_AND_EXTERNAL_VALIDATION_FRAMEWORK.md",
+        ".github/workflows/staging-deploy-validation.yml",
+        "scripts/staging/",
+        "docs/deployment/github-environment-secrets.md",
+        "docs/deployment/staging-auto-deploy-plan.md",
+        "docs/production-launch/pr-14a-validation-report.md"
+      ],
+      "branch": "production/pr-14a-github-actions-staging-validation",
+      "commit": "recorded_in_final_response_after_commit",
+      "external_execution": "not_run_requires_owner_github_environment_secrets_and_manual_approval"
+    },
+    {
+      "phase_id": "PR-14B",
+      "title": "Owner-Approved Staging Execution and Evidence Capture",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-14A"
+      ],
+      "priority": "p0",
+      "criticality": "external_launch_gate",
+      "validation_status": "not_run_requires_owner_approval",
+      "last_updated": "2026-05-30",
+      "evidence_links": [
+        "production-control/phases/PR-14B_OWNER_APPROVED_STAGING_EXECUTION_AND_EVIDENCE_CAPTURE.md",
+        "docs/deployment/github-environment-secrets.md",
+        "docs/production-launch/release-evidence-checklist.md"
       ],
       "branch": "pending_owner_approval",
       "commit": "pending"
@@ -637,23 +682,23 @@
   "high_production_requirements": [
     {
       "item": "PostgreSQL-specific multi-worker job-claim smoke must run in owner-approved staging/VPS before horizontal worker scaling is trusted",
-      "phase": "PR-14 external validation"
+      "phase": "PR-14B external validation"
     },
     {
       "item": "Browser E2E is currently mocked API coverage; live backend-integrated customer/admin/widget smoke remains required before real customer pilot",
-      "phase": "PR-14 external validation"
+      "phase": "PR-14B external validation"
     },
     {
       "item": "Paid-beta live operation approval, pricing/GST/refund confirmation, support readiness, post-merge launch-candidate CI, and VPS/staging smoke evidence",
-      "phase": "Gate D / PR-14"
+      "phase": "Gate D / PR-14B"
     },
     {
       "item": "Scanned-document OCR runtime remains gated and must not be claimed unless separately implemented",
-      "phase": "PR-07 / PR-14"
+      "phase": "PR-07 / PR-14B"
     },
     {
       "item": "Final owner launch approval and live evidence acceptance",
-      "phase": "PR-14 / Gate E"
+      "phase": "PR-14B / Gate E"
     }
   ],
   "closed_pr13_findings": [
