@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-30
 
-The original MVP Phase 0-10 roadmap remains historical/build evidence. This PR-00 through PR-13A roadmap is the production-remediation and audit execution plan and the source of truth for future production phase commands. PR-14 is the next external validation phase and must only run with owner-approved VPS/staging access.
+The original MVP Phase 0-10 roadmap remains historical/build evidence. This PR-00 through PR-13A roadmap is the production-remediation and audit execution plan and the source of truth for future production phase commands. PR-14 is now split into PR-14A repository staging-deployment framework setup and PR-14B owner-approved staging execution/evidence capture. Public production remains NO-GO.
 
 ## Phase Table
 
@@ -24,15 +24,17 @@ The original MVP Phase 0-10 roadmap remains historical/build evidence. This PR-0
 | PR-12A | Final repository security corrections before staging validation | PR-12 | Mandatory production super-admin MFA; Redis app rate limiting; readiness visibility; corrected launch docs | Independent-review repository blockers are corrected; production still NO-GO pending live evidence | verified | `production/pr-12a-security-corrections-before-staging` | pending | `phases/PR-12A_FINAL_REPOSITORY_SECURITY_CORRECTIONS_BEFORE_STAGING_VALIDATION.md` |
 | PR-13 | Full post-merge production readiness audit | PR-12A | Verify merged repository, rerun validation, audit every phase, create evidence pack, update status/dashboard | Repository truth is recorded; remediation phases are recommended before launch work | verified with findings | `production/pr-13-full-post-merge-audit` | pending | `phases/PR-13_FULL_POST_MERGE_PRODUCTION_READINESS_AUDIT.md`, `docs/production-audit/post-pr12a-final-audit/` |
 | PR-13A | Final repository remediation before formal VPS/staging validation | PR-13 | Close AUD-HIGH-001, AUD-HIGH-002, AUD-HIGH-003; update CI/status/docs | Repository High findings are closed; production still NO-GO pending PR-14 external evidence | verified | `production/pr-13a-consolidated-remediation` | `73d521d`, `bbc4788`, `51687ce`; final evidence-sync commit recorded in branch history/final report | `phases/PR-13A_FINAL_REPOSITORY_REMEDIATION_BEFORE_STAGING_VALIDATION.md`, `docs/production-audit/post-pr12a-final-audit/pr-13a-validation-execution-report.md` |
-| PR-14 | Owner-approved VPS/staging external validation | PR-13A | Run target-host CI/VPS/TLS/firewall/backup/restore/worker/Redis/pgvector/RAG/browser/quota smoke with synthetic data | External evidence is recorded and owner decides whether any launch gate can change | not_started | pending | pending | `phases/PR-14_OWNER_APPROVED_VPS_STAGING_EXTERNAL_VALIDATION.md`, `docs/production-launch/release-evidence-checklist.md` |
+| PR-14 | Owner-approved VPS/staging external validation umbrella | PR-13A | Split into PR-14A framework setup and PR-14B owner-approved execution | External evidence is recorded and owner decides whether any launch gate can change | split_into_pr14a_pr14b | pending | pending | `phases/PR-14_OWNER_APPROVED_VPS_STAGING_EXTERNAL_VALIDATION.md`, `docs/production-launch/release-evidence-checklist.md` |
+| PR-14A | GitHub Actions staging deployment and external validation framework | PR-13A | Manual `workflow_dispatch`; GitHub Environment `staging`; SSH known-host validation; deploy/validate/backup/restore/evidence scripts; owner setup docs | Repository contains a safe, syntactically validated framework for later owner-approved staging execution | verified | `production/pr-14a-github-actions-staging-validation` | pending until commit | `phases/PR-14A_GITHUB_ACTIONS_STAGING_DEPLOYMENT_AND_EXTERNAL_VALIDATION_FRAMEWORK.md`, `.github/workflows/staging-deploy-validation.yml`, `scripts/staging/`, `docs/deployment/github-environment-secrets.md`, `docs/production-launch/pr-14a-validation-report.md` |
+| PR-14B | Owner-approved staging execution and evidence capture | PR-14A | Owner configures GitHub `staging` variables/secrets, approves workflow, runs synthetic staging validation, reviews uploaded evidence | External VPS/staging evidence is captured and release gates are updated truthfully | not_started | pending_owner_approval | pending | `phases/PR-14B_OWNER_APPROVED_STAGING_EXECUTION_AND_EVIDENCE_CAPTURE.md` |
 
 ## Launch Gates
 
 - Gate A: Controlled Internal Demo - synthetic/sample data only. Current status: GO WITH CONDITIONS.
 - Gate B: Secure Private Internet Demo - requires validated PR-01 through PR-05.
-- Gate C: Real Customer Pilot - requires PR-01 through PR-13A plus PR-14 external evidence and owner approval.
-- Gate D: Paid Beta - requires PR-01 through PR-13A plus PR-14 external evidence and owner commercial approval.
-- Gate E: Public Production Launch - PR-13A repository remediation is complete, but public launch remains NO-GO until owner-approved live evidence plus explicit owner approval are recorded.
+- Gate C: Real Customer Pilot - requires PR-01 through PR-13A plus PR-14B external evidence and owner approval.
+- Gate D: Paid Beta - requires PR-01 through PR-13A plus PR-14B external evidence and owner commercial approval.
+- Gate E: Public Production Launch - PR-13A repository remediation is complete and PR-14A prepares the staging framework, but public launch remains NO-GO until owner-approved PR-14B live evidence plus explicit owner approval are recorded.
 
 ## Phase Status Rules
 

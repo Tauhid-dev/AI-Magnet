@@ -307,3 +307,15 @@ Append-only ADR-lite log for production remediation.
   - Pin an insecure runtime opt-out: rejected because it would hide the deprecation rather than validating compatibility.
   - Replace official actions with third-party actions: rejected because no repository need justifies expanding the CI supply-chain surface.
 - Follow-up impact: The post-push PR #31 workflow run must remain green and should be checked for residual Node.js runtime warnings before owner merge.
+
+## DEC-PR-20260530-028: PR-14A Uses GitHub Environments For Staging Deployment Approval
+
+- Date: 2026-05-30
+- Decision: Implement PR-14A as a manual `workflow_dispatch` GitHub Actions workflow using the GitHub Environment named `staging`, owner-managed Environment variables/secrets, strict SSH known-host validation, and redacted evidence artifacts. Split external validation into PR-14A repository framework setup and PR-14B owner-approved staging execution.
+- Reason: The repository needs a repeatable way to collect external VPS/staging evidence without committing VPS details or asking Codex to handle live secrets. GitHub Environments provide manual approval and scoped secret release, while `workflow_dispatch` keeps deployment disabled by default until the owner chooses to run it.
+- Affected files/phases: PR-14A, PR-14B, `.github/workflows/staging-deploy-validation.yml`, `scripts/staging/*`, `docs/deployment/github-environment-secrets.md`, `docs/deployment/staging-auto-deploy-plan.md`, `production-control/*`.
+- Alternatives rejected:
+  - Commit `.env.staging` or server values: rejected because secrets and VPS details must remain outside source control.
+  - Auto-deploy on every push immediately: rejected because staging must be proven manually before any automatic promotion path is considered.
+  - Use `StrictHostKeyChecking=no`: rejected because it would weaken SSH host identity verification and make the deployment path vulnerable to host substitution.
+- Follow-up impact: PR-14B must configure the GitHub `staging` Environment, manually approve the workflow, use synthetic data only, and review uploaded evidence before any launch gate can change.

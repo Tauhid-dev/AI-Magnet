@@ -8,7 +8,7 @@ Branch: `production/pr-12a-security-corrections-before-staging`
 
 This report re-audits the AI-Magnet repository against the 2026-05-23 production-readiness baseline and the PR-00 through PR-12 production remediation plan.
 
-Post-merge update: PR-13 on 2026-05-30 audited the merged repository and recorded follow-up findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and reproducible browser/e2e evidence. PR-13A then closed those repository-level High findings while keeping public production NO-GO pending external PR-14 evidence and owner approval. See `docs/production-audit/post-pr12a-final-audit/`.
+Post-merge update: PR-13 on 2026-05-30 audited the merged repository and recorded follow-up findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and reproducible browser/e2e evidence. PR-13A then closed those repository-level High findings. PR-14A prepares the GitHub Actions staging deployment/evidence framework while keeping public production NO-GO pending external PR-14B evidence and owner approval. See `docs/production-audit/post-pr12a-final-audit/`.
 
 This PR-12/PR-12A run validates repository-controlled code, configuration, documentation, migrations, tests, security scans, and release artifacts. It does not perform live deployment, DNS changes, certificate issuance, production database migration, payment activation, or real customer onboarding.
 
@@ -18,10 +18,10 @@ PR-12A was required after an independent review found two repository-level launc
 
 The repository has moved from the 2026-05-23 audited state of 35/100 production readiness to a repository-ready production remediation state for controlled beta preparation. PR-01 through PR-13A have evidence-backed implementations in code, tests, docs, and production-control status files.
 
-Public production launch remains NO-GO because required external launch evidence has not been executed in this PR-12 run:
+Public production launch remains NO-GO because required external launch evidence has not been executed. PR-14A prepares the workflow/scripts to run those checks later, but does not deploy:
 
 - post-merge launch-candidate CI evidence after PR #31 merge; PR #31 itself passed remote CI at `51687cec8695e397c41bb0daa377370be4da214f` before the final Actions-runtime cleanup
-- owner-approved staging/VPS deployment smoke
+- owner-approved PR-14B staging/VPS deployment smoke
 - production super-admin MFA smoke on the target environment
 - Redis-backed application rate-limit smoke on the target environment
 - TLS certificate issuance and renewal verification

@@ -6,6 +6,11 @@ This guide covers the Docker Compose deployment path for an OCI VPS or similar s
 
 PR-04 adds a separate production topology in `docker-compose.prod.yml`. The original `docker-compose.yml` remains a local development topology and still publishes development ports.
 
+PR-14A adds a manual GitHub Actions staging deployment framework. The owner must configure the GitHub `staging` Environment before any workflow run can deploy to a VPS:
+
+- `docs/deployment/github-environment-secrets.md`
+- `docs/deployment/staging-auto-deploy-plan.md`
+
 ## Services
 
 - `backend`: FastAPI API service.

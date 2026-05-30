@@ -284,7 +284,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Baseline/default branch verification | pass | `master` pulled to `32b74ee87a41c1a7d924763af85fb4abae562d07`; PR-13 merge commit visible; PR-12/PR-12A history retained |
 | Worker atomic claim implementation | pass | `backend/app/jobs/service.py` uses atomic `UPDATE ... RETURNING`; PostgreSQL candidate query uses `FOR UPDATE SKIP LOCKED` |
 | Worker concurrency/retry/recovery tests | pass | `backend/.venv/bin/python -m pytest backend/tests/workers/test_background_jobs.py -q` - 11 passed |
-| PostgreSQL job claim SQL compile | pass | SQLAlchemy PostgreSQL dialect compile confirms `UPDATE ... SELECT ... FOR UPDATE SKIP LOCKED ... RETURNING`; live PostgreSQL execution remains PR-14 evidence |
+| PostgreSQL job claim SQL compile | pass | SQLAlchemy PostgreSQL dialect compile confirms `UPDATE ... SELECT ... FOR UPDATE SKIP LOCKED ... RETURNING`; live PostgreSQL execution remains PR-14B evidence |
 | PostgreSQL-specific multi-worker live proof | external_pending | SQL shape is implemented, but local test DB is SQLite; PR-14 must run staging PostgreSQL multi-worker smoke |
 | Rate-limit exceed event persistence | pass | `backend/app/core/rate_limit.py`, `backend/app/usage/service.py`; denied requests persist safe tenant/global events before returning 429 |
 | Rate-limit analytics and privacy tests | pass | Focused rate-limit/admin/business/chat/analytics/security tests - 44 passed |
@@ -300,3 +300,22 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Compose and data-service port checks | pass | Dev/prod Compose rendered; production JSON check confirmed PostgreSQL/Redis publish no host ports |
 | Security scans | pass_with_warning | Bandit passed; pip-audit found no Python vulnerabilities; secret pattern scan no matches; npm audit high threshold passed with moderate PostCSS advisory noted |
 | Production-control visual/status consistency | pass | `python3 -m json.tool production-control/status/production-status.json`; SVG parse check; dashboard/status grep review; `git diff --check` passed after final memory updates |
+
+## PR-14A Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| GitHub Actions staging workflow exists | pass | `.github/workflows/staging-deploy-validation.yml` |
+| Workflow uses manual trigger and GitHub Environment `staging` | pass | Workflow uses `workflow_dispatch` and `environment: staging` on deploy/validate/evidence jobs |
+| Required secrets/variables are documented without committed values | pass | `docs/deployment/github-environment-secrets.md` |
+| VPS bootstrap helper | pass | `scripts/staging/bootstrap-vps.sh` |
+| Staging deploy helper | pass | `scripts/staging/deploy-staging.sh` |
+| Synthetic staging validation helper | pass | `scripts/staging/validate-staging.sh` |
+| Backup and restore drill helpers | pass | `scripts/staging/backup-staging.sh`; `scripts/staging/restore-staging-drill.sh` |
+| Redacted evidence capture helper | pass | `scripts/staging/capture-staging-evidence.sh` |
+| YAML syntax validation | pass | `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/staging-deploy-validation.yml'); puts 'yaml ok'"` |
+| Bash syntax validation | pass | `bash -n scripts/staging/*.sh` |
+| Shellcheck | not_run | `shellcheck` is not installed in this environment |
+| Production-control status JSON parse | pass | `python3 -m json.tool production-control/status/production-status.json` |
+| SVG/dashboard consistency | pass | SVG parsed with ElementTree; `rg` confirmed PR-14A/PR-14B/NO-GO references across JSON, Mermaid, SVG and dashboard |
+| Live VPS/staging deployment | not_run | Explicitly out of scope for PR-14A; PR-14B requires owner-approved GitHub Environment secrets and manual approval |

@@ -45,6 +45,6 @@ The current baseline must preserve:
 Current launch posture after PR-13A:
 
 - Private stakeholder demo: CONDITIONAL.
-- Real customer pilot: NO-GO pending PR-14 external VPS/staging validation and owner approval.
-- Paid Beta: NO-GO pending PR-14 external evidence and owner commercial approval.
+- Real customer pilot: NO-GO pending PR-14B external VPS/staging validation and owner approval.
+- Paid Beta: NO-GO pending PR-14B external evidence and owner commercial approval.
 - Public Production: NO-GO until owner-approved live evidence, target-environment super-admin MFA and Redis rate-limit smoke, and explicit owner approval.

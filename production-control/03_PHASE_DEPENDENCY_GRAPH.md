@@ -20,12 +20,14 @@ flowchart TB
     PR12A["PR-12A<br/>Security Corrections<br/>verified<br/>public launch NO-GO pending owner/live evidence"]
     PR13["PR-13<br/>Post-Merge Audit<br/>verified with findings"]
     PR13A["PR-13A<br/>Repository Remediation<br/>verified<br/>High findings closed"]
-    PR14["PR-14<br/>External VPS/Staging Validation<br/>not started"]
+    PR14["PR-14<br/>External VPS/Staging Validation Umbrella<br/>split into PR-14A/PR-14B"]
+    PR14A["PR-14A<br/>GitHub Actions Staging Framework<br/>in progress"]
+    PR14B["PR-14B<br/>Owner-Approved Staging Execution<br/>not started"]
 
     GateA["Gate A<br/>Controlled Internal Demo<br/>GO WITH CONDITIONS"]
     GateB["Gate B<br/>Secure Private Internet Demo<br/>requires PR-01..PR-05"]
-    GateC["Gate C<br/>Real Customer Pilot<br/>NO-GO pending PR-14 external evidence"]
-    GateD["Gate D<br/>Paid Beta<br/>NO-GO pending PR-14, owner approval and external evidence"]
+    GateC["Gate C<br/>Real Customer Pilot<br/>NO-GO pending PR-14B external evidence"]
+    GateD["Gate D<br/>Paid Beta<br/>NO-GO pending PR-14B, owner approval and external evidence"]
     GateE["Gate E<br/>Public Production Launch<br/>NO-GO pending live evidence and owner approval"]
 
     PR00 --> PR01 --> PR02 --> PR03 --> PR04 --> PR05
@@ -33,13 +35,13 @@ flowchart TB
     PR05 --> PR07
     PR06 --> PR08
     PR07 --> PR08
-    PR08 --> PR09 --> PR10 --> PR11 --> PR12 --> PR12A --> PR13 --> PR13A --> PR14
+    PR08 --> PR09 --> PR10 --> PR11 --> PR12 --> PR12A --> PR13 --> PR13A --> PR14 --> PR14A --> PR14B
 
     PR00 --> GateA
     PR05 --> GateB
-    PR14 --> GateC
-    PR14 --> GateD
-    PR14 --> GateE
+    PR14B --> GateC
+    PR14B --> GateD
+    PR14B --> GateE
 
     classDef verified fill:#dcfce7,stroke:#15803d,color:#052e16
     classDef blocker fill:#fee2e2,stroke:#b91c1c,color:#450a0a
@@ -50,6 +52,8 @@ flowchart TB
     class PR00,PR01,PR02,PR03,PR04,PR05,PR06,PR07,PR08,PR09,PR10,PR11,PR12,PR12A,PR13A verified
     class PR13 high
     class PR14 notStarted
+    class PR14A high
+    class PR14B notStarted
     class GateA,GateB,GateC,GateD,GateE gate
 ```
 
@@ -57,4 +61,4 @@ flowchart TB
 
 PR-01 through PR-05 cover the minimum repository-controlled security and infrastructure requirements before any private internet demo with real risk exposure: production auth, abuse controls, tenant/privacy integrity, TLS/private networking/backups/secrets/scans, and a real worker. PR-06 and PR-07 add safe ingestion paths, PR-08 adds grounded scalable retrieval, PR-09 adds customer setup UX, PR-10 adds operational visibility and quotas, and PR-11 adds manual paid-beta entitlements.
 
-PR-12 is verified as a repository-controlled launch-gate package. PR-12A adds independent-review security corrections for mandatory production super-admin MFA and Redis-backed application rate limiting. PR-13 adds the post-merge audit and PR-13A closes its repository High findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and reproducible mocked browser/e2e evidence. Gate E remains NO-GO because public production still requires owner-approved live evidence for TLS, firewall, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, controlled crawl/document smoke, alerting, quota/abuse smoke, target-environment MFA/rate-limit smoke, and explicit owner approval.
+PR-12 is verified as a repository-controlled launch-gate package. PR-12A adds independent-review security corrections for mandatory production super-admin MFA and Redis-backed application rate limiting. PR-13 adds the post-merge audit and PR-13A closes its repository High findings for worker concurrency-safe job claiming, persisted rate-limit abuse analytics, and reproducible mocked browser/e2e evidence. PR-14A prepares GitHub Actions staging deployment and evidence capture, but PR-14B must still execute owner-approved staging validation. Gate E remains NO-GO because public production still requires owner-approved live evidence for TLS, firewall, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, controlled crawl/document smoke, alerting, quota/abuse smoke, target-environment MFA/rate-limit smoke, and explicit owner approval.

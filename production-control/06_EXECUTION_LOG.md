@@ -729,3 +729,47 @@ Append-only production phase run history.
   - This maintenance commit must pass the same required GitHub Actions checks before PR #31 is recommended for owner merge.
 - Next phase permitted after PR #31 merge: `Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only`.
 - Commit hash: pending until commit.
+
+## 2026-05-30 - PR-14A: GitHub Actions Staging Deployment and External Validation Framework
+
+- Instruction received: `CODEX INSTRUCTION - PR-14A GitHub Actions Staging Deployment and External Validation Framework`.
+- Phase selected: PR-14A.
+- Branch: `production/pr-14a-github-actions-staging-validation`.
+- Baseline default branch/commit: `master` at `1b8a979fd60b44c31467026fd429bf8a9c6c1521`.
+- PR-13A merge presence:
+  - PR #31 was confirmed merged before this branch was created.
+  - Merge commit visible locally: `1b8a979fd60b44c31467026fd429bf8a9c6c1521`.
+- Files changed:
+  - GitHub Actions: `.github/workflows/staging-deploy-validation.yml`.
+  - Staging scripts: `scripts/staging/bootstrap-vps.sh`, `scripts/staging/deploy-staging.sh`, `scripts/staging/validate-staging.sh`, `scripts/staging/backup-staging.sh`, `scripts/staging/restore-staging-drill.sh`, `scripts/staging/capture-staging-evidence.sh`.
+  - Deployment docs: `docs/deployment/github-environment-secrets.md`, `docs/deployment/staging-auto-deploy-plan.md`, `docs/deployment.md`.
+  - Launch/audit docs: `docs/production-launch/*`, `docs/production-audit/post-pr12a-final-audit/external-launch-evidence-still-required.md`.
+  - Production-control memory/status/visuals: roadmap, dependency graph, current status, decisions, risk register, validation matrix, release gates, phase files, status JSON, Mermaid, SVG, and dashboard.
+- Implementation summary:
+  - Added a manual `workflow_dispatch` staging deployment workflow using GitHub Environment `staging`, least-privilege permissions, owner confirmation of synthetic data only, environment variable/secret preflight, strict SSH known-host validation, secure runtime placement of `.env.staging`, deploy/validate/evidence jobs, and artifact upload.
+  - Added staging-safe scripts for VPS bootstrap, deployment, synthetic validation, encrypted backup, safe temporary restore drill, and redacted evidence capture.
+  - Documented required GitHub Environment variables/secrets, SSH key setup, known-host verification, secret rotation, manual workflow trigger, evidence artifact review, and disabled-by-default auto-deploy options.
+  - Split PR-14 into PR-14A repository framework and PR-14B owner-approved external staging execution.
+  - Kept public production launch NO-GO.
+  - Did not deploy, change DNS/TLS, issue certificates, activate payments, onboard customers, or use real customer data.
+- Validations run/result:
+  - Workflow YAML parse with Ruby YAML loader - pass.
+  - `bash -n scripts/staging/*.sh` - pass.
+  - `shellcheck` - not run; unavailable locally.
+  - Production status JSON parse - pass.
+  - Roadmap SVG parse - pass.
+  - Dashboard/JSON/Mermaid/SVG status grep for PR-14A/PR-14B/NO-GO - pass.
+  - `git diff --check` - pass.
+  - `npm ci` - pass.
+  - `npm run lint` - pass.
+  - `npm run typecheck` - pass.
+  - `npm test` - pass.
+  - `npm run test:e2e` - pass after sandbox escalation for local Next.js server binding, 5 Playwright Chromium tests.
+  - `npm run build` - pass.
+  - `npm audit --audit-level=high` - pass after sandbox network escalation; two moderate transitive PostCSS advisories through Next.js remain below the high threshold.
+- Known gaps:
+  - PR-14A does not execute a live VPS/staging deployment; PR-14B requires owner-configured GitHub Environment variables/secrets and manual approval.
+  - Live TLS/renewal, firewall/private-port proof, backup/restore drill, PostgreSQL/pgvector RAG, Redis/worker, multi-worker claim, ingestion, rate-limit analytics, backend-integrated browser, monitoring/logging, quota/abuse, and owner approval evidence remain external gates.
+  - Public production launch remains NO-GO.
+- Next phase permitted after merge and owner setup: `Run PR-14B owner-approved staging execution using synthetic data only`.
+- Commit hash: pending until commit.

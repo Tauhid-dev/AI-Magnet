@@ -8,19 +8,19 @@ This is the quick-resume page for production remediation. Future Codex sessions 
 
 ## Current Active Phase
 
-No product implementation phase is active. PR-13A repository remediation is complete at repository level.
+PR-14A - GitHub Actions staging deployment and external validation framework.
 
-Status: PR-13A closed the three PR-13 High repository findings for worker job claiming, rate-limit abuse analytics, and reproducible browser evidence. Public production launch remains NO-GO pending owner-approved live VPS/staging validation evidence and explicit launch approval.
+Status: PR-14A prepares a safe manual GitHub Actions staging workflow, owner-managed GitHub Environment setup, staging deploy/validation/backup/restore/evidence scripts, and production-control tracking. It does not execute live deployment. Public production launch remains NO-GO pending PR-14B owner-approved staging evidence and explicit launch approval.
 
 ## Last Completed Phase
 
-PR-13A.
+PR-13A. PR-14A is in progress on branch `production/pr-14a-github-actions-staging-validation`.
 
 ## Next Permitted Phase
 
-The next recommended safe command is:
+The next recommended safe command after PR-14A is merged and the owner configures the GitHub `staging` Environment is:
 
-- `Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only`
+- `Run PR-14B owner-approved staging execution using synthetic data only`
 
 Do not perform live deployment, DNS/TLS changes, payment activation, production database migration, or real customer onboarding unless explicitly requested.
 
@@ -29,10 +29,10 @@ Do not perform live deployment, DNS/TLS changes, payment activation, production 
 | Target | Current status |
 |---|---|
 | Gate A: Controlled Internal Demo, synthetic/sample data only | GO WITH CONDITIONS |
-| Gate B: Secure Private Internet Demo | CONDITIONAL. Repository High findings are closed and PR #31 remote CI passed at `51687cec8695e397c41bb0daa377370be4da214f`, but live VPS smoke, target MFA/rate-limit smoke, post-merge launch-candidate CI evidence, and owner approval are still required |
-| Gate C: Real Customer Pilot | NO-GO until PR-14 live VPS/staging smoke, alerting/log destination setup, controlled quota-limit smoke, backup/restore, worker/Redis, crawl/document/RAG smoke, and owner approval are recorded |
-| Gate D: Paid Beta | NO-GO until PR-14 evidence, owner pricing/tax/refund approval, support readiness, post-merge launch-candidate CI, VPS/staging smoke, and explicit paid-beta approval are recorded |
-| Gate E: Public Production Launch | NO-GO. Repository remediation is complete, but external VPS/staging evidence and explicit owner approval remain |
+| Gate B: Secure Private Internet Demo | CONDITIONAL. Repository High findings are closed and PR-14A prepares the staging workflow, but PR-14B live VPS smoke, target MFA/rate-limit smoke, post-merge launch-candidate CI evidence, and owner approval are still required |
+| Gate C: Real Customer Pilot | NO-GO until PR-14B live VPS/staging smoke, alerting/log destination setup, controlled quota-limit smoke, backup/restore, worker/Redis, crawl/document/RAG smoke, and owner approval are recorded |
+| Gate D: Paid Beta | NO-GO until PR-14B evidence, owner pricing/tax/refund approval, support readiness, post-merge launch-candidate CI, VPS/staging smoke, and explicit paid-beta approval are recorded |
+| Gate E: Public Production Launch | NO-GO. Repository remediation is complete and PR-14A prepares validation automation, but external VPS/staging evidence and explicit owner approval remain |
 
 ## Baseline
 
@@ -57,19 +57,37 @@ Do not perform live deployment, DNS/TLS changes, payment activation, production 
 ## Unresolved Critical Risks
 
 - No unresolved critical repository-controlled implementation blocker is recorded after PR-13A.
-- Public production launch is still a NO-GO because live VPS/staging validation, restore drill evidence, post-merge launch-candidate CI evidence, and explicit owner launch approval are not recorded. PR #31 remote CI passed on run `26661669094` at `51687cec8695e397c41bb0daa377370be4da214f`; this final evidence-sync commit updates GitHub Actions runtime compatibility and must also pass before owner merge.
+- Public production launch is still a NO-GO because live VPS/staging validation, restore drill evidence, post-merge launch-candidate CI evidence, and explicit owner launch approval are not recorded.
+- PR-14A adds the framework to collect that evidence later through a manually approved GitHub `staging` Environment workflow. It does not satisfy the external evidence gate by itself.
 
 ## Unresolved High Risks
 
 - PR-13A closed AUD-HIGH-001 in repository code/tests. Production PostgreSQL `FOR UPDATE SKIP LOCKED` job acquisition still needs owner-approved staging/VPS multi-worker smoke before horizontal scaling is trusted.
-- PR-13A closed AUD-HIGH-002 in repository code/tests. Live Redis/rate-limit abuse analytics smoke remains PR-14 external evidence.
-- PR-13A closed AUD-HIGH-003 with mocked Playwright browser tests. Live backend-integrated customer/admin/widget smoke remains PR-14 external evidence.
+- PR-13A closed AUD-HIGH-002 in repository code/tests. Live Redis/rate-limit abuse analytics smoke remains PR-14B external evidence.
+- PR-13A closed AUD-HIGH-003 with mocked Playwright browser tests. Live backend-integrated customer/admin/widget smoke remains PR-14B external evidence.
 - Paid-beta live operation still requires owner approval for pricing, GST/tax handling, refund terms, support process, and manual invoicing acceptance.
 - Scanned-document OCR runtime remains gated and not implemented; do not claim scanned-PDF OCR support.
-- Remote CI evidence for PR #31 at `51687cec8695e397c41bb0daa377370be4da214f` is recorded as PASS for Backend, Frontend, Compose config and Security scans. Post-merge launch-candidate CI remains a PR-14 gate.
+- Remote CI evidence for PR #31 at `51687cec8695e397c41bb0daa377370be4da214f` is recorded as PASS for Backend, Frontend, Compose config and Security scans. Post-merge launch-candidate CI remains a PR-14B gate.
 - First VPS certificate issuance/renewal, backup/restore drill, worker/Redis smoke, controlled real-site crawl and document-upload smoke, live PostgreSQL/pgvector RAG smoke, `/ready` smoke, log/alert destination verification, and controlled quota-limit smoke run are pending release-gate validation.
 
 ## Last Validation Commands
+
+Latest PR-14A validation commands:
+
+- `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/staging-deploy-validation.yml'); puts 'yaml ok'"` - pass.
+- `bash -n scripts/staging/*.sh` - pass.
+- `command -v shellcheck` - not run; `shellcheck` is not installed in this environment.
+- `python3 -m json.tool production-control/status/production-status.json` - pass.
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse('production-control/visual/production-roadmap-status.svg'); print('svg ok')"` - pass.
+- `rg -n "PR-14A|PR-14B|Public Production: NO-GO|Public production launch remains NO-GO" production-control/status/production-status.json production-control/visual/production-roadmap-status.mmd production-control/visual/production-roadmap-status.svg production-control/visual/production-status-dashboard.html` - pass.
+- `git diff --check` - pass.
+- `npm ci` - pass.
+- `npm run lint` - pass.
+- `npm run typecheck` - pass.
+- `npm test` - pass.
+- `npm run test:e2e` - pass after sandbox escalation for local Next.js server binding, 5 Playwright Chromium tests.
+- `npm run build` - pass.
+- `npm audit --audit-level=high` - pass after sandbox network escalation; two moderate transitive PostCSS advisories through Next.js remain below the high threshold.
 
 Latest PR-13A validation commands:
 

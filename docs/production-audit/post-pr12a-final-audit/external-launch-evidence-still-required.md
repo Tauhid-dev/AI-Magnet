@@ -2,14 +2,14 @@
 
 Date: 2026-05-30
 
-The following items are not repository implementation tasks. They require owner-approved staging/VPS execution, external proof files, or business/legal approval before launch status can change.
+The following items require owner-approved staging/VPS execution, external proof files, or business/legal approval before launch status can change. PR-14A adds the GitHub Actions `staging` Environment framework and scripts to collect this evidence later; it does not execute deployment by itself.
 
 ## Required External Technical Evidence
 
 | Evidence item | Required before | Current PR-13 status |
 |---|---|---|
-| Remote CI evidence after PR-13 and any remediation merge | Staging and all later gates | Not verified from this environment; `gh` unavailable. |
-| Owner-approved staging/VPS deployment smoke | Secure private demo and later | Not present in repository. |
+| Remote CI evidence after PR-13A and PR-14A merge | Staging and all later gates | PR-13A PR #31 CI was recorded as passing before merge; PR-14A CI must pass after this framework branch is pushed. |
+| Owner-approved staging/VPS deployment smoke | Secure private demo and later | PR-14A workflow/scripts are prepared; no owner-approved staging run has executed. |
 | Live TLS certificate issuance and renewal proof | Private internet demo and later | Not present in repository. |
 | External firewall/private-port proof for PostgreSQL and Redis | Private internet demo and later | Repository production Compose has no data-service published ports, but live firewall proof is absent. |
 | Scheduled encrypted backup proof | Real customer pilot and later | Scripts exist; live schedule evidence absent. |
@@ -38,4 +38,4 @@ The following items are not repository implementation tasks. They require owner-
 
 ## Public Production Gate
 
-PR-13A closed the repository remediation findings from PR-13. Public production launch remains NO-GO until the external evidence above and explicit owner approval are recorded.
+PR-13A closed the repository remediation findings from PR-13. PR-14A prepares the staging deployment/evidence framework. Public production launch remains NO-GO until PR-14B external evidence and explicit owner approval are recorded.
