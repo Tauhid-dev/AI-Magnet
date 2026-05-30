@@ -76,6 +76,7 @@ May require usage/cost/quota tables. Provide migrations and quota default behavi
 - `backend/app/usage/quotas.py` computes tenant quota snapshots from tenant-scoped usage, document, conversation, and crawl data.
 - `backend/app/chat/service.py` records estimated AI tokens/cost and blocks exhausted tenant chat/AI quotas gracefully.
 - `backend/app/api/business_portal.py` enforces knowledge/document/crawl/agent-test quotas and records `quota_limit_exceeded` events.
+- PR-13A persists rate-limit denial events as tenant-scoped `UsageLog(rate_limit_exceeded)` entries when a tenant is safely resolvable or `GlobalAuditLog(rate_limit_exceeded)` entries for unauthenticated/global abuse, using safe hashed attributes without raw credentials, tokens, MFA codes, cookies, widget secrets, request bodies, or raw IP addresses.
 - `backend/app/api/health.py` exposes `/ready` for database/configuration readiness checks.
 - `backend/app/analytics/service.py`, `backend/app/api/admin.py`, and `backend/app/api/business_portal.py` expose quota/cost/usage metrics to admin and portal clients.
 - `frontend/app/admin/usage/page.tsx` shows platform estimated tokens, cost, crawl/storage totals, and tenant quota state.
@@ -86,6 +87,8 @@ May require usage/cost/quota tables. Provide migrations and quota default behavi
 Validation:
 
 - `backend/.venv/bin/python -m pytest backend/tests/usage/test_quota_service.py backend/tests/chat/test_chat_api.py backend/tests/test_health.py` - pass, 12 tests.
+- `backend/.venv/bin/python -m pytest backend/tests/security/test_rate_limit_backend.py backend/tests/analytics/test_usage_analytics.py backend/tests/business/test_business_portal_api.py backend/tests/chat/test_chat_api.py backend/tests/admin/test_admin_api.py -q` - pass, 44 tests.
+- `backend/.venv/bin/python -m pytest backend/tests -q` - pass, 116 tests.
 - `backend/.venv/bin/ruff check backend/app backend/tests` - pass.
 - `backend/.venv/bin/python -m pytest backend/tests` - pass, 93 tests.
 - `npm run lint` - pass.
@@ -98,8 +101,8 @@ Validation:
 
 ## Blockers
 
-PR-13 reopened one repository-controlled risk: application rate-limit exceed events are logged but not persisted into tenant usage/abuse analytics. Live logging/alert destination setup, VPS `/ready` smoke, quota-limit smoke, and operational incident/restore drills remain release-gate evidence before real customer pilot use.
+PR-13 reopened one repository-controlled risk: application rate-limit exceed events were logged but not persisted into tenant usage/abuse analytics. PR-13A closed the repository risk with durable privacy-safe rate-limit denial events and aggregate analytics. Live Redis/rate-limit abuse analytics smoke, log destination setup, VPS `/ready` smoke, quota-limit smoke, and operational incident/restore drills remain release-gate evidence before real customer pilot use.
 
 ## Completion Criteria
 
-The operator can observe core failures and usage, enforce quotas, and identify tenant/provider cost risk before accepting paid usage. PR-13 found that abuse/rate-limit event persistence must be added before claiming complete abuse analytics.
+The operator can observe core failures and usage, enforce quotas, and identify tenant/provider cost risk before accepting paid usage. PR-13A closes the repository-level abuse/rate-limit event persistence gap. PR-14 must still prove target-environment Redis, analytics, alerting, quota, and restore behavior.

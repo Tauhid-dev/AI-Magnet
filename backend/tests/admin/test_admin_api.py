@@ -8,6 +8,7 @@ import app.models  # noqa: F401
 from app.admin.auth import AdminPortalAuthService
 from app.core.config import Settings, get_settings
 from app.core.passwords import hash_password
+from app.core.rate_limit import rate_limiter
 from app.core.totp import generate_totp_code
 from app.db.base import Base, utc_now
 from app.db.session import get_db_session
@@ -44,6 +45,7 @@ def create_test_session():
 def create_client(session, monkeypatch):
     monkeypatch.setenv("ADMIN_PORTAL_SESSION_SECRET", "test-admin-secret")
     monkeypatch.setenv("BUSINESS_PORTAL_SESSION_SECRET", "test-business-secret")
+    rate_limiter.reset()
     get_settings.cache_clear()
     app = create_app()
 
@@ -293,6 +295,55 @@ def test_admin_locks_after_repeated_failed_passwords(monkeypatch):
         assert locked_response.status_code == 401
         assert admin.failed_login_count == 2
         assert admin.locked_until is not None
+
+
+def test_admin_login_rate_limit_records_global_safe_event(monkeypatch):
+    with create_test_session() as session:
+        admin = seed_admin(session)
+        session.commit()
+        monkeypatch.setenv("RATE_LIMIT_LOGIN_PER_MINUTE", "1")
+        client = create_client(session, monkeypatch)
+
+        first_response = client.post(
+            "/admin/auth/login",
+            json={
+                "email": admin.email,
+                "password": "wrong-admin-password",
+                "mfa_code": "123456",
+            },
+        )
+        assert first_response.status_code == 401
+        assert (
+            session.scalars(
+                select(GlobalAuditLog).where(GlobalAuditLog.action == "rate_limit_exceeded")
+            ).all()
+            == []
+        )
+
+        limited_response = client.post(
+            "/admin/auth/login",
+            json={
+                "email": admin.email,
+                "password": "wrong-admin-password",
+                "mfa_code": "654321",
+            },
+        )
+
+        assert limited_response.status_code == 429
+        assert int(limited_response.headers["Retry-After"]) > 0
+        event = session.scalars(
+            select(GlobalAuditLog).where(GlobalAuditLog.action == "rate_limit_exceeded")
+        ).one()
+        assert event.tenant_id is None
+        assert event.target_type == "rate_limit"
+        assert event.attributes["scope"] == "admin_login"
+        assert event.attributes["actor_category"] == "admin_login"
+        assert event.attributes["route"] == "/admin/auth/login"
+        serialized = str(event.attributes).lower()
+        assert admin.email not in serialized
+        assert "wrong-admin-password" not in serialized
+        assert "123456" not in serialized
+        assert "654321" not in serialized
 
 
 def test_admin_routes_reject_business_portal_tokens(monkeypatch):

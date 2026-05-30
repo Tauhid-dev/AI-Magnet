@@ -82,6 +82,51 @@ def test_memory_limiter_rejection_includes_retry_header():
     assert int(exc.value.headers["Retry-After"]) > 0
 
 
+def test_analytics_persistence_failure_still_blocks_abused_request(monkeypatch):
+    limiter = InMemoryRateLimiter()
+    settings = Settings(
+        rate_limit_backend="memory",
+        rate_limit_window_seconds=60,
+    )
+
+    class FailingSession:
+        rolled_back = False
+
+        def rollback(self):
+            self.rolled_back = True
+
+    def fail_record(*_args, **_kwargs):
+        raise RuntimeError("analytics write failed")
+
+    session = FailingSession()
+    monkeypatch.setattr(
+        "app.usage.service.UsageService.record_rate_limit_exceeded",
+        fail_record,
+    )
+    enforce_rate_limit(
+        fake_request(),
+        settings,
+        scope="test",
+        identifiers=["subject"],
+        limit=1,
+        limiter=limiter,
+        session=session,
+    )
+    with pytest.raises(HTTPException) as exc:
+        enforce_rate_limit(
+            fake_request(),
+            settings,
+            scope="test",
+            identifiers=["subject"],
+            limit=1,
+            limiter=limiter,
+            session=session,
+        )
+
+    assert exc.value.status_code == 429
+    assert session.rolled_back is True
+
+
 def test_redis_limiter_coordinates_counts_and_retry_window():
     redis = FakeRedis()
     settings = Settings(

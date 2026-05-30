@@ -15,3 +15,5 @@ storage/
 frontend/node_modules/
 frontend/.next/
 frontend/tsconfig.tsbuildinfo
+frontend/playwright-report/
+frontend/test-results/

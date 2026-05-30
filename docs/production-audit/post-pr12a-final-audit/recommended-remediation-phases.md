@@ -4,6 +4,8 @@ Date: 2026-05-30
 
 ## PR-13A - Security And Operations Correctness Remediation
 
+Status: CLOSED by PR-13A.
+
 Scope:
 
 - Make background job acquisition atomic/concurrency-safe for multiple worker processes.
@@ -32,6 +34,8 @@ Blocks:
 
 ## PR-13B - Product Flow Browser/E2E Evidence Remediation
 
+Status: CLOSED into PR-13A for repository-level mocked browser evidence.
+
 Scope:
 
 - Add reproducible browser/e2e coverage for login, onboarding, knowledge source setup, agent sandbox with citations, widget key/domain setup and embed snippet generation.
@@ -42,7 +46,6 @@ Scope:
 Dependencies:
 
 - PR-13 audit findings.
-- PR-13A if shared setup/security helpers are touched.
 
 Acceptance criteria:
 
@@ -51,10 +54,12 @@ Acceptance criteria:
 
 Blocks:
 
-- Real customer pilot if business self-service onboarding is in scope.
-- Paid beta.
+- No longer a separate repository remediation blocker after PR-13A.
+- Live backend-integrated customer/admin/widget smoke remains PR-14 external validation.
 
 ## PR-13C - Documentation And Status Cleanup
+
+Status: CLOSED into PR-13A production-control updates, subject to final review.
 
 Scope:
 
@@ -88,7 +93,6 @@ Scope:
 Dependencies:
 
 - PR-13A complete.
-- PR-13B complete or owner explicitly scopes out self-service customer flow from the staging gate.
 - Owner explicitly authorizes staging/VPS actions.
 
 Acceptance criteria:
@@ -101,4 +105,3 @@ Blocks:
 - Real customer pilot.
 - Paid beta.
 - Public production launch.
-

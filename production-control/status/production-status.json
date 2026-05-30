@@ -9,11 +9,11 @@
     "public_paid_production": "no_go"
   },
   "current": {
-    "active_phase": "POST-PR-13",
-    "last_completed_phase": "PR-13",
-    "next_permitted_phase": "Implement remediation phase PR-13A",
-    "production_go_no_go": "PR-13 audit is verified with findings; public production remains NO-GO until repository remediation, owner-approved live evidence, and explicit launch approval are recorded",
-    "overall_status": "pr13_audit_verified_with_findings_public_launch_no_go"
+    "active_phase": null,
+    "last_completed_phase": "PR-13A",
+    "next_permitted_phase": "Implement external validation phase PR-14 using owner-approved VPS/staging environment and synthetic data only",
+    "production_go_no_go": "Repository-level PR-13A remediation is complete; public production remains NO-GO until owner-approved external VPS/staging evidence and explicit launch approval are recorded",
+    "overall_status": "repository_high_findings_closed_external_launch_no_go"
   },
   "launch_gates": [
     {
@@ -32,49 +32,48 @@
     {
       "gate_id": "B",
       "title": "Secure Private Internet Demo",
-            "status": "conditional",
-            "requires_verified_phases": [
-                "PR-01",
-                "PR-02",
-                "PR-03",
-                "PR-04",
-                "PR-05"
-            ],
-            "remaining_conditions": [
-                "PR-13A remediation or explicit owner scoping for worker concurrency and abuse analytics findings",
-                "Remote CI evidence for the current production remediation branch",
-                "Owner-approved VPS smoke for TLS/firewall exposure",
-                "Production super-admin MFA smoke on the target environment",
-                "Redis-backed app rate-limit smoke on the target environment",
-                "Worker health and Redis reachability smoke",
-                "Backup/restore and PostgreSQL/pgvector smoke evidence",
-                "Controlled real-site crawl smoke if private demo includes live website ingestion",
-                "Controlled document-upload smoke if private demo includes customer documents"
-            ],
-            "evidence_links": [
-                "production-control/09_RELEASE_GATES.md"
-            ]
-    },
-    {
-      "gate_id": "C",
-      "title": "Real Customer Pilot",
-      "status": "no_go_pending_remediation_and_external_evidence",
+      "status": "conditional_pending_external_evidence",
       "requires_verified_phases": [
         "PR-01",
         "PR-02",
         "PR-03",
         "PR-04",
-                "PR-05",
-                "PR-06",
-                "PR-07",
-        "PR-08",
-        "PR-09",
-        "PR-10"
+        "PR-05",
+        "PR-13A"
       ],
       "remaining_conditions": [
-        "PR-13A remediation for worker concurrency-safe claiming and persisted abuse analytics",
-        "PR-13B browser/e2e evidence or owner-approved manual validation protocol",
-        "Remote CI evidence for the latest production remediation branch",
+        "Post-merge launch-candidate CI evidence after PR #31 merge",
+        "Owner-approved VPS smoke for TLS/firewall exposure",
+        "Production super-admin MFA smoke on the target environment",
+        "Redis-backed app rate-limit smoke on the target environment",
+        "Worker health and Redis reachability smoke",
+        "Backup/restore and PostgreSQL/pgvector smoke evidence",
+        "Controlled real-site crawl smoke if private demo includes live website ingestion",
+        "Controlled document-upload smoke if private demo includes customer documents"
+      ],
+      "evidence_links": [
+        "production-control/09_RELEASE_GATES.md"
+      ]
+    },
+    {
+      "gate_id": "C",
+      "title": "Real Customer Pilot",
+      "status": "no_go_pending_external_evidence_and_owner_approval",
+      "requires_verified_phases": [
+        "PR-01",
+        "PR-02",
+        "PR-03",
+        "PR-04",
+        "PR-05",
+        "PR-06",
+        "PR-07",
+        "PR-08",
+        "PR-09",
+        "PR-10",
+        "PR-13A"
+      ],
+      "remaining_conditions": [
+        "Post-merge launch-candidate CI evidence after PR #31 merge",
         "Owner-approved VPS/staging smoke before any real customer data",
         "Live /ready readiness check against production-equivalent PostgreSQL",
         "Logging/alert destination configured and verified",
@@ -91,7 +90,7 @@
     {
       "gate_id": "D",
       "title": "Paid Beta",
-      "status": "no_go_pending_remediation_external_evidence_and_owner_commercial_approval",
+      "status": "no_go_pending_external_evidence_and_owner_commercial_approval",
       "requires_verified_phases": [
         "PR-01",
         "PR-02",
@@ -103,12 +102,12 @@
         "PR-08",
         "PR-09",
         "PR-10",
-        "PR-11"
+        "PR-11",
+        "PR-13A"
       ],
       "remaining_conditions": [
-        "PR-13A/PR-13B remediation or explicit owner risk acceptance",
         "Owner approval for pricing, GST/tax handling, refund terms, and support process",
-        "Remote CI evidence for the final remediation branch",
+        "Post-merge launch-candidate CI evidence after PR #31 merge",
         "VPS/staging smoke for auth, manual entitlement changes, quotas, backup/restore, worker/Redis, PostgreSQL/pgvector RAG, and /ready checks",
         "Confirmation that manual invoicing is acceptable for the first paid beta; Stripe remains deferred"
       ],
@@ -122,11 +121,13 @@
       "status": "no_go",
       "requires_verified_phases": [
         "PR-12",
-        "PR-12A"
+        "PR-12A",
+        "PR-13",
+        "PR-13A",
+        "PR-14"
       ],
       "remaining_conditions": [
-        "PR-13A security/operations correctness remediation and PR-13B customer-flow evidence remediation",
-        "Remote CI evidence for the launch candidate",
+        "Post-merge launch-candidate CI evidence",
         "Owner-approved staging/VPS validation run",
         "Production super-admin MFA smoke on the target environment",
         "Redis-backed app rate-limit smoke on the target environment",
@@ -134,7 +135,10 @@
         "External firewall proof that PostgreSQL and Redis are not public",
         "Scheduled encrypted backup and restore drill evidence",
         "Production-equivalent PostgreSQL/pgvector migration and RAG smoke",
+        "PostgreSQL multi-worker background job claiming smoke",
         "Worker/Redis health smoke",
+        "Live Redis-backed rate-limit abuse analytics smoke",
+        "Live backend-integrated browser/customer/admin/widget smoke with synthetic data",
         "Controlled website crawl and document upload smoke",
         "Log/alert destination verification",
         "Quota-limit and abuse-control smoke",
@@ -263,60 +267,61 @@
       "commit": "pending"
     },
     {
-            "phase_id": "PR-05",
-            "title": "Real Async Queue, Worker Reliability and Job Visibility",
-            "status": "complete",
-            "completion_percent": 95,
-            "dependencies": [
-                "PR-04"
-            ],
-            "priority": "p0",
-            "criticality": "high_launch_blocker",
-            "validation_status": "pass_with_pr13_residual_risk",
-            "last_updated": "2026-05-30",
-            "evidence_links": [
-                "production-control/phases/PR-05_REAL_ASYNC_QUEUE_WORKER_RELIABILITY_AND_JOB_VISIBILITY.md",
-                "backend/app/jobs/service.py",
-                "backend/app/jobs/processor.py",
-                "backend/app/workers/runner.py",
-                "backend/app/models/job.py",
-                "backend/migrations/versions/20260528_0008_pr05_background_jobs.py",
-                "backend/tests/workers/test_background_jobs.py",
-                "docs/worker-queue.md",
-                "docs/production-audit/post-pr12a-final-audit/implementation-gap-register.md"
-            ],
-            "branch": "production/pr-05-real-async-queue-worker",
-            "commit": "pending",
-            "pr13_finding": "AUD-HIGH-001"
-        },
-        {
-            "phase_id": "PR-06",
-            "title": "Secure Website and Sitemap Ingestion",
-            "status": "verified",
-            "completion_percent": 100,
-            "dependencies": [
-                "PR-05"
-            ],
-            "priority": "p1",
-            "criticality": "product_workflow_blocker",
-            "validation_status": "pass",
-            "last_updated": "2026-05-28",
-            "evidence_links": [
-                "production-control/phases/PR-06_SECURE_WEBSITE_AND_SITEMAP_INGESTION.md",
-                "backend/app/models/knowledge.py",
-                "backend/app/rag/web_security.py",
-                "backend/app/rag/web_fetcher.py",
-                "backend/app/rag/web_extraction.py",
-                "backend/app/rag/website_ingestion.py",
-                "backend/app/jobs/handlers.py",
-                "backend/migrations/versions/20260528_0009_pr06_website_sitemap_ingestion.py",
-                "backend/tests/rag/test_website_ingestion.py",
-                "frontend/app/portal/documents/page.tsx",
-                "docs/website-ingestion.md"
-            ],
-            "branch": "production/pr-06-secure-website-sitemap-ingestion",
-            "commit": "pending"
-        },
+      "phase_id": "PR-05",
+      "title": "Real Async Queue, Worker Reliability and Job Visibility",
+      "status": "verified",
+      "completion_percent": 100,
+      "dependencies": [
+        "PR-04"
+      ],
+      "priority": "p0",
+      "criticality": "high_launch_blocker",
+      "validation_status": "pass_pr13a_concurrency_safe_claiming_repository_tests_postgresql_smoke_pending",
+      "last_updated": "2026-05-30",
+      "evidence_links": [
+        "production-control/phases/PR-05_REAL_ASYNC_QUEUE_WORKER_RELIABILITY_AND_JOB_VISIBILITY.md",
+        "backend/app/jobs/service.py",
+        "backend/app/jobs/processor.py",
+        "backend/app/workers/runner.py",
+        "backend/app/models/job.py",
+        "backend/migrations/versions/20260528_0008_pr05_background_jobs.py",
+        "backend/tests/workers/test_background_jobs.py",
+        "docs/worker-queue.md",
+        "docs/production-audit/post-pr12a-final-audit/implementation-gap-register.md",
+        "production-control/phases/PR-13A_FINAL_REPOSITORY_REMEDIATION_BEFORE_STAGING_VALIDATION.md"
+      ],
+      "branch": "production/pr-13a-consolidated-remediation",
+      "commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf + 51687cec8695e397c41bb0daa377370be4da214f",
+      "pr13_finding_status": "AUD-HIGH-001 closed by PR-13A; live PostgreSQL multi-worker smoke remains PR-14 external evidence"
+    },
+    {
+      "phase_id": "PR-06",
+      "title": "Secure Website and Sitemap Ingestion",
+      "status": "verified",
+      "completion_percent": 100,
+      "dependencies": [
+        "PR-05"
+      ],
+      "priority": "p1",
+      "criticality": "product_workflow_blocker",
+      "validation_status": "pass",
+      "last_updated": "2026-05-28",
+      "evidence_links": [
+        "production-control/phases/PR-06_SECURE_WEBSITE_AND_SITEMAP_INGESTION.md",
+        "backend/app/models/knowledge.py",
+        "backend/app/rag/web_security.py",
+        "backend/app/rag/web_fetcher.py",
+        "backend/app/rag/web_extraction.py",
+        "backend/app/rag/website_ingestion.py",
+        "backend/app/jobs/handlers.py",
+        "backend/migrations/versions/20260528_0009_pr06_website_sitemap_ingestion.py",
+        "backend/tests/rag/test_website_ingestion.py",
+        "frontend/app/portal/documents/page.tsx",
+        "docs/website-ingestion.md"
+      ],
+      "branch": "production/pr-06-secure-website-sitemap-ingestion",
+      "commit": "pending"
+    },
     {
       "phase_id": "PR-07",
       "title": "Secure Document Ingestion, Storage and OCR Path",
@@ -371,14 +376,14 @@
     {
       "phase_id": "PR-09",
       "title": "Customer Onboarding, Agent Testing and Widget Installation Experience",
-      "status": "complete",
-      "completion_percent": 95,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-08"
       ],
       "priority": "p1",
       "criticality": "beta_workflow_blocker",
-      "validation_status": "pass_with_pr13_evidence_gap",
+      "validation_status": "pass_mocked_browser_e2e_repository_coverage_external_integration_pending",
       "last_updated": "2026-05-30",
       "evidence_links": [
         "production-control/phases/PR-09_CUSTOMER_ONBOARDING_AGENT_TESTING_AND_WIDGET_INSTALLATION_EXPERIENCE.md",
@@ -388,23 +393,28 @@
         "frontend/app/portal/agent/page.tsx",
         "frontend/app/portal/widget/page.tsx",
         "frontend/tests/static-check.mjs",
-        "docs/production-audit/post-pr12a-final-audit/implementation-gap-register.md"
+        "docs/production-audit/post-pr12a-final-audit/implementation-gap-register.md",
+        "frontend/e2e/business-portal.spec.ts",
+        "frontend/e2e/admin-console.spec.ts",
+        "frontend/e2e/support/mock-api.ts",
+        "frontend/playwright.config.ts",
+        "frontend/e2e/README.md"
       ],
-      "branch": "production/pr-09-customer-onboarding-agent-widget-ux",
-      "commit": "pending",
-      "pr13_finding": "AUD-HIGH-003"
+      "branch": "production/pr-13a-consolidated-remediation",
+      "commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf + 51687cec8695e397c41bb0daa377370be4da214f",
+      "pr13_finding_status": "AUD-HIGH-003 closed by PR-13A mocked browser E2E; live backend-integrated staging E2E remains PR-14 external evidence"
     },
     {
       "phase_id": "PR-10",
       "title": "Monitoring, Analytics, Metering, Quotas and Cost Protection",
-      "status": "complete",
-      "completion_percent": 95,
+      "status": "verified",
+      "completion_percent": 100,
       "dependencies": [
         "PR-09"
       ],
       "priority": "p1",
       "criticality": "pilot_operations_blocker",
-      "validation_status": "pass_with_pr13_residual_risk",
+      "validation_status": "pass_pr13a_persisted_rate_limit_abuse_analytics",
       "last_updated": "2026-05-30",
       "evidence_links": [
         "production-control/phases/PR-10_MONITORING_ANALYTICS_METERING_QUOTAS_AND_COST_PROTECTION.md",
@@ -415,11 +425,15 @@
         "frontend/app/admin/usage/page.tsx",
         "frontend/app/portal/analytics/page.tsx",
         "docs/operations-monitoring.md",
-        "docs/production-audit/post-pr12a-final-audit/implementation-gap-register.md"
+        "docs/production-audit/post-pr12a-final-audit/implementation-gap-register.md",
+        "backend/app/core/rate_limit.py",
+        "backend/app/usage/service.py",
+        "backend/tests/security/test_rate_limit_backend.py",
+        "backend/tests/analytics/test_usage_analytics.py"
       ],
-      "branch": "production/pr-10-monitoring-metering-quotas-cost-protection",
-      "commit": "pending",
-      "pr13_finding": "AUD-HIGH-002"
+      "branch": "production/pr-13a-consolidated-remediation",
+      "commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf + 51687cec8695e397c41bb0daa377370be4da214f",
+      "pr13_finding_status": "AUD-HIGH-002 closed by PR-13A privacy-safe persisted rate-limit exceed events and aggregate analytics"
     },
     {
       "phase_id": "PR-11",
@@ -519,6 +533,76 @@
       ],
       "branch": "production/pr-13-full-post-merge-audit",
       "commit": "pending"
+    },
+    {
+      "phase_id": "PR-13A",
+      "title": "Final Repository Remediation Before Formal VPS/Staging Validation",
+      "status": "verified",
+      "completion_percent": 100,
+      "dependencies": [
+        "PR-13"
+      ],
+      "priority": "p0",
+      "criticality": "repository_remediation_gate",
+      "validation_status": "pass_repository_remote_ci_passed_node24_cleanup_pending_final_run",
+      "last_updated": "2026-05-30",
+      "evidence_links": [
+        "production-control/phases/PR-13A_FINAL_REPOSITORY_REMEDIATION_BEFORE_STAGING_VALIDATION.md",
+        "production-control/PR-13A_EXECUTION_PLAN.md",
+        "docs/production-audit/post-pr12a-final-audit/pr-13a-validation-execution-report.md",
+        "backend/app/jobs/service.py",
+        "backend/app/core/rate_limit.py",
+        "frontend/e2e/README.md",
+        ".github/workflows/ci.yml"
+      ],
+      "branch": "production/pr-13a-consolidated-remediation",
+      "commit": "51687cec8695e397c41bb0daa377370be4da214f",
+      "commit_chain": {
+        "implementation_commit": "73d521d208ca75c04dbaffe0645917ce1dcc60cf",
+        "execution_log_commit": "bbc47886549e686d251399565edbfa064930289e",
+        "lockfile_ci_fix_commit": "51687cec8695e397c41bb0daa377370be4da214f",
+        "final_evidence_sync_commit": "recorded_in_final_response_after_commit"
+      },
+      "remote_ci": {
+        "pull_request": 31,
+        "run_id": 26661669094,
+        "head_sha": "51687cec8695e397c41bb0daa377370be4da214f",
+        "conclusion": "success",
+        "jobs": {
+          "Backend checks": "pass",
+          "Frontend checks": "pass",
+          "Compose config": "pass",
+          "Security scans": "pass"
+        },
+        "node20_warning_before_cleanup": true,
+        "node24_action_cleanup": "pending_post_push_ci_for_this_evidence_sync_commit"
+      },
+      "closed_findings": [
+        "AUD-HIGH-001",
+        "AUD-HIGH-002",
+        "AUD-HIGH-003"
+      ]
+    },
+    {
+      "phase_id": "PR-14",
+      "title": "Owner-Approved VPS/Staging External Validation",
+      "status": "not_started",
+      "completion_percent": 0,
+      "dependencies": [
+        "PR-13A"
+      ],
+      "priority": "p0",
+      "criticality": "external_launch_gate",
+      "validation_status": "not_run_requires_owner_approval",
+      "last_updated": "2026-05-30",
+      "evidence_links": [
+        "production-control/phases/PR-14_OWNER_APPROVED_VPS_STAGING_EXTERNAL_VALIDATION.md",
+        "docs/production-launch/release-evidence-checklist.md",
+        "docs/production-launch/vps-staging-validation-runbook.md",
+        "docs/production-audit/post-pr12a-final-audit/external-launch-evidence-still-required.md"
+      ],
+      "branch": "pending_owner_approval",
+      "commit": "pending"
     }
   ],
   "conditional_or_deferred": [
@@ -544,9 +628,7 @@
     }
   ],
   "critical_blockers": [
-    "Public production launch is blocked until PR-13 repository findings are remediated where required and owner-approved live VPS/staging validation evidence plus explicit owner approval are recorded",
-    "PR-13A is recommended to address worker concurrency-safe job claiming and persisted abuse/rate-limit analytics before real customer pilot",
-    "PR-13B is recommended to add reproducible browser/e2e evidence before self-service customer pilot",
+    "Public production launch remains NO-GO until owner-approved live VPS/staging validation evidence plus explicit owner approval are recorded",
     "Production super-admin MFA and Redis-backed app rate limiting require target-environment smoke before launch-gate change",
     "First controlled real-site crawl smoke remains pending before pilot use of website ingestion",
     "First controlled document-upload smoke remains pending before pilot use of customer documents",
@@ -554,28 +636,41 @@
   ],
   "high_production_requirements": [
     {
-      "item": "Worker job acquisition must be made concurrency-safe or scoped to single-worker operation with explicit risk acceptance",
-      "phase": "PR-05 / PR-13A"
+      "item": "PostgreSQL-specific multi-worker job-claim smoke must run in owner-approved staging/VPS before horizontal worker scaling is trusted",
+      "phase": "PR-14 external validation"
     },
     {
-      "item": "Application rate-limit exceed events should be persisted into safe tenant/widget/account usage analytics",
-      "phase": "PR-02 / PR-10 / PR-13A"
+      "item": "Browser E2E is currently mocked API coverage; live backend-integrated customer/admin/widget smoke remains required before real customer pilot",
+      "phase": "PR-14 external validation"
     },
     {
-      "item": "Primary onboarding/widget flows need committed browser/e2e evidence or an owner-approved manual validation protocol",
-      "phase": "PR-09 / PR-13B"
-    },
-    {
-      "item": "Paid-beta live operation approval, pricing/GST/refund confirmation, support readiness, remote CI, and VPS/staging smoke evidence",
-      "phase": "Gate D / PR-12"
+      "item": "Paid-beta live operation approval, pricing/GST/refund confirmation, support readiness, post-merge launch-candidate CI, and VPS/staging smoke evidence",
+      "phase": "Gate D / PR-14"
     },
     {
       "item": "Scanned-document OCR runtime remains gated and must not be claimed unless separately implemented",
-      "phase": "PR-07 / PR-12"
+      "phase": "PR-07 / PR-14"
     },
     {
       "item": "Final owner launch approval and live evidence acceptance",
-      "phase": "PR-12A / Gate E"
+      "phase": "PR-14 / Gate E"
+    }
+  ],
+  "closed_pr13_findings": [
+    {
+      "finding_id": "AUD-HIGH-001",
+      "closed_by": "PR-13A",
+      "evidence": "Atomic UPDATE ... RETURNING job claim with PostgreSQL FOR UPDATE SKIP LOCKED candidate query plus concurrency tests in backend/tests/workers/test_background_jobs.py"
+    },
+    {
+      "finding_id": "AUD-HIGH-002",
+      "closed_by": "PR-13A",
+      "evidence": "Rate-limit 429 events persist to tenant UsageLog or GlobalAuditLog with hashed/safe attributes and aggregate analytics counts"
+    },
+    {
+      "finding_id": "AUD-HIGH-003",
+      "closed_by": "PR-13A",
+      "evidence": "Playwright browser tests cover business/admin portal flows with synthetic mocked API and are wired into CI"
     }
   ]
 }

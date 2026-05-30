@@ -1,6 +1,6 @@
 # Validation Matrix
 
-Last updated: 2026-05-29
+Last updated: 2026-05-30
 
 Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 
@@ -20,12 +20,12 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Live PostgreSQL plus pgvector validation | PR-04 | optional | optional | required | optional | optional | required | required | partial | validation script exists; first staging/VPS run pending |
 | Dependency/secret/SAST CI scans | PR-04 | optional | optional | optional | optional | required | required | optional | partial | CI jobs added; first remote run pending |
 | Structured logs/correlation IDs/PII-safe logging | PR-04/PR-10 | required | required | optional | optional | required | required | manual log review | partial | request/correlation baseline tests pass; PR-10 owns full monitoring/log review |
-| Real queue worker and job visibility | PR-05 | required | required | required if schema changes | required if UI | required | required | manual worker smoke | pass | job enqueue/process/retry/failure/idempotency tests, job APIs, worker health check config |
+| Real queue worker and job visibility | PR-05/PR-13A | required | required | required if schema changes | required if UI | required | required | manual worker smoke | pass | job enqueue/process/retry/failure/idempotency tests, job APIs, worker health check config, atomic claim/concurrency tests |
 | Website/sitemap ingestion SSRF safety | PR-06 | required | required | required | required | required | required | staging safe crawl | pass | malicious URL tests, redirect/private DNS tests, crawl status, source UI, and migration smoke pass; controlled real-site crawl remains release-gate evidence |
 | Document/PDF/DOCX/OCR ingestion safety | PR-07 | required | required | required | required | required | required | manual upload test | pass | upload validation, DOCX/PDF extraction/OCR gate tests, tenant API refresh/delete tests, private storage and worker tests |
 | SQL pgvector retrieval/citations/RAG safety | PR-08 | required | required | required | required if UI | required | required | staging RAG eval | pass | SQL retrieval path, citation/schema/widget tests, RAG safety fixtures, SQLite migration smoke; production-equivalent pgvector smoke remains release-gate evidence |
-| Onboarding/agent/widget UX | PR-09 | optional | required | optional | required | required | required | browser smoke | pass | backend API tests, frontend static/type/lint/build, authenticated browser smoke |
-| Monitoring/metering/quotas/cost controls | PR-10 | required | required | optional | required if UI | required | required | manual alert/limit checks | pass | quota/metering/readiness tests, admin/portal UI checks, operations runbook |
+| Onboarding/agent/widget UX | PR-09/PR-13A | optional | required | optional | required | required | required | browser smoke | pass | backend API tests, frontend static/type/lint/build, committed Playwright mocked browser tests |
+| Monitoring/metering/quotas/cost controls | PR-10/PR-13A | required | required | optional | required if UI | required | required | manual alert/limit checks | pass | quota/metering/readiness tests, persisted rate-limit abuse analytics, admin/portal UI checks, operations runbook |
 | Billing/entitlements/paid-beta controls | PR-11 | required | required | required | required | required | required | manual paid-beta review | pass | manual entitlement model/API/UI tests, quota enforcement tests, migration smoke, and paid-beta gate record |
 | Final production launch audit | PR-12 | required | required | required | required | required | required | required | partial | repository final validation package exists; local repository checks pass when recorded below; owner-approved VPS/staging evidence and launch approval remain required |
 | Final repository security corrections before staging | PR-12A | required | required | optional | optional | required | required | staging MFA/Redis smoke | pass | mandatory production admin MFA tests, Redis rate-limiter tests, readiness/config checks, full validation suite |
@@ -100,6 +100,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Document ingestion job success and payload redaction | pass | `backend/tests/workers/test_background_jobs.py` |
 | Retry/backoff/idempotency/failure visibility | pass | `backend/tests/workers/test_background_jobs.py` |
 | Notification delivery job processing and usage logging | pass | `backend/tests/workers/test_background_jobs.py` |
+| Atomic job claim and concurrent worker distribution | pass | PR-13A `backend/tests/workers/test_background_jobs.py` - 11 focused tests passed |
 | Tenant/admin job visibility APIs | pass | `backend/tests/business/test_business_portal_api.py`; `backend/tests/admin/test_admin_api.py` |
 | Backend full test suite | pass | `backend/.venv/bin/python -m pytest backend/tests` - 63 passed |
 | Backend compile/lint | pass | `backend/.venv/bin/python -m compileall backend/app backend/tests backend/migrations`; `backend/.venv/bin/ruff check backend/app backend/tests` |
@@ -218,7 +219,7 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Migration upgrade/downgrade | pass | SQLite upgrade head and downgrade to `20260529_0011` |
 | Frontend lint/typecheck/test/build | pass | `npm run lint`; `npm run typecheck`; `npm test`; `npm run build` |
 | Dependency and static security scans | pass | `pip-audit` found no known Python vulnerabilities; Bandit passed; `npm audit --audit-level=high` passed high threshold with moderate transitive PostCSS advisory noted |
-| Paid-beta live operations review | partial | Repository controls are verified; owner approval, pricing/tax/refund confirmation, remote CI, VPS/staging smoke, and support readiness remain Gate D conditions |
+| Paid-beta live operations review | partial | Repository controls are verified; owner approval, pricing/tax/refund confirmation, post-merge launch-candidate CI, VPS/staging smoke, and support readiness remain Gate D conditions |
 
 ## PR-12 Validation
 
@@ -271,7 +272,31 @@ Status values: `pass`, `fail`, `not_run`, `partial`, `blocked`.
 | Backup/restore/pgvector script syntax | pass | `sh -n scripts/backup_postgres.sh scripts/restore_postgres.sh scripts/validate_pgvector_migrations.sh` passed |
 | Security scans | pass_with_warning | Bandit passed; pip-audit found no Python vulnerabilities; secret pattern scan had no matches; npm audit passed high threshold with moderate PostCSS advisory noted |
 | Production-control artifact syntax | pass | Status JSON parsed; SVG parsed; phase/status consistency checked |
-| Worker multi-process atomic claim proof | fail_gap | PR-13 finding AUD-HIGH-001; no atomic claim or concurrency race test found |
-| Persisted rate-limit abuse analytics | fail_gap | PR-13 finding AUD-HIGH-002; rate-limit exceeds are logged but not written to `UsageEventType.RATE_LIMIT_EXCEEDED` |
-| Reproducible browser/e2e evidence | fail_gap | PR-13 finding AUD-HIGH-003; frontend committed test is static only |
+| Worker multi-process atomic claim proof | closed_pr13a | PR-13 finding AUD-HIGH-001; closed by PR-13A repository implementation and tests |
+| Persisted rate-limit abuse analytics | closed_pr13a | PR-13 finding AUD-HIGH-002; closed by PR-13A repository implementation and tests |
+| Reproducible browser/e2e evidence | closed_pr13a | PR-13 finding AUD-HIGH-003; closed by PR-13A mocked Playwright browser tests |
 | External VPS/staging launch evidence | not_run | Required in PR-14 with owner approval |
+
+## PR-13A Validation
+
+| Check | Status | Evidence |
+|---|---|---|
+| Baseline/default branch verification | pass | `master` pulled to `32b74ee87a41c1a7d924763af85fb4abae562d07`; PR-13 merge commit visible; PR-12/PR-12A history retained |
+| Worker atomic claim implementation | pass | `backend/app/jobs/service.py` uses atomic `UPDATE ... RETURNING`; PostgreSQL candidate query uses `FOR UPDATE SKIP LOCKED` |
+| Worker concurrency/retry/recovery tests | pass | `backend/.venv/bin/python -m pytest backend/tests/workers/test_background_jobs.py -q` - 11 passed |
+| PostgreSQL job claim SQL compile | pass | SQLAlchemy PostgreSQL dialect compile confirms `UPDATE ... SELECT ... FOR UPDATE SKIP LOCKED ... RETURNING`; live PostgreSQL execution remains PR-14 evidence |
+| PostgreSQL-specific multi-worker live proof | external_pending | SQL shape is implemented, but local test DB is SQLite; PR-14 must run staging PostgreSQL multi-worker smoke |
+| Rate-limit exceed event persistence | pass | `backend/app/core/rate_limit.py`, `backend/app/usage/service.py`; denied requests persist safe tenant/global events before returning 429 |
+| Rate-limit analytics and privacy tests | pass | Focused rate-limit/admin/business/chat/analytics/security tests - 44 passed |
+| Browser E2E framework | pass | Playwright committed in `frontend/playwright.config.ts` and `frontend/e2e/*` |
+| Browser E2E execution | pass | `npm run test:e2e` - 5 mocked Chromium tests passed |
+| Live backend-integrated browser proof | external_pending | Mocked API browser coverage is repository evidence only; PR-14 must run target-environment smoke |
+| CI browser wiring | pass_remote | `.github/workflows/ci.yml` installs Playwright Chromium and runs `npm run test:e2e`; PR #31 GitHub Actions run `26661669094` passed Frontend checks at `51687cec8695e397c41bb0daa377370be4da214f` |
+| GitHub Actions Node 24 runtime compatibility cleanup | pending_final_remote_run | This evidence-sync cleanup upgrades `actions/checkout`, `actions/setup-node`, and `actions/setup-python` to official v6 releases and enables `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`; post-push CI must confirm the warning is cleared |
+| Full backend regression | pass | `backend/.venv/bin/python -m pytest backend/tests -q` - 116 passed |
+| Backend lint/compile | pass | Ruff passed; compileall passed |
+| Alembic smoke | pass | SQLite upgrade/downgrade/upgrade using `/private/tmp/ai_magnet_pr13a_alembic.sqlite` passed |
+| Frontend lint/typecheck/static/build | pass | `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` passed |
+| Compose and data-service port checks | pass | Dev/prod Compose rendered; production JSON check confirmed PostgreSQL/Redis publish no host ports |
+| Security scans | pass_with_warning | Bandit passed; pip-audit found no Python vulnerabilities; secret pattern scan no matches; npm audit high threshold passed with moderate PostCSS advisory noted |
+| Production-control visual/status consistency | pass | `python3 -m json.tool production-control/status/production-status.json`; SVG parse check; dashboard/status grep review; `git diff --check` passed after final memory updates |

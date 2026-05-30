@@ -64,11 +64,17 @@ from app.schemas.admin import (
     AdminUsageOverviewResponse,
     AdminWorkerHeartbeatResponse,
 )
+from app.usage import UsageEventSource
 
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 ALLOWED_TENANT_STATUSES = {"active", "suspended", "inactive", "offboarding"}
+
+
+def existing_tenant_id_resolver(session: Session, tenant_id: str):
+    """Return a lazy tenant-id resolver for rate-limit attribution."""
+    return lambda: session.scalar(select(Tenant.id).where(Tenant.id == tenant_id))
 
 
 def get_current_admin_session(
@@ -125,6 +131,9 @@ def login(
         scope="admin_login",
         identifiers=[payload.email],
         limit=settings.rate_limit_login_per_minute,
+        session=session,
+        event_source=UsageEventSource.OPERATIONS,
+        actor_category="admin_login",
     )
     result = AdminPortalAuthService(session, settings).login(
         email=payload.email,
@@ -214,6 +223,9 @@ def create_tenant(
         scope="admin_tenant_create",
         identifiers=[admin_session.admin_id],
         limit=settings.rate_limit_admin_write_per_minute,
+        session=session,
+        event_source=UsageEventSource.OPERATIONS,
+        actor_category="admin_user",
     )
     if payload.status not in ALLOWED_TENANT_STATUSES:
         raise HTTPException(
@@ -340,6 +352,10 @@ def set_tenant_subscription(
         scope="admin_tenant_subscription_write",
         identifiers=[admin_session.admin_id, tenant_id],
         limit=settings.rate_limit_admin_write_per_minute,
+        session=session,
+        tenant_id_resolver=existing_tenant_id_resolver(session, tenant_id),
+        event_source=UsageEventSource.OPERATIONS,
+        actor_category="admin_user",
     )
     service = BillingService(session)
     existing_subscription = service.get_subscription(tenant_id)
@@ -405,6 +421,10 @@ def update_tenant_status(
         scope="admin_tenant_status_write",
         identifiers=[admin_session.admin_id, tenant_id],
         limit=settings.rate_limit_admin_write_per_minute,
+        session=session,
+        tenant_id_resolver=existing_tenant_id_resolver(session, tenant_id),
+        event_source=UsageEventSource.OPERATIONS,
+        actor_category="admin_user",
     )
     if payload.status not in ALLOWED_TENANT_STATUSES:
         raise HTTPException(
@@ -451,6 +471,10 @@ def offboard_tenant(
         scope="admin_tenant_offboard",
         identifiers=[admin_session.admin_id, tenant_id],
         limit=settings.rate_limit_admin_write_per_minute,
+        session=session,
+        tenant_id_resolver=existing_tenant_id_resolver(session, tenant_id),
+        event_source=UsageEventSource.OPERATIONS,
+        actor_category="admin_user",
     )
     service = AdminService(session, settings)
     tenant = service.offboard_tenant(tenant_id, payload.retention_days)
@@ -502,6 +526,10 @@ def export_tenant_privacy_data(
         scope="admin_tenant_privacy_export",
         identifiers=[admin_session.admin_id, tenant_id],
         limit=settings.rate_limit_admin_write_per_minute,
+        session=session,
+        tenant_id_resolver=existing_tenant_id_resolver(session, tenant_id),
+        event_source=UsageEventSource.OPERATIONS,
+        actor_category="admin_user",
     )
     service = AdminService(session, settings)
     export_data = service.export_tenant_data(tenant_id)
@@ -549,6 +577,10 @@ def delete_tenant_data(
         scope="admin_tenant_delete_data",
         identifiers=[admin_session.admin_id, tenant_id],
         limit=settings.rate_limit_admin_write_per_minute,
+        session=session,
+        tenant_id_resolver=existing_tenant_id_resolver(session, tenant_id),
+        event_source=UsageEventSource.OPERATIONS,
+        actor_category="admin_user",
     )
     if not payload.confirm_delete:
         raise HTTPException(

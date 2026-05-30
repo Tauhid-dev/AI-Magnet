@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, update
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
@@ -205,27 +206,53 @@ class BackgroundJobService:
         queue_name: str,
         worker_id: str,
     ) -> BackgroundJob | None:
-        """Mark the next due queued/retry job as running for this worker."""
+        """Atomically mark the next due queued/retry job as running for this worker."""
         now = utc_now()
-        statement = (
-            select(BackgroundJob)
+        candidate_job = aliased(BackgroundJob)
+        candidate_statement = (
+            select(candidate_job.id)
             .where(
+                candidate_job.queue_name == queue_name,
+                candidate_job.status.in_([JOB_STATUS_QUEUED, JOB_STATUS_RETRY_SCHEDULED]),
+                candidate_job.scheduled_at <= now,
+            )
+            .order_by(
+                candidate_job.priority.asc(),
+                candidate_job.scheduled_at.asc(),
+                candidate_job.created_at.asc(),
+                candidate_job.id.asc(),
+            )
+            .limit(1)
+        )
+
+        bind = self.session.get_bind()
+        if bind.dialect.name == "postgresql":
+            candidate_statement = candidate_statement.with_for_update(
+                of=candidate_job,
+                skip_locked=True,
+            )
+
+        statement = (
+            update(BackgroundJob)
+            .where(
+                BackgroundJob.id == candidate_statement.scalar_subquery(),
                 BackgroundJob.queue_name == queue_name,
                 BackgroundJob.status.in_([JOB_STATUS_QUEUED, JOB_STATUS_RETRY_SCHEDULED]),
                 BackgroundJob.scheduled_at <= now,
             )
-            .order_by(BackgroundJob.priority.asc(), BackgroundJob.scheduled_at.asc())
-            .limit(1)
+            .values(
+                status=JOB_STATUS_RUNNING,
+                locked_by=worker_id,
+                locked_at=now,
+                started_at=now,
+                attempts=BackgroundJob.attempts + 1,
+                last_error=None,
+                updated_at=now,
+            )
+            .returning(BackgroundJob)
+            .execution_options(synchronize_session=False, populate_existing=True)
         )
         job = self.session.scalars(statement).first()
-        if job is None:
-            return None
-        job.status = JOB_STATUS_RUNNING
-        job.locked_by = worker_id
-        job.locked_at = now
-        job.started_at = now
-        job.attempts += 1
-        job.last_error = None
         self.session.flush()
         return job
 

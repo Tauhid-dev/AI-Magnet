@@ -25,6 +25,7 @@ from app.jobs.service import BackgroundJobService
 from app.models.job import BackgroundJob
 from app.models.billing import TenantSubscription
 from app.models.knowledge import KnowledgeDocument
+from app.models.tenant import Tenant
 from app.providers.ai.base import ChatMessage
 from app.providers.ai.factory import get_chat_completion_provider, get_embedding_provider
 from app.rag.document_storage import LocalDocumentStorage
@@ -73,6 +74,33 @@ from app.rag.website_ingestion import WebsiteIngestionService
 
 
 router = APIRouter(prefix="/business-portal", tags=["business-portal"])
+
+
+def resolve_tenant_id_for_slug(session: Session, tenant_slug: str) -> str | None:
+    """Resolve a login tenant slug only when rate-limit attribution needs it."""
+    return session.scalar(select(Tenant.id).where(Tenant.slug == tenant_slug))
+
+
+def enforce_business_portal_rate_limit(
+    request: Request,
+    settings: Settings,
+    session: Session,
+    portal_session: BusinessPortalSession,
+    *,
+    scope: str,
+) -> None:
+    """Apply write limits with tenant-safe abuse analytics context."""
+    enforce_rate_limit(
+        request,
+        settings,
+        scope=scope,
+        identifiers=[portal_session.tenant_id, portal_session.user_id],
+        limit=settings.rate_limit_portal_write_per_minute,
+        session=session,
+        tenant_id=portal_session.tenant_id,
+        event_source=UsageEventSource.BUSINESS_PORTAL,
+        actor_category="business_user",
+    )
 
 
 def get_current_business_session(
@@ -239,6 +267,10 @@ def login(
         scope="business_login",
         identifiers=[payload.tenant_slug, payload.email],
         limit=settings.rate_limit_login_per_minute,
+        session=session,
+        tenant_id_resolver=lambda: resolve_tenant_id_for_slug(session, payload.tenant_slug),
+        event_source=UsageEventSource.BUSINESS_PORTAL,
+        actor_category="business_login",
     )
     result = BusinessPortalAuthService(session, settings).login(
         tenant_slug=payload.tenant_slug,
@@ -327,12 +359,12 @@ def update_profile(
     settings: Settings = Depends(get_settings),
 ) -> PortalBusinessProfileResponse:
     """Update the tenant-owned business profile used for onboarding and crawl approval."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_profile_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     website_url = normalized_profile_url(payload.website_url)
     service = BusinessPortalService(session, portal_session.tenant_id)
@@ -371,12 +403,12 @@ def create_document(
     settings: Settings = Depends(get_settings),
 ) -> PortalDocumentResponse:
     """Queue text document ingestion for the current tenant."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_documents_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     blockers = QuotaService(session, settings).document_blockers(
         portal_session.tenant_id,
@@ -419,12 +451,12 @@ async def upload_document_file(
     settings: Settings = Depends(get_settings),
 ) -> PortalDocumentResponse:
     """Validate, store, and queue a tenant-owned uploaded knowledge document."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_documents_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     content = await file.read(settings.document_upload_max_bytes + 1)
     try:
@@ -496,12 +528,12 @@ def refresh_document_file(
     settings: Settings = Depends(get_settings),
 ) -> PortalDocumentResponse:
     """Queue re-indexing for a tenant-owned uploaded document file."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_documents_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     document = session.scalars(
         select(KnowledgeDocument).where(
@@ -536,12 +568,12 @@ def delete_document(
     settings: Settings = Depends(get_settings),
 ) -> Response:
     """Delete a tenant-owned knowledge document and any private stored file."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_documents_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     document = session.scalars(
         select(KnowledgeDocument).where(
@@ -581,12 +613,12 @@ def create_website_source(
     settings: Settings = Depends(get_settings),
 ) -> PortalWebsiteSourceResponse:
     """Create a tenant-approved website/sitemap source and queue ingestion."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_website_source_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     blockers = QuotaService(session, settings).website_crawl_blockers(portal_session.tenant_id)
     if blockers:
@@ -626,12 +658,12 @@ def refresh_website_source(
     settings: Settings = Depends(get_settings),
 ) -> PortalWebsiteSourceResponse:
     """Queue a refresh crawl for a tenant-owned website/sitemap source."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_website_source_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     blockers = QuotaService(session, settings).website_crawl_blockers(portal_session.tenant_id)
     if blockers:
@@ -664,12 +696,12 @@ def delete_website_source(
     settings: Settings = Depends(get_settings),
 ) -> Response:
     """Delete a tenant-owned source and generated knowledge documents."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_website_source_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     deleted_count = WebsiteIngestionService(session, settings=settings).delete_source(
         portal_session.tenant_id,
@@ -756,12 +788,12 @@ def update_lead_status(
     settings: Settings = Depends(get_settings),
 ) -> PortalLeadResponse:
     """Update a current tenant lead lifecycle status."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_lead_status_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     service = BusinessPortalService(session, portal_session.tenant_id)
     current_lead = service.get_lead(lead_id)
@@ -839,12 +871,12 @@ def test_agent(
     settings: Settings = Depends(get_settings),
 ) -> PortalAgentTestResponse:
     """Run a tenant-scoped source-grounded agent sandbox test without creating a lead."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_agent_test",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     blockers = QuotaService(session, settings).ai_response_blockers(portal_session.tenant_id)
     if blockers:
@@ -952,12 +984,12 @@ def create_widget_key(
     settings: Settings = Depends(get_settings),
 ) -> PortalWidgetResponse:
     """Create a new active widget key and return it once."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_widget_key_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     service = WidgetService(session, settings)
     widget_key = service.generate_widget_key()
@@ -990,12 +1022,12 @@ def update_widget_origins(
     settings: Settings = Depends(get_settings),
 ) -> PortalWidgetResponse:
     """Replace allowed origins for a tenant-owned widget."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_widget_origins_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     service = WidgetService(session, settings)
     try:
@@ -1032,12 +1064,12 @@ def update_widget_branding(
     settings: Settings = Depends(get_settings),
 ) -> PortalWidgetResponse:
     """Update beta-scope widget title branding for a tenant-owned widget."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_widget_branding_write",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     service = WidgetService(session, settings)
     widget = service.update_branding(
@@ -1066,12 +1098,12 @@ def disable_widget_key(
     settings: Settings = Depends(get_settings),
 ) -> PortalWidgetResponse:
     """Disable a tenant-owned widget key."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_widget_disable",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     widget = WidgetService(session, settings).disable_widget(widget_id, portal_session.tenant_id)
     if widget is None:
@@ -1095,12 +1127,12 @@ def revoke_widget_key(
     settings: Settings = Depends(get_settings),
 ) -> PortalWidgetResponse:
     """Revoke a tenant-owned widget key permanently."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_widget_revoke",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     widget = WidgetService(session, settings).revoke_widget(widget_id, portal_session.tenant_id)
     if widget is None:
@@ -1125,12 +1157,12 @@ def rotate_widget_key(
     settings: Settings = Depends(get_settings),
 ) -> PortalWidgetResponse:
     """Rotate a tenant-owned widget key and return the replacement key once."""
-    enforce_rate_limit(
+    enforce_business_portal_rate_limit(
         request,
         settings,
+        session,
+        portal_session,
         scope="business_portal_widget_rotate",
-        identifiers=[portal_session.tenant_id, portal_session.user_id],
-        limit=settings.rate_limit_portal_write_per_minute,
     )
     service = WidgetService(session, settings)
     new_widget_key = service.generate_widget_key()

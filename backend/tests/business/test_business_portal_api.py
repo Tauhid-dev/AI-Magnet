@@ -14,7 +14,7 @@ from app.models import Business, BusinessUser, Conversation, KnowledgeDocument, 
 from app.models.usage import UsageLog
 from app.providers.ai.deterministic import DeterministicEmbeddingProvider
 from app.rag.ingestion import RagIngestionService
-from app.usage import UsageEventType
+from app.usage import UsageEventSource, UsageEventType
 from app.tenants.service import TenantService
 from fastapi.testclient import TestClient
 
@@ -197,7 +197,7 @@ def test_business_portal_locks_after_repeated_failed_passwords(monkeypatch):
 
 def test_business_portal_login_rate_limit_blocks_repeated_attempts(monkeypatch):
     with create_test_session() as session:
-        seed_business_user(
+        tenant, _user = seed_business_user(
             session,
             "Rate Limited Plumbing",
             "rate-limited",
@@ -215,6 +215,16 @@ def test_business_portal_login_rate_limit_blocks_repeated_attempts(monkeypatch):
                 "password": "wrong-password",
             },
         )
+        assert first_response.status_code == 401
+        assert (
+            session.scalars(
+                select(UsageLog).where(
+                    UsageLog.event_type == UsageEventType.RATE_LIMIT_EXCEEDED
+                )
+            ).all()
+            == []
+        )
+
         limited_response = client.post(
             "/business-portal/auth/login",
             json={
@@ -224,8 +234,20 @@ def test_business_portal_login_rate_limit_blocks_repeated_attempts(monkeypatch):
             },
         )
 
-        assert first_response.status_code == 401
         assert limited_response.status_code == 429
+        assert int(limited_response.headers["Retry-After"]) > 0
+        event = session.scalars(
+            select(UsageLog).where(UsageLog.event_type == UsageEventType.RATE_LIMIT_EXCEEDED)
+        ).one()
+        assert event.tenant_id == tenant.id
+        assert event.event_source == UsageEventSource.BUSINESS_PORTAL
+        assert event.attributes["scope"] == "business_login"
+        assert event.attributes["actor_category"] == "business_login"
+        assert event.attributes["route"] == "/business-portal/auth/login"
+        serialized = str(event.attributes).lower()
+        assert "rate-limited" not in serialized
+        assert "limit@example.test" not in serialized
+        assert "wrong-password" not in serialized
 
 
 def test_business_portal_blocks_cross_tenant_lead_and_conversation(monkeypatch):

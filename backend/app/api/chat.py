@@ -20,7 +20,7 @@ from app.schemas.chat import (
     ConversationStartResponse,
     LeadCaptureState,
 )
-from app.usage import QuotaLimitExceeded
+from app.usage import QuotaLimitExceeded, UsageEventSource
 from app.usage.quotas import retry_after_for_month
 from app.widget.service import WidgetService
 
@@ -66,6 +66,16 @@ def get_widget_service(
     return WidgetService(session, settings)
 
 
+def resolve_widget_tenant_id(
+    widget_service: WidgetService,
+    widget_key: str,
+    origin: str | None,
+) -> str | None:
+    """Resolve widget tenant attribution only after a rate-limit denial."""
+    resolution = widget_service.resolve_widget_key(widget_key, origin)
+    return resolution.tenant_id if resolution else None
+
+
 @router.post("/conversations", response_model=ConversationStartResponse)
 def start_conversation(
     request: Request,
@@ -81,6 +91,14 @@ def start_conversation(
         scope="chat_start_public",
         identifiers=[payload.widget_key[:16]],
         limit=settings.rate_limit_chat_start_per_minute,
+        session=widget_service.session,
+        tenant_id_resolver=lambda: resolve_widget_tenant_id(
+            widget_service,
+            payload.widget_key,
+            payload.origin,
+        ),
+        event_source=UsageEventSource.CHAT_WIDGET,
+        actor_category="chat_widget",
     )
     resolution = widget_service.resolve_widget_key(payload.widget_key, payload.origin)
     if resolution is None:
@@ -94,6 +112,10 @@ def start_conversation(
         scope="chat_start_tenant_widget",
         identifiers=[resolution.tenant_id, resolution.widget.id],
         limit=settings.rate_limit_chat_start_per_minute,
+        session=widget_service.session,
+        tenant_id=resolution.tenant_id,
+        event_source=UsageEventSource.CHAT_WIDGET,
+        actor_category="chat_widget",
     )
     try:
         result = chat_service.start_conversation(
@@ -135,6 +157,14 @@ def post_conversation_message(
         scope="chat_message_public",
         identifiers=[payload.widget_key[:16], conversation_id],
         limit=settings.rate_limit_chat_message_per_minute,
+        session=widget_service.session,
+        tenant_id_resolver=lambda: resolve_widget_tenant_id(
+            widget_service,
+            payload.widget_key,
+            payload.origin,
+        ),
+        event_source=UsageEventSource.CHAT_WIDGET,
+        actor_category="chat_widget",
     )
     resolution = widget_service.resolve_widget_key(payload.widget_key, payload.origin)
     if resolution is None:
@@ -148,6 +178,10 @@ def post_conversation_message(
         scope="chat_message_tenant_widget",
         identifiers=[resolution.tenant_id, resolution.widget.id],
         limit=settings.rate_limit_chat_message_per_minute,
+        session=widget_service.session,
+        tenant_id=resolution.tenant_id,
+        event_source=UsageEventSource.CHAT_WIDGET,
+        actor_category="chat_widget",
     )
     try:
         result = chat_service.handle_visitor_message(

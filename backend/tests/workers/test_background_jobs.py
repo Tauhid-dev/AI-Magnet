@@ -1,16 +1,20 @@
+from datetime import timedelta
+from threading import Barrier, Lock, Thread
+
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
 from app.core.config import Settings
-from app.db.base import Base
+from app.db.base import Base, utc_now
 from app.jobs.handlers import PermanentJobError, RetryableJobError
 from app.jobs.processor import BackgroundJobProcessor
 from app.jobs.service import (
     JOB_STATUS_COMPLETED,
     JOB_STATUS_FAILED,
     JOB_STATUS_RETRY_SCHEDULED,
+    JOB_STATUS_RUNNING,
     JOB_TYPE_RAG_DOCUMENT_INGESTION,
     BackgroundJobService,
 )
@@ -35,6 +39,290 @@ def create_test_session_factory():
     )
     Base.metadata.create_all(engine)
     return sessionmaker(bind=engine, future=True, expire_on_commit=False)
+
+
+def create_file_test_session_factory(tmp_path):
+    engine = create_engine(
+        f"sqlite:///{tmp_path / 'background-jobs.db'}",
+        future=True,
+        connect_args={"check_same_thread": False, "timeout": 10},
+    )
+    Base.metadata.create_all(engine)
+    return sessionmaker(bind=engine, future=True, expire_on_commit=False)
+
+
+def acquire_jobs_concurrently(session_factory, settings, worker_ids):
+    barrier = Barrier(len(worker_ids))
+    lock = Lock()
+    results = []
+    errors = []
+
+    def run(worker_id):
+        try:
+            barrier.wait(timeout=10)
+            with session_factory() as session:
+                job = BackgroundJobService(
+                    session,
+                    settings,
+                    redis_wake_queue=NoopWakeQueue(),
+                ).acquire_due_job(
+                    queue_name=settings.worker_queue_name,
+                    worker_id=worker_id,
+                )
+                claimed = (worker_id, job.id if job is not None else None)
+                session.commit()
+        except Exception as exc:  # pragma: no cover - surfaced by assertion below
+            with lock:
+                errors.append(exc)
+        else:
+            with lock:
+                results.append(claimed)
+
+    threads = [Thread(target=run, args=(worker_id,)) for worker_id in worker_ids]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=10)
+
+    assert not [thread for thread in threads if thread.is_alive()]
+    assert errors == []
+    return results
+
+
+def test_acquire_due_job_claims_queued_job():
+    session_factory = create_test_session_factory()
+    settings = Settings()
+    with session_factory() as session:
+        job = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).enqueue("test.claim", {}, priority=10).job
+        session.commit()
+        job_id = job.id
+
+    with session_factory() as session:
+        claimed = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).acquire_due_job(
+            queue_name=settings.worker_queue_name,
+            worker_id="worker-a",
+        )
+        session.commit()
+
+    assert claimed is not None
+    assert claimed.id == job_id
+    assert claimed.status == JOB_STATUS_RUNNING
+    assert claimed.attempts == 1
+    assert claimed.locked_by == "worker-a"
+    assert claimed.locked_at is not None
+    assert claimed.started_at is not None
+    assert claimed.last_error is None
+
+
+def test_acquire_due_job_claims_due_retry_scheduled_job():
+    session_factory = create_test_session_factory()
+    settings = Settings()
+    with session_factory() as session:
+        job = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).enqueue("test.retry", {}, max_attempts=3).job
+        job.status = JOB_STATUS_RETRY_SCHEDULED
+        job.scheduled_at = utc_now() - timedelta(seconds=1)
+        job.attempts = 1
+        job.last_error = "temporary outage"
+        session.commit()
+        job_id = job.id
+
+    with session_factory() as session:
+        claimed = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).acquire_due_job(
+            queue_name=settings.worker_queue_name,
+            worker_id="worker-b",
+        )
+        session.commit()
+
+    assert claimed is not None
+    assert claimed.id == job_id
+    assert claimed.status == JOB_STATUS_RUNNING
+    assert claimed.attempts == 2
+    assert claimed.locked_by == "worker-b"
+    assert claimed.last_error is None
+
+
+def test_acquire_due_job_does_not_claim_non_eligible_jobs():
+    session_factory = create_test_session_factory()
+    settings = Settings()
+    with session_factory() as session:
+        service = BackgroundJobService(session, settings, redis_wake_queue=NoopWakeQueue())
+        future_job = service.enqueue("test.future", {}).job
+        future_job.scheduled_at = utc_now() + timedelta(minutes=5)
+        running_job = service.enqueue("test.running", {}).job
+        running_job.status = JOB_STATUS_RUNNING
+        running_job.started_at = utc_now()
+        running_job.locked_at = utc_now()
+        running_job.locked_by = "worker-existing"
+        retry_future_job = service.enqueue("test.retry.future", {}).job
+        retry_future_job.status = JOB_STATUS_RETRY_SCHEDULED
+        retry_future_job.scheduled_at = utc_now() + timedelta(minutes=5)
+        completed_job = service.enqueue("test.completed", {}).job
+        completed_job.status = JOB_STATUS_COMPLETED
+        service.enqueue("test.other-queue", {}, queue_name="other").job
+        session.commit()
+
+    with session_factory() as session:
+        claimed = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).acquire_due_job(
+            queue_name=settings.worker_queue_name,
+            worker_id="worker-c",
+        )
+        session.commit()
+
+    assert claimed is None
+
+
+def test_acquire_due_job_preserves_priority_then_schedule_order():
+    session_factory = create_test_session_factory()
+    settings = Settings()
+    now = utc_now()
+    with session_factory() as session:
+        service = BackgroundJobService(session, settings, redis_wake_queue=NoopWakeQueue())
+        later_high_priority = service.enqueue("test.later-high", {}, priority=1).job
+        later_high_priority.scheduled_at = now + timedelta(seconds=10)
+        earlier_low_priority = service.enqueue("test.earlier-low", {}, priority=50).job
+        earlier_low_priority.scheduled_at = now - timedelta(seconds=10)
+        earliest_same_priority = service.enqueue("test.earliest-same", {}, priority=1).job
+        earliest_same_priority.scheduled_at = now - timedelta(seconds=5)
+        session.commit()
+
+    with session_factory() as session:
+        claimed = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).acquire_due_job(
+            queue_name=settings.worker_queue_name,
+            worker_id="worker-order",
+        )
+        session.commit()
+
+    assert claimed is not None
+    assert claimed.job_type == "test.earliest-same"
+
+
+def test_concurrent_workers_do_not_receive_same_job(tmp_path):
+    session_factory = create_file_test_session_factory(tmp_path)
+    settings = Settings()
+    worker_ids = [f"worker-{index}" for index in range(6)]
+    with session_factory() as session:
+        job = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).enqueue("test.single-concurrent", {}).job
+        session.commit()
+        job_id = job.id
+
+    results = acquire_jobs_concurrently(session_factory, settings, worker_ids)
+    claimed_ids = [claimed_id for _worker_id, claimed_id in results if claimed_id is not None]
+
+    assert claimed_ids == [job_id]
+    with session_factory() as session:
+        stored_job = session.get(BackgroundJob, job_id)
+        assert stored_job.status == JOB_STATUS_RUNNING
+        assert stored_job.attempts == 1
+        assert stored_job.locked_by in worker_ids
+
+
+def test_multiple_due_jobs_distribute_across_concurrent_workers(tmp_path):
+    session_factory = create_file_test_session_factory(tmp_path)
+    settings = Settings()
+    worker_ids = [f"worker-{index}" for index in range(5)]
+    with session_factory() as session:
+        service = BackgroundJobService(session, settings, redis_wake_queue=NoopWakeQueue())
+        expected_job_ids = {
+            service.enqueue(f"test.concurrent-{index}", {}, priority=index).job.id
+            for index in range(len(worker_ids))
+        }
+        session.commit()
+
+    results = acquire_jobs_concurrently(session_factory, settings, worker_ids)
+    claimed_ids = [claimed_id for _worker_id, claimed_id in results if claimed_id is not None]
+
+    assert set(claimed_ids) == expected_job_ids
+    assert len(claimed_ids) == len(set(claimed_ids)) == len(worker_ids)
+    with session_factory() as session:
+        jobs = list(session.scalars(select(BackgroundJob)))
+        assert {job.locked_by for job in jobs} == set(worker_ids)
+        assert {job.status for job in jobs} == {JOB_STATUS_RUNNING}
+        assert {job.attempts for job in jobs} == {1}
+
+
+def test_stale_running_job_is_recovered_and_can_be_reclaimed():
+    session_factory = create_test_session_factory()
+    settings = Settings(
+        worker_job_lock_timeout_seconds=1,
+        worker_retry_base_seconds=0,
+        worker_retry_max_seconds=0,
+    )
+    with session_factory() as session:
+        job = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).enqueue("test.stale", {}, max_attempts=3).job
+        session.commit()
+        job_id = job.id
+
+    with session_factory() as session:
+        service = BackgroundJobService(session, settings, redis_wake_queue=NoopWakeQueue())
+        claimed = service.acquire_due_job(
+            queue_name=settings.worker_queue_name,
+            worker_id="worker-stale",
+        )
+        assert claimed is not None
+        claimed.locked_at = utc_now() - timedelta(seconds=10)
+        session.commit()
+
+    with session_factory() as session:
+        service = BackgroundJobService(session, settings, redis_wake_queue=NoopWakeQueue())
+        assert service.reset_stale_running_jobs(settings.worker_queue_name) == 1
+        session.commit()
+
+    with session_factory() as session:
+        recovered = session.get(BackgroundJob, job_id)
+        assert recovered.status == JOB_STATUS_RETRY_SCHEDULED
+        assert recovered.attempts == 1
+        assert recovered.locked_at is None
+        assert recovered.locked_by is None
+        assert recovered.last_error == "Worker lock expired before completion"
+
+    with session_factory() as session:
+        reclaimed = BackgroundJobService(
+            session,
+            settings,
+            redis_wake_queue=NoopWakeQueue(),
+        ).acquire_due_job(
+            queue_name=settings.worker_queue_name,
+            worker_id="worker-reclaim",
+        )
+        session.commit()
+
+    assert reclaimed is not None
+    assert reclaimed.id == job_id
+    assert reclaimed.status == JOB_STATUS_RUNNING
+    assert reclaimed.attempts == 2
+    assert reclaimed.locked_by == "worker-reclaim"
 
 
 def test_document_ingestion_job_processes_and_redacts_sensitive_payload():

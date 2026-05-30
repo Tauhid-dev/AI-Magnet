@@ -15,7 +15,7 @@ from app.models.knowledge import KnowledgeDocument
 from app.models.lead import Lead
 from app.models.notification import NotificationDelivery
 from app.models.tenant import Tenant
-from app.models.usage import AuditLog, UsageLog
+from app.models.usage import AuditLog, GlobalAuditLog, UsageLog
 from app.models.widget import WidgetConfig
 from app.usage.quotas import QuotaService, QuotaSnapshot
 from app.usage.taxonomy import UsageEventType
@@ -216,12 +216,7 @@ class AnalyticsService:
                 sum(self._metric_used(item.tenant_id, "storage_mb") for item in tenant_usage),
                 4,
             ),
-            rate_limit_events_total=int(
-                sum(
-                    self._metric_used(item.tenant_id, "rate_limit_events")
-                    for item in tenant_usage
-                )
-            ),
+            rate_limit_events_total=self._rate_limit_events_total(),
             quota_warning_tenants=sum(1 for item in tenant_usage if item.quota_warnings),
             quota_blocked_tenants=sum(1 for item in tenant_usage if item.quota_blockers),
             usage_event_counts=self._breakdown(UsageLog, UsageLog.event_type),
@@ -297,6 +292,17 @@ class AnalyticsService:
             if metric.key == key:
                 return metric.used
         return 0.0
+
+    def _rate_limit_events_total(self) -> int:
+        tenant_events = self._count(
+            UsageLog,
+            UsageLog.event_type == UsageEventType.RATE_LIMIT_EXCEEDED,
+        )
+        global_events = self._count(
+            GlobalAuditLog,
+            GlobalAuditLog.action == UsageEventType.RATE_LIMIT_EXCEEDED,
+        )
+        return tenant_events + global_events
 
     def _breakdown(self, model: type, column) -> list[AnalyticsBreakdown]:
         statement = (

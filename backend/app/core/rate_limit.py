@@ -4,18 +4,29 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import re
 import time
 from collections import defaultdict, deque
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Any, Callable, Protocol
 
 from fastapi import HTTPException, Request, status
 
 from app.core.config import Settings
 
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
 
 logger = logging.getLogger(__name__)
+
+REQUEST_ID_HEADERS = ("x-request-id", "x-correlation-id")
+SAFE_REQUEST_ID_RE = re.compile(
+    r"^(?:[0-9a-fA-F]{16,64}|"
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|"
+    r"[0-9A-HJKMNP-TV-Z]{26})$"
+)
 
 
 @dataclass(frozen=True)
@@ -155,12 +166,19 @@ def enforce_rate_limit(
     limit: int,
     window_seconds: int | None = None,
     limiter: RateLimiter | None = None,
+    session: "Session | None" = None,
+    tenant_id: str | None = None,
+    tenant_id_resolver: Callable[[], str | None] | None = None,
+    event_source: str | None = None,
+    actor_category: str = "unknown",
 ) -> None:
     """Raise HTTP 429 when a request exceeds a configured policy."""
     if not settings.rate_limit_enabled:
         return
     window = window_seconds or settings.rate_limit_window_seconds
-    key = rate_limit_key(scope, [client_ip(request), *identifiers])
+    identifier_values = [identifier for identifier in identifiers if identifier]
+    request_client_ip = client_ip(request)
+    key = rate_limit_key(scope, [request_client_ip, *identifier_values])
     selected_limiter = limiter or get_rate_limiter(settings)
     try:
         result = selected_limiter.check(key, limit=limit, window_seconds=window)
@@ -177,11 +195,155 @@ def enforce_rate_limit(
         "rate_limit_exceeded",
         extra={"scope": scope, "retry_after_seconds": result.retry_after_seconds},
     )
+    persist_rate_limit_exceeded(
+        request,
+        session=session,
+        tenant_id=tenant_id,
+        tenant_id_resolver=tenant_id_resolver,
+        event_source=event_source,
+        scope=scope,
+        actor_category=actor_category,
+        identifiers=identifier_values,
+        limiter_key=key,
+        limit=limit,
+        window_seconds=window,
+        retry_after_seconds=result.retry_after_seconds,
+        request_client_ip=request_client_ip,
+    )
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail="Too many requests. Please wait before trying again.",
         headers={"Retry-After": str(result.retry_after_seconds)},
     )
+
+
+def persist_rate_limit_exceeded(
+    request: Request,
+    *,
+    session: "Session | None",
+    tenant_id: str | None,
+    tenant_id_resolver: Callable[[], str | None] | None,
+    event_source: str | None,
+    scope: str,
+    actor_category: str,
+    identifiers: list[str],
+    limiter_key: str,
+    limit: int,
+    window_seconds: int,
+    retry_after_seconds: int,
+    request_client_ip: str,
+) -> None:
+    """Best-effort durable abuse analytics for denied rate-limit requests."""
+    if session is None:
+        return
+    resolved_tenant_id = tenant_id
+    if resolved_tenant_id is None and tenant_id_resolver is not None:
+        try:
+            resolved_tenant_id = tenant_id_resolver()
+        except Exception:
+            logger.exception(
+                "rate_limit_tenant_attribution_failed",
+                extra={"scope": scope},
+            )
+            try:
+                session.rollback()
+            except Exception:
+                logger.exception(
+                    "rate_limit_tenant_attribution_rollback_failed",
+                    extra={"scope": scope},
+                )
+    attributes = rate_limit_event_attributes(
+        request,
+        scope=scope,
+        actor_category=actor_category,
+        identifiers=identifiers,
+        limiter_key=limiter_key,
+        limit=limit,
+        window_seconds=window_seconds,
+        retry_after_seconds=retry_after_seconds,
+        request_client_ip=request_client_ip,
+    )
+    try:
+        from app.usage.service import UsageService
+
+        UsageService(session).record_rate_limit_exceeded(
+            tenant_id=resolved_tenant_id,
+            event_source=event_source,
+            attributes=attributes,
+        )
+        session.commit()
+    except Exception:
+        logger.exception(
+            "rate_limit_analytics_persistence_failed",
+            extra={"scope": scope, "tenant_attributed": bool(resolved_tenant_id)},
+        )
+        try:
+            session.rollback()
+        except Exception:
+            logger.exception(
+                "rate_limit_analytics_rollback_failed",
+                extra={"scope": scope},
+            )
+
+
+def rate_limit_event_attributes(
+    request: Request,
+    *,
+    scope: str,
+    actor_category: str,
+    identifiers: list[str],
+    limiter_key: str,
+    limit: int,
+    window_seconds: int,
+    retry_after_seconds: int,
+    request_client_ip: str,
+) -> dict[str, Any]:
+    """Build a non-secret, analytics-safe rate-limit event payload."""
+    attributes: dict[str, Any] = {
+        "scope": scope,
+        "actor_category": actor_category,
+        "actor_fingerprint": fingerprint("|".join([request_client_ip, *identifiers])),
+        "client_fingerprint": fingerprint(request_client_ip),
+        "limiter_key_fingerprint": fingerprint(limiter_key),
+        "identifier_count": len(identifiers),
+        "limit": limit,
+        "window_seconds": window_seconds,
+        "retry_after_seconds": retry_after_seconds,
+    }
+    method = getattr(request, "method", None)
+    if method:
+        attributes["method"] = str(method).upper()[:12]
+    route = safe_route_template(request)
+    if route:
+        attributes["route"] = route
+    request_id = safe_request_id(request)
+    if request_id:
+        attributes["request_id"] = request_id
+    return attributes
+
+
+def safe_route_template(request: Request) -> str | None:
+    """Return the FastAPI route template rather than the raw request path."""
+    scope = getattr(request, "scope", None)
+    if not isinstance(scope, dict):
+        return None
+    route = scope.get("route")
+    path = getattr(route, "path", None)
+    if not path:
+        return None
+    return str(path)[:160]
+
+
+def safe_request_id(request: Request) -> str | None:
+    """Return a bounded request/correlation id when it has a safe id shape."""
+    headers = getattr(request, "headers", None)
+    if headers is None:
+        return None
+    for header_name in REQUEST_ID_HEADERS:
+        value = headers.get(header_name)
+        if value and SAFE_REQUEST_ID_RE.fullmatch(value):
+            return value
+    return None
 
 
 def get_rate_limiter(settings: Settings) -> RateLimiter:

@@ -261,3 +261,49 @@ Append-only ADR-lite log for production remediation.
   - Proceed directly to staging/VPS validation: rejected because repository findings should be remediated or explicitly scoped first.
   - Implement fixes inside PR-13: rejected because the instruction defined PR-13 as audit-only except for documentation/status corrections.
 - Follow-up impact: The next safe command is `Implement remediation phase PR-13A`, followed by PR-13B where customer browser-flow evidence is required, then owner-approved PR-14 external validation.
+- PR-13A update: PR-13A closed the repository High findings in one consolidated phase, including the browser/e2e evidence originally proposed as PR-13B. The next safe command is now owner-approved PR-14 external validation.
+
+## DEC-PR-20260530-024: PR-13A Uses Atomic Database Job Claiming
+
+- Date: 2026-05-30
+- Decision: Replace background job select-then-update acquisition with an atomic `UPDATE ... RETURNING` claim path. In PostgreSQL, the candidate subquery uses `FOR UPDATE SKIP LOCKED`; SQLite test mode uses the same atomic update shape without pretending to prove PostgreSQL row-lock behavior.
+- Reason: PR-13 found that multiple workers could race because the repository had no database-level proof that one job could only be claimed once. Atomic claiming preserves ordering while ensuring only one worker receives a job row.
+- Affected files/phases: PR-13A, PR-05, `backend/app/jobs/service.py`, `backend/tests/workers/test_background_jobs.py`.
+- Alternatives rejected:
+  - Keep single-worker operation as policy: rejected because the production architecture should not silently depend on a human operational limit.
+  - Introduce a new queue framework during PR-13A: rejected because the existing durable job ledger can be hardened incrementally without rewriting worker architecture.
+- Follow-up impact: PR-14 must still run a production-equivalent PostgreSQL multi-worker smoke test before trusting horizontal worker scaling.
+
+## DEC-PR-20260530-025: PR-13A Persists Privacy-Safe Rate-Limit Exceed Events
+
+- Date: 2026-05-30
+- Decision: Persist denied rate-limit events as tenant `UsageLog(rate_limit_exceeded)` when tenant context is safely resolvable, otherwise as `GlobalAuditLog(action=rate_limit_exceeded)`. Persist only safe metadata: scope, route template, method, limit/window/retry-after, actor category, hashed actor/client/limiter fingerprints, identifier count, and safe-shaped request IDs.
+- Reason: PR-13 found that rate-limit denials were logged but not durable for abuse investigation, quota analytics, or admin monitoring. The event payload must support operations without storing credentials, tokens, raw IPs, MFA codes, widget secrets, or request bodies.
+- Affected files/phases: PR-13A, PR-02, PR-10, `backend/app/core/rate_limit.py`, `backend/app/usage/service.py`, `backend/app/analytics/service.py`, affected API routes and tests.
+- Alternatives rejected:
+  - Store raw request identifiers for investigation: rejected because it creates unnecessary privacy and secret-exposure risk.
+  - Allow abused requests when analytics persistence fails: rejected; the request must remain blocked even if the best-effort analytics write fails.
+- Follow-up impact: PR-14 should smoke-test Redis-backed rate-limit denials and abuse metrics in the target environment.
+
+## DEC-PR-20260530-026: PR-13A Adds Mocked Browser E2E As Repository Evidence
+
+- Date: 2026-05-30
+- Decision: Add Playwright browser tests that start the real Next.js frontend and intercept the API boundary with deterministic synthetic responses for critical business and admin flows. Wire the mocked browser suite into CI while documenting that it is not live backend/staging proof.
+- Reason: PR-13 found that PR-09 browser evidence was overstated. Mocked browser E2E is stable and reproducible in repository CI, covers routing/forms/state/citation/widget UI behavior, and avoids requiring live secrets or real customer data.
+- Affected files/phases: PR-13A, PR-09, `.github/workflows/ci.yml`, `frontend/playwright.config.ts`, `frontend/e2e/*`, `frontend/package.json`, `frontend/README.md`.
+- Alternatives rejected:
+  - Add only more static/unit tests: rejected because the finding specifically required browser-level evidence.
+  - Claim mocked E2E proves backend integration: rejected; PR-14 still needs owner-approved target-environment smoke for live backend, Redis, PostgreSQL, worker, widget-origin, and cookie/MFA behavior.
+- Follow-up impact: Future frontend changes should keep the mocked browser suite green, and PR-14 should add live/staging smoke evidence without real customer data.
+
+## DEC-PR-20260530-027: PR-13A Upgrades Official GitHub Actions For Node 24 Compatibility
+
+- Date: 2026-05-30
+- Decision: Keep the CI workflow on official GitHub-maintained actions, upgrade `actions/checkout`, `actions/setup-node`, and `actions/setup-python` to inspected official v6 releases, and set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` so the next PR #31 run validates Node 24 JavaScript-action execution.
+- Reason: GitHub Actions reported Node.js 20 runtime deprecation warnings after the PR-13A lockfile fix. The safest maintenance path is to upgrade the official actions already in use and opt in to Node 24 compatibility testing rather than disabling checks or swapping in third-party actions.
+- Affected files/phases: PR-13A, `.github/workflows/ci.yml`, `docs/production-audit/post-pr12a-final-audit/pr-13a-validation-execution-report.md`, `production-control/*`.
+- Alternatives rejected:
+  - Ignore the warning until PR-14: rejected because PR #31 is already being prepared for owner merge.
+  - Pin an insecure runtime opt-out: rejected because it would hide the deprecation rather than validating compatibility.
+  - Replace official actions with third-party actions: rejected because no repository need justifies expanding the CI supply-chain surface.
+- Follow-up impact: The post-push PR #31 workflow run must remain green and should be checked for residual Node.js runtime warnings before owner merge.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from app.models.usage import UsageLog
+from app.models.usage import GlobalAuditLog, UsageLog
 from app.usage.taxonomy import UsageEventSource, UsageEventType
 
 
@@ -28,6 +28,34 @@ class UsageService:
             event_type=event_type,
             event_source=event_source,
             attributes=attributes or {},
+        )
+        self.session.add(event)
+        self.session.flush()
+        return event
+
+    def record_rate_limit_exceeded(
+        self,
+        *,
+        tenant_id: str | None,
+        event_source: str | None,
+        attributes: dict | None = None,
+    ) -> UsageLog | GlobalAuditLog:
+        """Persist a privacy-safe rate-limit abuse analytics event."""
+        payload = attributes or {}
+        if tenant_id:
+            return self.record_event(
+                tenant_id=tenant_id,
+                event_type=UsageEventType.RATE_LIMIT_EXCEEDED,
+                event_source=event_source,
+                attributes=payload,
+            )
+        if event_source:
+            payload = {**payload, "event_source": event_source}
+        event = GlobalAuditLog(
+            actor_id=None,
+            action=UsageEventType.RATE_LIMIT_EXCEEDED,
+            target_type="rate_limit",
+            attributes=payload,
         )
         self.session.add(event)
         self.session.flush()
