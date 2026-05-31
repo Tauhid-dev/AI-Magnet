@@ -24,7 +24,7 @@
   var launcher = document.createElement("button");
   launcher.type = "button";
   launcher.setAttribute("aria-label", config.title);
-  launcher.textContent = "Chat";
+  launcher.textContent = "AI Chat";
   launcher.style.cssText = [
     "position:fixed",
     "right:20px",
@@ -34,9 +34,9 @@
     "border-radius:8px",
     "background:#1f6feb",
     "color:#fff",
-    "font:600 15px system-ui,-apple-system,BlinkMacSystemFont,sans-serif",
-    "padding:12px 16px",
-    "box-shadow:0 8px 24px rgba(15,23,42,.22)",
+    "font:700 14px system-ui,-apple-system,BlinkMacSystemFont,sans-serif",
+    "padding:13px 17px",
+    "box-shadow:0 12px 30px rgba(31,111,235,.32)",
     "cursor:pointer",
   ].join(";");
 
@@ -47,26 +47,29 @@
     "right:20px",
     "bottom:76px",
     "z-index:2147483000",
-    "width:min(360px,calc(100vw - 32px))",
-    "height:480px",
+    "width:min(390px,calc(100vw - 32px))",
+    "height:520px",
     "display:none",
     "grid-template-rows:auto 1fr auto",
-    "background:#fff",
-    "border:1px solid #d7dde8",
+    "background:#ffffff",
+    "border:1px solid #cbd7e6",
     "border-radius:8px",
-    "box-shadow:0 18px 48px rgba(15,23,42,.24)",
+    "box-shadow:0 24px 60px rgba(15,23,42,.28)",
     "overflow:hidden",
     "font:14px system-ui,-apple-system,BlinkMacSystemFont,sans-serif",
   ].join(";");
 
   panel.innerHTML = [
-    "<header style=\"background:#172033;color:#fff;padding:14px 16px;font-weight:700;\">",
+    "<header style=\"background:#101b2c;color:#fff;padding:15px 16px;border-bottom:1px solid #263b58;\">",
+    "<div style=\"font-size:13px;font-weight:800;\">",
     escapeHtml(config.title),
+    "</div>",
+    "<div style=\"margin-top:3px;color:#9bb2ce;font-size:12px;font-weight:600;\">AI receptionist online</div>",
     "</header>",
-    "<div data-wm-messages style=\"padding:14px;overflow:auto;background:#f7f9fc;\"></div>",
+    "<div data-wm-messages style=\"padding:14px;overflow:auto;background:#eef3f9;\"></div>",
     "<form data-wm-form style=\"display:flex;gap:8px;padding:12px;border-top:1px solid #d7dde8;background:#fff;\">",
-    "<input data-wm-input aria-label=\"Message\" autocomplete=\"off\" placeholder=\"Type your message\" style=\"min-width:0;flex:1;border:1px solid #cbd5e1;border-radius:6px;padding:10px;font:14px system-ui;\" />",
-    "<button type=\"submit\" style=\"border:0;border-radius:6px;background:#1f6feb;color:#fff;font-weight:700;padding:0 14px;cursor:pointer;\">Send</button>",
+    "<input data-wm-input aria-label=\"Message\" autocomplete=\"off\" placeholder=\"Type your message\" style=\"min-width:0;flex:1;border:1px solid #cbd5e1;border-radius:6px;padding:10px;font:14px system-ui;background:#f8fafc;\" />",
+    "<button type=\"submit\" style=\"border:0;border-radius:6px;background:#1f6feb;color:#fff;font-weight:800;padding:0 14px;cursor:pointer;box-shadow:0 8px 18px rgba(31,111,235,.24);\">Send</button>",
     "</form>",
   ].join("");
 
@@ -141,7 +144,7 @@
 
   function appendMessage(author, text) {
     var item = document.createElement("div");
-    item.style.cssText = "margin:0 0 10px;padding:10px;border-radius:8px;background:#fff;border:1px solid #e2e8f0;";
+    item.style.cssText = "margin:0 0 10px;padding:10px;border-radius:8px;background:#fff;border:1px solid #d7dde8;box-shadow:0 6px 16px rgba(16,24,40,.04);";
     item.innerHTML = "<strong>" + escapeHtml(author) + ":</strong> " + escapeHtml(text);
     messages.appendChild(item);
     messages.scrollTop = messages.scrollHeight;
@@ -153,7 +156,7 @@
       "margin:-4px 0 10px",
       "padding:8px 10px",
       "border-radius:8px",
-      "background:#eef6ff",
+      "background:#eef5ff",
       "border:1px solid #bfdbfe",
       "color:#1e3a5f",
       "font-size:12px",

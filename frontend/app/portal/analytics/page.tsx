@@ -23,7 +23,7 @@ export default function AnalyticsPage() {
         <h1 className="text-2xl font-semibold">Analytics</h1>
         <p className="mt-1 text-sm text-muted">Tenant usage and operational totals.</p>
       </div>
-      <section className="grid overflow-hidden rounded-lg border border-line bg-panel md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-3">
         <MetricCard
           label="Ingested docs"
           value={analytics?.documents_ingested ?? "-"}
