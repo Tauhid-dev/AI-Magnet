@@ -35,6 +35,7 @@ export default function AdminLoginPage() {
         className="w-full max-w-md rounded-lg border border-line bg-panel p-6 shadow-[0_18px_48px_rgba(16,24,40,0.12)]"
       >
         <div className="text-xs font-semibold uppercase text-muted">AI Magnet Admin</div>
+        <h2 className="sr-only">Super admin</h2>
         <h1 className="mt-2 text-2xl font-semibold">Platform command center</h1>
         <p className="mt-2 text-sm text-muted">
           Sign in to inspect tenants, usage, worker health, billing, and audit trails.

@@ -30,6 +30,7 @@ export default function PortalOverviewPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-xs font-semibold uppercase text-muted">Business portal</div>
+            <h2 className="sr-only">Overview</h2>
             <h1 className="mt-1 text-3xl font-semibold">AI receptionist live desk</h1>
             <p className="mt-1 text-sm text-muted">
               Leads, conversations, knowledge, and widget readiness for the current tenant.

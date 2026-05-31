@@ -34,6 +34,7 @@ export default function AdminOverviewPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-xs font-semibold uppercase text-muted">Admin console</div>
+            <h2 className="sr-only">Platform overview</h2>
             <h1 className="mt-1 text-3xl font-semibold">Platform command center</h1>
             <p className="mt-1 text-sm text-muted">
               Tenant, usage, worker health, and launch risk snapshot.
