@@ -26,19 +26,27 @@ export default function PortalOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Overview</h1>
-        <p className="mt-1 text-sm text-muted">Today&apos;s tenant workspace snapshot.</p>
+      <div className="rounded-lg border border-line bg-panel p-5 shadow-[0_12px_30px_rgba(16,24,40,0.06)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-xs font-semibold uppercase text-muted">Business portal</div>
+            <h1 className="mt-1 text-3xl font-semibold">AI receptionist live desk</h1>
+            <p className="mt-1 text-sm text-muted">
+              Leads, conversations, knowledge, and widget readiness for the current tenant.
+            </p>
+          </div>
+          <StatusPill value={widget?.status || "not_configured"} />
+        </div>
       </div>
-      <section className="grid overflow-hidden rounded-lg border border-line bg-panel md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Leads" value={analytics?.leads_total ?? "-"} />
         <MetricCard label="Conversations" value={analytics?.conversations_total ?? "-"} />
         <MetricCard label="Knowledge files" value={analytics?.documents_total ?? "-"} />
         <MetricCard label="Messages" value={analytics?.messages_total ?? "-"} />
       </section>
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-line bg-panel p-4">
-          <h2 className="font-semibold">Widget</h2>
+        <div className="rounded-lg border border-line bg-panel p-4 shadow-[0_12px_30px_rgba(16,24,40,0.05)]">
+          <h2 className="font-semibold">Widget control</h2>
           <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
             <span className="text-sm text-muted">Status</span>
             <StatusPill value={widget?.status || "not_configured"} />
@@ -48,7 +56,7 @@ export default function PortalOverviewPage() {
             <span className="font-mono text-sm">{widget?.key_prefix || "-"}</span>
           </div>
         </div>
-        <div className="rounded-lg border border-line bg-panel p-4">
+        <div className="rounded-lg border border-line bg-panel p-4 shadow-[0_12px_30px_rgba(16,24,40,0.05)]">
           <h2 className="font-semibold">Recent usage</h2>
           <div className="mt-3 divide-y divide-line">
             {(analytics?.recent_usage || []).slice(0, 5).map((event) => (

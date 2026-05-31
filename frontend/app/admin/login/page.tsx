@@ -29,18 +29,22 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-canvas px-4 text-ink">
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10 text-ink">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-md border border-line bg-panel p-5 shadow-sm"
+        className="w-full max-w-md rounded-lg border border-line bg-panel p-6 shadow-[0_18px_48px_rgba(16,24,40,0.12)]"
       >
-        <h1 className="text-xl font-semibold">Super admin</h1>
+        <div className="text-xs font-semibold uppercase text-muted">AI Magnet Admin</div>
+        <h1 className="mt-2 text-2xl font-semibold">Platform command center</h1>
+        <p className="mt-2 text-sm text-muted">
+          Sign in to inspect tenants, usage, worker health, billing, and audit trails.
+        </p>
         <label className="mt-6 block text-sm font-medium text-muted" htmlFor="email">
           Email
         </label>
         <input
           id="email"
-          className="mt-2 w-full rounded-md border border-line px-3 py-2"
+          className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2 shadow-sm"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
@@ -49,7 +53,7 @@ export default function AdminLoginPage() {
         </label>
         <input
           id="password"
-          className="mt-2 w-full rounded-md border border-line px-3 py-2"
+          className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2 shadow-sm"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="current-password"
@@ -62,7 +66,7 @@ export default function AdminLoginPage() {
         </label>
         <input
           id="mfa-code"
-          className="mt-2 w-full rounded-md border border-line px-3 py-2"
+          className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2 shadow-sm"
           value={mfaCode}
           onChange={(event) => setMfaCode(event.target.value)}
           autoComplete="one-time-code"
@@ -73,7 +77,7 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-5 w-full rounded-md bg-ink px-3 py-2 font-semibold text-white disabled:opacity-60"
+          className="mt-5 w-full rounded-md bg-accent px-3 py-2.5 font-semibold text-white shadow-[0_10px_22px_rgba(31,111,235,0.24)] disabled:opacity-60"
         >
           {loading ? "Signing in" : "Sign in"}
         </button>

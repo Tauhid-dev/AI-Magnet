@@ -30,12 +30,17 @@ export default function AdminOverviewPage() {
 
   return (
     <AdminShell>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Platform overview</h1>
-          <p className="text-sm text-muted">Tenant, usage, and health snapshot.</p>
+      <div className="rounded-lg border border-line bg-panel p-5 shadow-[0_12px_30px_rgba(16,24,40,0.06)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-semibold uppercase text-muted">Admin console</div>
+            <h1 className="mt-1 text-3xl font-semibold">Platform command center</h1>
+            <p className="mt-1 text-sm text-muted">
+              Tenant, usage, worker health, and launch risk snapshot.
+            </p>
+          </div>
+          {health && <StatusPill value={health.status} />}
         </div>
-        {health && <StatusPill value={health.status} />}
       </div>
       {error && <div className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
       <section className="mt-6 grid gap-4 md:grid-cols-4">
@@ -44,13 +49,21 @@ export default function AdminOverviewPage() {
         <MetricCard label="Conversations" value={usage?.conversations_total ?? "-"} />
         <MetricCard label="Leads" value={usage?.leads_total ?? "-"} />
       </section>
-      <section className="mt-6 rounded-md border border-line bg-panel">
+      <section className="mt-6 rounded-lg border border-line bg-panel shadow-[0_12px_30px_rgba(16,24,40,0.05)]">
         <div className="border-b border-line px-4 py-3">
-          <h2 className="font-semibold">Recent tenants</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold">Tenant operations</h2>
+              <p className="mt-1 text-xs text-muted">Most recent tenants with live activity totals.</p>
+            </div>
+            <span className="rounded-md bg-accent/10 px-2 py-1 text-xs font-semibold text-accent">
+              {tenants.length} visible
+            </span>
+          </div>
         </div>
         <div className="divide-y divide-line">
           {tenants.map((tenant) => (
-            <div key={tenant.id} className="grid gap-2 px-4 py-3 md:grid-cols-4">
+            <div key={tenant.id} className="grid gap-2 px-4 py-3 md:grid-cols-4 md:items-center">
               <div className="font-medium">{tenant.name}</div>
               <div className="text-sm text-muted">{tenant.slug}</div>
               <StatusPill value={tenant.status} />
